@@ -1,0 +1,48 @@
+/* Cadre de l'espace client — noir #08090A, rouge #EF1733 (mêmes tokens que le reste du produit) */
+.cl{min-height:100svh;display:grid;grid-template-columns:248px minmax(0,1fr);background:#e9e6e0}
+.cl-skip{position:absolute;left:12px;top:-60px;z-index:100;background:#fff;color:#111;border-radius:10px;padding:8px 14px;font-weight:700;transition:top .2s}
+.cl-skip:focus{top:12px}
+.cl-bar,.cl-scrim,.cl-close,.cl-tabbar{display:none}
+
+.cl-side{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;gap:18px;padding:18px 14px;background:#08090A;color:#cfccc6}
+.cl-top{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 14px;border-bottom:1px solid #1e2023}
+.cl-brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;line-height:1.15}
+.cl-brand img{border-radius:9px;object-fit:cover;background:#EF1733}
+.cl-brand small{display:block;margin-top:2px;font:600 10.5px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8d8a85}
+.cl-nav{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.cl-nav a{position:relative;display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;font-weight:600;font-size:14px;color:#cfccc6;transition:background .2s,color .2s}
+.cl-nav a:hover{background:#15171a;color:#fff}
+.cl-nav a.on{background:#1b1d21;color:#fff}
+.cl-nav a.on::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:#EF1733}
+.cl-nav a:focus-visible,.cl-user button:focus-visible,.cl-burger:focus-visible,.cl-close:focus-visible{outline:2px solid #EF1733;outline-offset:2px}
+
+.cl-user{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 8px 4px;border-top:1px solid #1e2023}
+.cl-av{flex:none;width:36px;height:36px;border-radius:50%;background:#1b1d21;color:#e8c77f;display:grid;place-items:center;font-weight:800}
+.cl-who{flex:1;min-width:0;display:grid;line-height:1.25}
+.cl-who b{color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-who small{color:#8d8a85;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-user button{flex:none;width:36px;height:36px;border:1px solid #26292e;border-radius:10px;background:none;color:#cfccc6;display:grid;place-items:center;cursor:pointer;transition:border-color .2s,color .2s}
+.cl-user button:hover{border-color:#EF1733;color:#fff}
+
+.cl-main{min-width:0;outline:none}
+/* L'éditeur (démo) vit dans la zone de contenu : la colonne collante n'a plus de barre au-dessus */
+.cl-main .demo-stage{top:20px}
+.cl-main .device{height:min(800px,calc(100svh - 40px))}
+
+@media (max-width:900px){
+  .cl{grid-template-columns:1fr}
+  .cl-side{display:none}
+  .cl-main{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+  .cl-tabbar{position:fixed;right:0;bottom:0;left:0;z-index:30;display:flex;align-items:stretch;justify-content:space-around;gap:2px;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid #e3dfd8;background:rgba(255,255,255,.97);box-shadow:0 -8px 24px rgb(8 9 10 / 7%);backdrop-filter:blur(14px)}
+  .cl-tabbar a,.cl-tabbar button{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 1px;border:0;border-radius:9px;background:none;color:#77716a;font:600 9px/1.1 Inter,sans-serif;text-decoration:none;cursor:pointer}
+  .cl-tabbar svg{width:19px;height:19px;flex:none}
+  .cl-tabbar a span,.cl-tabbar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cl-tabbar a.on{color:#ef1733}
+  .cl-tabbar a.on::before{position:absolute;top:-6px;right:22%;left:22%;height:2px;border-radius:0 0 3px 3px;background:#ef1733;content:""}
+  .cl-tabbar a:focus-visible,.cl-tabbar button:focus-visible{outline:2px solid #ef1733;outline-offset:1px}
+}
+@media (max-width:370px){
+  .cl-tabbar a,.cl-tabbar button{font-size:8px}
+  .cl-tabbar svg{width:17px;height:17px}
+}
+@media (prefers-reduced-motion:reduce){.cl-skip{transition:none!important}}
