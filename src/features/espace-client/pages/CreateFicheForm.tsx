@@ -3,7 +3,6 @@ import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { getToken as getSessionToken } from "../../../lib/session";
 import "../../../styles/create-fiche-form.css";
-import { formatPrice } from "../lib/formatPrice";
 import {
   createFiche,
   getFicheCreationStatus,
@@ -14,6 +13,7 @@ import {
   type FichePurchaseQuote,
   type PricingGrid,
 } from "../espaceClient.service";
+import { formatPrice } from "../lib/formatPrice";
 
 // Formulaire de création d’une fiche → POST /api/fiches
 // Une fiche Essentielle gratuite est créée avec son identité. Les commandes
@@ -127,7 +127,7 @@ export default function CreateFicheForm({
   getToken = getSessionToken,
   onCreated,
   onUnauthorized,
-  publicBaseUrl = "https://supportconnecte.com",
+  publicBaseUrl = "https://support-connecte.com",
 }: CreateFicheFormProps) {
   const uid = useId();
   const refs = useRef<
@@ -187,7 +187,7 @@ export default function CreateFicheForm({
     pricing?.formules.find(formula => formula.formule === purchasePlan)
       ?.durees ?? [];
   const selectedFormula = pricing?.formules.find(
-    formula => formula.formule === purchasePlan,
+    formula => formula.formule === purchasePlan
   );
   const quantityDiscounts = selectedFormula?.remises ?? [];
   const selectedDuration = durations.some(item => item.dureeMois === duration)
@@ -200,20 +200,18 @@ export default function CreateFicheForm({
       ? {}
       : { dureeMois: selectedDuration }),
   };
-  const { data: quote, isPending: isQuotePending, isError: isQuoteError } =
-    useQuery<FichePurchaseQuote>({
-      queryKey: [
-        "fichePurchaseQuote",
-        purchasePlan,
-        quantity,
-        selectedDuration,
-      ],
-      queryFn: () => quoteFichePurchase(purchaseInput),
-      enabled:
-        purchaseMode &&
-        quantity > 0 &&
-        (purchasePlan === "essentielle" || selectedDuration !== undefined),
-    });
+  const {
+    data: quote,
+    isPending: isQuotePending,
+    isError: isQuoteError,
+  } = useQuery<FichePurchaseQuote>({
+    queryKey: ["fichePurchaseQuote", purchasePlan, quantity, selectedDuration],
+    queryFn: () => quoteFichePurchase(purchaseInput),
+    enabled:
+      purchaseMode &&
+      quantity > 0 &&
+      (purchasePlan === "essentielle" || selectedDuration !== undefined),
+  });
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -435,7 +433,7 @@ export default function CreateFicheForm({
                   setPurchasePlan(plan);
                   setDuration(
                     pricing?.formules.find(item => item.formule === plan)
-                      ?.durees[0]?.dureeMois ?? 12,
+                      ?.durees[0]?.dureeMois ?? 12
                   );
                   setFormError("");
                 }}
@@ -444,22 +442,22 @@ export default function CreateFicheForm({
                 {(pricing?.formules ?? [])
                   .filter(formula => formula.formule !== "essentielle")
                   .map(formula => (
-                  <option key={formula.formule} value={formula.formule}>
-                    {formula.nom}
-                    {formula.prixMensuelFcfa !== null
-                      ? ` — ${formatPrice(formula.prixMensuelFcfa)}/mois`
-                      : " — tarif à configurer"}
-                  </option>
-                ))}
+                    <option key={formula.formule} value={formula.formule}>
+                      {formula.nom}
+                      {formula.prixMensuelFcfa !== null
+                        ? ` — ${formatPrice(formula.prixMensuelFcfa)}/mois`
+                        : " — tarif à configurer"}
+                    </option>
+                  ))}
               </select>
               {purchasePlan !== "essentielle" &&
                 selectedFormula?.prixMensuelFcfa !== null &&
                 selectedFormula?.prixMensuelFcfa !== undefined && (
-                <p className="cf-note">
-                  Tarif de base par fiche :{" "}
-                  {formatPrice(selectedFormula.prixMensuelFcfa)} par mois,
-                  avant remises.
-                </p>
+                  <p className="cf-note">
+                    Tarif de base par fiche :{" "}
+                    {formatPrice(selectedFormula.prixMensuelFcfa)} par mois,
+                    avant remises.
+                  </p>
                 )}
             </div>
 
@@ -482,7 +480,7 @@ export default function CreateFicheForm({
                     {quantityDiscounts
                       .map(
                         remise =>
-                          `dès ${remise.quantiteMin} : −${remise.remisePct}%`,
+                          `dès ${remise.quantiteMin} : −${remise.remisePct}%`
                       )
                       .join(" · ")}
                   </p>
@@ -530,8 +528,8 @@ export default function CreateFicheForm({
               </p>
             ) : isQuoteError ? (
               <p className="cf-alert" role="alert">
-                Le tarif ne peut pas être calculé. Vérifie que les paramètres
-                de la formule sont configurés.
+                Le tarif ne peut pas être calculé. Vérifie que les paramètres de
+                la formule sont configurés.
               </p>
             ) : quote ? (
               <div className="cf-note" aria-live="polite">
@@ -549,7 +547,7 @@ export default function CreateFicheForm({
                       Remise durée ({quote.tarif.remiseDureePct}%) : −
                       {formatPrice(
                         quote.tarif.totalSansRemiseFcfa -
-                          quote.tarif.prixApresDureeFcfa * quote.quantity,
+                          quote.tarif.prixApresDureeFcfa * quote.quantity
                       )}
                     </p>
                     <p>
@@ -557,7 +555,7 @@ export default function CreateFicheForm({
                       {formatPrice(
                         (quote.tarif.prixApresDureeFcfa -
                           quote.tarif.prixUnitaireFcfa) *
-                          quote.quantity,
+                          quote.quantity
                       )}
                     </p>
                     <p>
@@ -565,8 +563,7 @@ export default function CreateFicheForm({
                       {formatPrice(quote.tarif.prixUnitaireFcfa)}
                     </p>
                     <p>
-                      Économie totale :{" "}
-                      {formatPrice(quote.tarif.economieFcfa)}
+                      Économie totale : {formatPrice(quote.tarif.economieFcfa)}
                     </p>
                   </>
                 )}
@@ -612,8 +609,8 @@ export default function CreateFicheForm({
             </button>
             <p className="cf-note">
               Mode simulation : aucun paiement réel n’est effectué. Les fiches
-              Essentielle utilisent d’abord les places gratuites restantes;
-              Pro et Signature n’ajoutent pas de frais d’emplacement.
+              Essentielle utilisent d’abord les places gratuites restantes; Pro
+              et Signature n’ajoutent pas de frais d’emplacement.
             </p>
             {creationStatus && creationStatus.freeSlots > 0 && (
               <button

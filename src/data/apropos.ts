@@ -13,7 +13,7 @@ export interface CatalogItem { t: string; cat: CatKey; text: string }
 
 export const CONTACT = {
   phone: '(+221) 33 999 41 11', tel: '+221339994111',
-  email: 'contact@supportconnecte.com',
+  email: 'contact@support-connecte.com',
   zone: 'Saly · Mbour · Dakar',
   reach: 'Sénégal · Afrique · International',
 };
