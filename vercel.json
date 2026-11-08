@@ -10,7 +10,7 @@
   "rewrites": [
     {
       "source": "/f/:slug",
-      "destination": "https://support-connecte.com/f/:slug"
+      "destination": "https://api.support-connecte.com/f/:slug"
     },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
