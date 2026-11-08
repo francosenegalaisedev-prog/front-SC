@@ -9,14 +9,9 @@
   ],
   "rewrites": [
     {
-      "source": "/q/:code",
-      "destination": "https://PROJECT_REF.supabase.co/functions/v1/qr-redirect?c=:code"
-    },
-    {
       "source": "/f/:slug",
-      "destination": "https://URL_OUTIL_MEMBRES/f/:slug"
+      "destination": "https://support-connecte.com/f/:slug"
     },
-
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
