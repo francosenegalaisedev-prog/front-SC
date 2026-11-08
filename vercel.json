@@ -7,13 +7,7 @@
       "permanent": true
     }
   ],
-  "rewrites": [
-    {
-      "source": "/f/:slug",
-      "destination": "https://api.support-connecte.com/f/:slug"
-    },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
       "source": "/assets/(.*)",
