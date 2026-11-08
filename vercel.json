@@ -16,7 +16,6 @@
       "source": "/f/:slug",
       "destination": "https://URL_OUTIL_MEMBRES/f/:slug"
     },
-    { "source": "/api/:path*", "destination": "http://72.61.16.76/api/:path*" },
 
     { "source": "/(.*)", "destination": "/index.html" }
   ],
