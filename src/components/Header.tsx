@@ -191,7 +191,7 @@ export default function Header({ current = "/" }: HeaderProps) {
         <div className="drawer-auth">
           <Link
             to="/login"
-            className="btn btn-login"
+            className="btn btn-red"
             onClick={() => setOpen(false)}
           >
             Connexion
