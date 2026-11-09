@@ -18,7 +18,6 @@ import FaqList from '../components/shared/FaqList';
 import CtaBand from '../components/shared/CtaBand';
 import QuoteBar from '../components/devis/QuoteBar';
 import QuoteForm from '../components/devis/QuoteForm';
-import { quote } from '../components/devis/quoteStore';
 import { CC_POLES, CC_STEPS, CC_FAQ, CC_CTA, CC_META } from '../data/contenu';
 import type { Mode } from '../types/v5';
 import '../styles/cartes.css';
@@ -38,7 +37,7 @@ export default function ContenuPage() {
   return (
     <>
       <IconSprite />
-      <Header current="/creation-contenu" onQuote={() => quote.open({ pole: 'contenu', production, from: 'entete' })} />
+      <Header current="/creation-contenu" />
       <main className="cartes-page cc-page">
         <CcHero />
         <CcIndex />

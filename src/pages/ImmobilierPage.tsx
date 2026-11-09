@@ -16,7 +16,6 @@ import FaqList from '../components/shared/FaqList';
 import CtaBand from '../components/shared/CtaBand';
 import QuoteBar from '../components/devis/QuoteBar';
 import QuoteForm from '../components/devis/QuoteForm';
-import { quote } from '../components/devis/quoteStore';
 import { IM_AGENCES, IM_LOCATION, IM_STEPS, IM_FAQ, IM_CTA, IM_META } from '../data/immobilier';
 import '../styles/cartes.css';
 import '../styles/panneaux.css';
@@ -33,7 +32,7 @@ export default function ImmobilierPage() {
   return (
     <>
       <IconSprite />
-      <Header current="/promoteur-immobilier" onQuote={() => quote.open({ pole: 'immobilier', from: 'entete' })} />
+      <Header current="/promoteur-immobilier" />
       <main className="cartes-page cc-page ix-page">
         <ImHero />
         <ImProfiles />

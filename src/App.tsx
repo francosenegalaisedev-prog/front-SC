@@ -138,8 +138,8 @@ function ScrollToTop() {
 }
 
 /**
- * Layout pour les pages publiques :
- * Header + contenu de la page (chargé à la demande) + Footer.
+ * Layout pour les pages publiques : contenu chargé à la demande et pied de page.
+ * Les pages publiques rendent leur propre header.
  */
 type PublicAppSettings = {
   platformName: string;
@@ -152,7 +152,6 @@ type PublicAppSettings = {
 function PublicLayout({ settings }: { settings?: PublicAppSettings }) {
   return (
     <>
-      <Header current="" />
       <Suspense fallback={<PageWait />}>
         <Outlet />
       </Suspense>

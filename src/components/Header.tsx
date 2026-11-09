@@ -1,4 +1,3 @@
-import type { AnchorHTMLAttributes } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { NavItem } from "../data/content";
@@ -9,12 +8,10 @@ import { Icon } from "./Icons";
 // Cahier, section 05. Transparent sur le hero, blanc (#FFFFFF) dès 40 px de scroll.
 // Menu déroulant « Nos solutions » (survol, clic ou clavier) ; sur mobile, tiroir plein écran avec sous-menu dépliable.
 // Logo officiel détouré : /images/logo-blanc.webp et /images/logo-noir.webp. Ne pas le redessiner.
-// V5 : onQuote (facultatif) = le bouton « Demander un devis » ouvre le formulaire de la page au lieu d'aller sur /contact.
 interface HeaderProps {
   current?: string;
-  onQuote?: () => void;
 }
-export default function Header({ current = "/", onQuote }: HeaderProps) {
+export default function Header({ current = "/" }: HeaderProps) {
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
   const [dd, setDd] = useState(false);
@@ -49,20 +46,6 @@ export default function Header({ current = "/", onQuote }: HeaderProps) {
   }, [open]);
 
   const inGroup = (n: NavItem) => n.children?.some(c => c.href === current);
-  const devis: AnchorHTMLAttributes<HTMLAnchorElement> = onQuote
-    ? {
-        href: "#devis",
-        onClick: e => {
-          e.preventDefault();
-          setOpen(false);
-          window.setTimeout(onQuote, 0);
-        },
-      }
-    : {
-        href: "/contact?sujet=devis#formulaire",
-        onClick: () => setOpen(false),
-      };
-
   return (
     <>
       <header className={`hd${solid ? " solid" : ""}`}>
@@ -140,12 +123,14 @@ export default function Header({ current = "/", onQuote }: HeaderProps) {
               )
             )}
           </nav>
-          <a className="btn btn-red" {...devis}>
-            Demander un devis <Icon id="arr" />
-          </a>
-          <Link to="/register" className="btn btn-red">
-            S'inscrire <Icon id="arr" />
-          </Link>
+          <div className="hd-actions">
+            <Link to="/login" className="btn btn-red">
+              Connexion
+            </Link>
+            <Link to="/register" className="btn btn-red">
+              S'inscrire <Icon id="arr" />
+            </Link>
+          </div>
           <button
             className="burger"
             aria-label="Ouvrir le menu"
@@ -203,13 +188,22 @@ export default function Header({ current = "/", onQuote }: HeaderProps) {
             </a>
           )
         )}
-        <a className="btn btn-red" {...devis}>
-          Demander un devis <Icon id="arr" />
-        </a>
-
-        <Link to="register" className="btn btn-red">
-          S'inscrire <Icon id="arr" />
-        </Link>
+        <div className="drawer-auth">
+          <Link
+            to="/login"
+            className="btn btn-login"
+            onClick={() => setOpen(false)}
+          >
+            Connexion
+          </Link>
+          <Link
+            to="/register"
+            className="btn btn-red"
+            onClick={() => setOpen(false)}
+          >
+            S'inscrire <Icon id="arr" />
+          </Link>
+        </div>
       </div>
     </>
   );
