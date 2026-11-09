@@ -18,7 +18,6 @@ import RequireAuth from "./features/auth/RequireAuth";
 import HomePage from "./pages/HomePage"; // page d'entrée : import direct
 import { LEGAL_PATHS } from "./pages/LegalPage"; // à créer (voir plus bas)
 
-/* ---------- Pages publiques ---------- */
 const AProposPage = lazy(() => import("./pages/AProposPage"));
 const BrandingPage = lazy(() => import("./pages/BrandingPage"));
 const CartesPage = lazy(() => import("./pages/CartesPage"));
