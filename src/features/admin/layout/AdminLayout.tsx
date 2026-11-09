@@ -17,7 +17,11 @@ export const ADMIN_BASE = "/admin";
 const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: ADMIN_BASE, label: "Tableau de bord", icon: "dash" },
   { to: `${ADMIN_BASE}/fiches`, label: "Fiches", icon: "card" },
-  { to: `${ADMIN_BASE}/abonnements`, label: "Abonnements & paiements", icon: "cal" },
+  {
+    to: `${ADMIN_BASE}/abonnements`,
+    label: "Abonnements & paiements",
+    icon: "cal",
+  },
   { to: `${ADMIN_BASE}/clients`, label: "Clients", icon: "users" },
   { to: `${ADMIN_BASE}/demandes`, label: "Demandes", icon: "file" },
   { to: `${ADMIN_BASE}/relances`, label: "Relances", icon: "zap" },
@@ -25,8 +29,16 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: `${ADMIN_BASE}/cartes`, label: "Modèles de cartes", icon: "card" },
   { to: `${ADMIN_BASE}/qrcodes`, label: "QR codes", icon: "qr" },
   { to: `${ADMIN_BASE}/formules`, label: "Formules", icon: "sliders" },
-  { to: `${ADMIN_BASE}/historique`, label: "Journal d’activité", icon: "clock" },
-  { to: `${ADMIN_BASE}/parametres`, label: "Paramètres admin", icon: "sliders" },
+  {
+    to: `${ADMIN_BASE}/historique`,
+    label: "Journal d’activité",
+    icon: "clock",
+  },
+  {
+    to: `${ADMIN_BASE}/parametres`,
+    label: "Paramètres admin",
+    icon: "sliders",
+  },
 ];
 
 export default function AdminLayout({ children }: { children?: ReactNode }) {
@@ -52,7 +64,7 @@ export default function AdminLayout({ children }: { children?: ReactNode }) {
               alt="Logo Support Connecté"
               width={34}
               height={34}
-              className="h-[34px] w-[34px] shrink-0 object-contain"
+              className="h-8.5 w-8.5 shrink-0 object-contain"
             />
 
             <div className="flex flex-col">
@@ -109,7 +121,7 @@ export default function AdminLayout({ children }: { children?: ReactNode }) {
               alt="Support Connecté"
               width={104}
               height={24}
-              className="h-6 w-[104px] object-contain"
+              className="h-6 w-26 object-contain"
             />
             <b>Back-office</b>
           </div>

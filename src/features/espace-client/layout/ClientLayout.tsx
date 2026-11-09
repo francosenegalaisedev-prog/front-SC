@@ -1,12 +1,12 @@
-import { Suspense, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Suspense, type ReactNode } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useSession } from "../../../lib/session";
 import "../../../styles/layout.css";
 import {
   getCurrentUser,
-  logout as signOut,
   resendVerificationEmail,
+  logout as signOut,
 } from "../../auth/auth.service";
 
 /*
@@ -144,7 +144,7 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
             alt="Logo Support Connecté"
             width={34}
             height={34}
-            className="h-[34px] w-[34px] shrink-0 object-contain"
+            className="h-8.5 w-8.5 shrink-0 object-contain"
           />
 
           <div className="flex flex-col">
@@ -201,10 +201,7 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
             aria-labelledby="cl-email-verification-title"
           >
             <div>
-              <h2
-                id="cl-email-verification-title"
-                className="font-semibold"
-              >
+              <h2 id="cl-email-verification-title" className="font-semibold">
                 Votre adresse e-mail n’est pas vérifiée
               </h2>
               <p className="mt-1 text-sm">
@@ -212,7 +209,10 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
                 confirmez votre compte.
               </p>
               {verificationEmail.isSuccess && (
-                <p className="mt-2 text-sm font-medium text-green-800" role="status">
+                <p
+                  className="mt-2 text-sm font-medium text-green-800"
+                  role="status"
+                >
                   Le lien de vérification a été envoyé à {user.email}.
                 </p>
               )}
@@ -224,7 +224,7 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
             </div>
             <button
               type="button"
-              className="shrink-0 rounded-lg bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:cursor-wait disabled:opacity-60"
+              className="shrink-0 rounded-lg bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:cursor-wait disabled:opacity-60"
               onClick={() => verificationEmail.mutate()}
               disabled={verificationEmail.isPending}
             >
