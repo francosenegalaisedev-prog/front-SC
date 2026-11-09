@@ -24,7 +24,7 @@ import { QR } from "../../fiche/QR";
 import { Lock, downloadSvg } from "../shared";
 
 const origin = () =>
-  (ENV.VITE_BASE_URL || window.location.origin).replace(/\/+$/, "");
+  (ENV.VITE_PUBLIC_APP_URL || window.location.origin).replace(/\/+$/, "");
 
 interface Preview {
   /** Section actuellement affichée dans l'aperçu téléphone (null = fiche complète). */

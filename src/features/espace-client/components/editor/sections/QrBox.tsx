@@ -14,7 +14,7 @@ export default function QrBox({ fiche }: { fiche: FicheRecord }) {
       <div className="ed-qr">
         <div className="ed-qr-v" id="ed-qr-svg">
           <QR
-            text={`${ENV.VITE_BASE_URL}/f/${fiche.slug}`}
+            text={`${ENV.VITE_PUBLIC_APP_URL}/f/${fiche.slug}`}
             logo={fiche.logo}
             size={132}
           />
@@ -38,7 +38,7 @@ export default function QrBox({ fiche }: { fiche: FicheRecord }) {
           </button>
           <a
             className="ed-up"
-            href={`${ENV.VITE_BASE_URL}/contact?sujet=qr#formulaire`}
+            href={`${ENV.VITE_PUBLIC_APP_URL}/contact?sujet=qr#formulaire`}
             target="_blank"
             rel="noreferrer"
           >

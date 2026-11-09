@@ -50,7 +50,7 @@ export const qrPayload = {
 };
 
 // Adresses stables encodées dans les supports imprimés (jamais d'adresse technique)
-export const BASE = ENV.VITE_BASE_URL;
+export const BASE = ENV.VITE_PUBLIC_APP_URL;
 export const ficheUrl = (slug: string) => `${BASE}/f/${slug}`;
 export const shortUrl = (code: string) => `${BASE}/q/${code}`;
 export const slugify = (s: string = "") =>

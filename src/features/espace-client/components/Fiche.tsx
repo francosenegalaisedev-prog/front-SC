@@ -38,7 +38,7 @@ interface Action {
 export default function Fiche({
   fiche,
   scrollerRef,
-  baseUrl = `${ENV.VITE_BASE_URL}/f/`,
+  baseUrl = `${ENV.VITE_PUBLIC_APP_URL}/f/`,
   ownerTools = false,
 }: FicheProps) {
   const publicAppUrl = (
@@ -106,7 +106,11 @@ export default function Fiche({
     >
       <header
         className="f-hero"
-        style={e.couverture ? cssVars({ "--cover": `url(${e.couverture})` }) : undefined}
+        style={
+          e.couverture
+            ? cssVars({ "--cover": `url(${e.couverture})` })
+            : undefined
+        }
       >
         <div className="f-chips">
           <span>Fiche de contact</span>
@@ -120,7 +124,7 @@ export default function Fiche({
         {ownerTools && (
           <div className="f-qrp" aria-hidden={!held}>
             <QR text={url} logo={fiche.logo} size={176} />
-            <p>Scannez pour ouvrir la fiche de {fiche.prenom}</p>
+            <p>Scannez pour ouvrir la fiche de {(fiche.prenom, url)}</p>
           </div>
         )}
         <div className="f-id">
