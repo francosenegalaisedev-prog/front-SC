@@ -124,7 +124,7 @@ export default function Fiche({
         {ownerTools && (
           <div className="f-qrp" aria-hidden={!held}>
             <QR text={url} logo={fiche.logo} size={176} />
-            <p>Scannez pour ouvrir la fiche de {(fiche.prenom, url)}</p>
+            <p>Scannez pour ouvrir la fiche de {fiche.prenom}</p>
           </div>
         )}
         <div className="f-id">
