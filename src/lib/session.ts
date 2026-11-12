@@ -170,3 +170,4 @@ export const useSession = (): Session | null =>
   useSyncExternalStore(subscribeSession, getSession, () => null);
 
 armExpiry();
+// src/lib/session.ts

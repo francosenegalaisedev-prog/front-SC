@@ -17,6 +17,8 @@ import RequireAdmin from "./features/auth/RequireAdmin";
 import RequireAuth from "./features/auth/RequireAuth";
 import HomePage from "./pages/HomePage"; // page d'entrée : import direct
 import { LEGAL_PATHS } from "./pages/LegalPage"; // à créer (voir plus bas)
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 
 const AProposPage = lazy(() => import("./pages/AProposPage"));
 const BrandingPage = lazy(() => import("./pages/BrandingPage"));
@@ -261,6 +263,9 @@ export default function App() {
       <ScrollToTop />
       <Suspense fallback={<Wait />}>
         <Routes>
+
+        <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+        <Route path="/espace-client" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           {/* Ouverture publique des fiches connectées (sans le header du site) */}
           <Route path="/f/:slug" element={<PublicFichePage />} />
           <Route path="/s/:slug/:section" element={<StickerSectionPage />} />
