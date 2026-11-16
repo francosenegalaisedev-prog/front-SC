@@ -23,7 +23,7 @@
  * Laisse "" pour ne rien ajouter. Attention : un titre ne doit pas dépasser
  * environ 60 caractères, sinon Google le coupe.
  */
-export const ZONE = "";
+export const ZONE = "Saly";
 
 /** Fragment « à Ville » ajouté aux titres, vide si ZONE est vide. */
 const lieu = ZONE ? ` à ${ZONE}` : "";
@@ -168,3 +168,77 @@ export function sectorSeo(id: string, metier: string): PageSeo {
 
      <Seo noindex title="Page introuvable | Support Connecté" description="…" />
 */
+/* ───────────────────────── PAGES /secteurs/:id ─────────────────────────
+   Un titre et une description propres à chaque secteur. /secteurs/immobilier
+   n'y figure pas : elle redirige vers /promoteur-immobilier. */
+
+export const SECTOR_PAGES: PageSeo[] = [
+  {
+    path: "/secteurs/restaurants-cafes",
+    keyword: "carte NFC restaurant",
+    title: `Carte NFC pour restaurant${lieu} | ${MARQUE}`,
+    description:
+      "Menu, avis Google et réservation en un scan : cartes NFC, QR codes de table et affiches pour restaurants et cafés. Demandez votre devis.",
+  },
+  {
+    path: "/secteurs/hotels-residences",
+    keyword: "carte NFC hôtel",
+    title: `Carte NFC pour hôtel${lieu} | ${MARQUE}`,
+    description:
+      "Cartes NFC et QR codes pour hôtels et résidences : présentez vos services et vos chambres, et recueillez les avis de vos clients dès leur arrivée.",
+  },
+  {
+    path: "/secteurs/commerces-boutiques",
+    keyword: "carte NFC commerce",
+    title: `Carte NFC pour commerce${lieu} | ${MARQUE}`,
+    description:
+      "Cartes NFC, QR codes et supports d'affichage pour boutiques et commerces : dirigez vos clients vers vos offres, votre fiche et vos avis Google.",
+  },
+  {
+    path: "/secteurs/promoteurs",
+    keyword: "QR code promoteur immobilier",
+    title: `Carte NFC pour promoteur${lieu} | ${MARQUE}`,
+    description:
+      "Panneaux de chantier, bâches et QR codes pour promoteurs immobiliers : présentez vos programmes et captez des contacts qualifiés en un scan.",
+  },
+  {
+    path: "/secteurs/tourisme-loisirs",
+    keyword: "carte NFC tourisme",
+    title: `Carte NFC pour tourisme et loisirs${lieu} | ${MARQUE}`,
+    description:
+      "Cartes NFC et QR codes pour le tourisme et les loisirs : guidez vos visiteurs, présentez vos activités et recueillez leurs avis en un geste.",
+  },
+  {
+    path: "/secteurs/entreprises",
+    keyword: "carte NFC entreprise",
+    title: `Carte NFC pour entreprise${lieu} | ${MARQUE}`,
+    description:
+      "Cartes de visite NFC, QR codes et supports de marque pour entreprises : partagez vos coordonnées et valorisez votre image professionnelle.",
+  },
+  {
+    path: "/secteurs/institutions-administrations",
+    keyword: "carte NFC institution",
+    title: `Carte NFC pour institution${lieu} | ${MARQUE}`,
+    description:
+      "Cartes NFC et QR codes pour institutions et administrations : orientez le public, partagez vos informations et simplifiez l'accueil au quotidien.",
+  },
+];
+
+/* ───────────────────────── PAGES LÉGALES ───────────────────────── */
+
+export const LEGAL_PAGES: PageSeo[] = [
+  {
+    path: "/mentions-legales",
+    keyword: "mentions légales",
+    title: `Mentions légales | ${MARQUE}`,
+    description:
+      "Mentions légales du site Support Connecté : éditeur, hébergeur, propriété intellectuelle et contact.",
+  },
+  {
+    path: "/confidentialite",
+    keyword: "politique de confidentialité",
+    title: `Politique de confidentialité | ${MARQUE}`,
+    description:
+      "Politique de confidentialité de Support Connecté : données collectées, finalités, durée de conservation et vos droits.",
+  },
+];

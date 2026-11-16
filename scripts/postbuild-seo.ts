@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { SEO } from "../src/data/seo";
+import { SEO, SECTOR_PAGES, LEGAL_PAGES } from "../src/data/seo";
 
 const BASE = "https://www.support-connecte.com";
 const DIST = "dist";
@@ -29,7 +29,11 @@ function render(p: { path: string; title: string; description: string }) {
   return h;
 }
 
-const pages = Object.values(SEO);
+const pages: { path: string; title: string; description: string }[] = [
+  ...Object.values(SEO),
+  ...SECTOR_PAGES,
+  ...LEGAL_PAGES,
+];
 
 for (const p of pages) {
   const dir = p.path ? `${DIST}${p.path}` : DIST;
