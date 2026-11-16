@@ -7,7 +7,7 @@ import { DemoPage } from '../PhoneMockup';
 import { cssVars } from '../../lib/css';
 
 /*
-  Hero V2 — « Redéfinissons vôtre relation client. »
+  Hero V2 — « Redéfinissons votre relation client. »
   Scène de convergence : la carte, le sticker, le chevalet et le polo ouvrent TOUS
   la même page. Un faisceau part du support actif vers le téléphone, qui affiche
   « Ouvert depuis : … ». Profondeur au pointeur (chaque support selon sa profondeur).

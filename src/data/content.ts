@@ -25,7 +25,7 @@ export const NAV_FLAT: NavLink[] = NAV.flatMap((n) => n.children || [n]);
 export const HERO = {
   kicker: ['Communication', 'Programmation', 'Support intelligent'],
   line1: 'Redéfinissons',
-  line2Start: 'vôtre ', // « vôtre » avec accent : formulation officielle validée
+  line2Start: 'votre ',
   line2Red: 'relation client.',
   lead: 'Nous réunissons la communication, la programmation et le support intelligent pour transformer chaque point de contact en une expérience digitale simple qui booste votre visibilité.',
   cta1: 'Découvrir nos solutions',
