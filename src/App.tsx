@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Link,
   Outlet,
+  Navigate,
   Route,
   Routes,
   useLocation,
@@ -17,7 +18,6 @@ import RequireAdmin from "./features/auth/RequireAdmin";
 import RequireAuth from "./features/auth/RequireAuth";
 import HomePage from "./pages/HomePage"; // page d'entrée : import direct
 import { LEGAL_PATHS } from "./pages/LegalPage"; // à créer (voir plus bas)
-import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Seo } from "./components/seo";
 
@@ -185,6 +185,7 @@ function PublicLayout({ settings }: { settings?: PublicAppSettings }) {
 function NotFound() {
   return (
     <>
+    <Seo noindex title="Page introuvable | Support Connecté" description="Cette page n'existe pas." />
       <IconSprite />
       <Header current="" />
       <main className="notfound">
@@ -264,9 +265,6 @@ export default function App() {
       <ScrollToTop />
       <Suspense fallback={<Wait />}>
         <Routes>
-
-        <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
-        <Route path="/espace-client" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           {/* Ouverture publique des fiches connectées (sans le header du site) */}
           <Route path="/f/:slug" element={<PublicFichePage />} />
           <Route path="/s/:slug/:section" element={<StickerSectionPage />} />
@@ -286,17 +284,15 @@ export default function App() {
             {LEGAL_PATHS.map(p => (
               <Route key={p} path={p} element={<LegalPage path={p} />} />
             ))}
-            <Route path="/secteurs/immobilier" element={<ImmobilierPage />} />
+            <Route path="/secteurs/immobilier" element={<Navigate to="/promoteur-immobilier" replace />} />
             <Route path="/secteurs/:sector" element={<SectorRoute />} />
           </Route>
-
           {/* Pages d'authentification */}
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyMailPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
+          <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+          <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
           {/* Espace client */}
           <Route
             path="/espace-client"
@@ -345,7 +341,6 @@ export default function App() {
 
           {/* Page 404 */}
           <Route path="*" element={<NotFound />} />
-          <Seo noindex title="Page introuvable | Support Connecté" description="Cette page n'existe pas." />
         </Routes>
       </Suspense>
     </>
