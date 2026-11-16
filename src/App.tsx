@@ -19,6 +19,7 @@ import HomePage from "./pages/HomePage"; // page d'entrée : import direct
 import { LEGAL_PATHS } from "./pages/LegalPage"; // à créer (voir plus bas)
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
+import { Seo } from "./components/seo";
 
 const AProposPage = lazy(() => import("./pages/AProposPage"));
 const BrandingPage = lazy(() => import("./pages/BrandingPage"));
@@ -344,6 +345,7 @@ export default function App() {
 
           {/* Page 404 */}
           <Route path="*" element={<NotFound />} />
+          <Seo noindex title="Page introuvable | Support Connecté" description="Cette page n'existe pas." />
         </Routes>
       </Suspense>
     </>

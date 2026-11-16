@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /espace-client
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /api
+
+Sitemap: https://support-connect.com/sitemap.xml

@@ -16,6 +16,8 @@ import '../styles/cartes.css';
 import '../styles/qr.css';
 import '../styles/studio.css';
 import '../styles/home.css';
+import { Seo } from "../components/seo";
+import { SEO } from "../data/seo";
 
 // Accueil V2 — structure et textes du cahier des charges (sections 06 à 17), mise en scène nouvelle.
 export default function HomePage() {
@@ -23,6 +25,7 @@ export default function HomePage() {
   const C = useContent('home.cta', CTA);
   return (
     <>
+    <Seo {...SEO.accueil} />
       <IconSprite />
       <Header current="/" />
       <main className="cartes-page qr-page home-page">

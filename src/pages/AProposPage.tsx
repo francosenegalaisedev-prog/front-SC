@@ -17,12 +17,14 @@ import '../styles/panneaux.css';
 import '../styles/branding.css';
 import '../styles/secteurs.css';
 import '../styles/apropos.css';
-
+import { Seo } from "../components/seo";
+import { SEO } from "../data/seo";
 // Page À propos — /a-propos
 export default function AProposPage() {
   useReveal();
   return (
     <>
+    <Seo {...SEO.apropos} />
       <IconSprite />
       <Header current="/a-propos" />
       <main className="cartes-page qr-page about-page">

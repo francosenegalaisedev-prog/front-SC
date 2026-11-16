@@ -42,22 +42,25 @@ export default defineConfig({
           },
         ],
       },
-     workbox: {
-        navigateFallbackDenylist: [/^\/api/],
+      workbox: {
+        navigateFallbackDenylist: [
+          /^\/api/,
+          /^\/sitemap\.xml$/,
+          /^\/robots\.txt$/,
+        ],
         runtimeCaching: [
-            {
+          {
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
             handler: "CacheFirst",
             options: {
-                cacheName: "google-fonts",
-                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
-                cacheableResponse: { statuses: [0, 200] },
+              cacheName: "google-fonts",
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
             },
-            },
+          },
         ],
-        },
+      },
       devOptions: { enabled: true },
     }),
   ],
-
 });

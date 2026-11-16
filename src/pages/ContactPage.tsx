@@ -9,12 +9,14 @@ import '../styles/cartes.css';
 import '../styles/qr.css';
 import '../styles/apropos.css';
 import '../styles/contact.css';
-
+import { Seo } from "../components/seo";
+import { SEO } from "../data/seo";
 // Page Contact — /contact (V6 : formulaire simple, sans la carte ; ?sujet=devis|demo|qr|… pré-sélectionne l'objet)
 export default function ContactPage() {
   useReveal();
   return (
     <>
+    <Seo {...SEO.contact} />
       <IconSprite />
       <Header current="/contact" />
       <main className="cartes-page qr-page contact-page">

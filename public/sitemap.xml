@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://support-connect.com/</loc></url>
+  <url><loc>https://support-connect.com/cartes-connectees</loc></url>
+  <url><loc>https://support-connect.com/qr-smart</loc></url>
+  <url><loc>https://support-connect.com/panneaux-baches</loc></url>
+  <url><loc>https://support-connect.com/branding-intelligent</loc></url>
+  <url><loc>https://support-connect.com/secteurs</loc></url>
+  <url><loc>https://support-connect.com/secteurs/immobilier</loc></url>
+  <url><loc>https://support-connect.com/promoteur-immobilier</loc></url>
+  <url><loc>https://support-connect.com/creation-contenu</loc></url>
+  <url><loc>https://support-connect.com/a-propos</loc></url>
+  <url><loc>https://support-connect.com/contact</loc></url>
+  <!-- À ajouter : une ligne par secteur (/secteurs/<id>, voir src/data/secteurs.ts)
+       et une ligne par page légale (voir LEGAL_PATHS dans src/pages/LegalPage). -->
+</urlset>
