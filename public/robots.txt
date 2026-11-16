@@ -7,5 +7,7 @@ Disallow: /verify-email
 Disallow: /reset-password
 Disallow: /forgot-password
 Disallow: /api
+Disallow: /f/
+Disallow: /s/
 
-Sitemap: https://support-connect.com/sitemap.xml
+Sitemap: https://www.support-connecte.com/sitemap.xml
