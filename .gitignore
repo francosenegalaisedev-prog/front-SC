@@ -6,4 +6,4 @@ dist/
 test-results/
 playwright-report/
 *.tsbuildinfo
-    
+    dev-dist
