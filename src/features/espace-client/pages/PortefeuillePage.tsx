@@ -1,6 +1,27 @@
 import { useState } from "react";
 import { usePortefeuille } from "../hooks/usePortefeuille";
 
+const INK = "#111";
+const RED = "#e0192d";
+const BG = "#e8e5df";
+const MUTED = "#777";
+const SERIF = "'Cormorant Garamond', 'Playfair Display', Georgia, serif";
+
+const pill = (variant: "dark" | "line" | "red"): React.CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "8px 16px",
+  borderRadius: 999,
+  fontWeight: 600,
+  fontSize: 14,
+  cursor: "pointer",
+  textDecoration: "none",
+  border: `1px solid ${variant === "red" ? RED : variant === "dark" ? INK : "#ddd"}`,
+  background: variant === "dark" ? INK : "#fff",
+  color: variant === "dark" ? "#fff" : variant === "red" ? RED : INK,
+});
+
 export default function PortefeuillePage() {
   const { fiches, remove } = usePortefeuille();
   const [q, setQ] = useState("");
@@ -9,114 +30,141 @@ export default function PortefeuillePage() {
   );
 
   return (
-    <main style={{ maxWidth: 560, margin: "0 auto", padding: 16 }}>
-      <h1 style={{ fontSize: 22 }}>Mes fiches</h1>
-
-      <div
-        style={{
-          padding: 12,
-          borderRadius: 12,
-          background: "#f4f4f5",
-          fontSize: 14,
-          margin: "12px 0",
-        }}
-      >
-        Crée un compte pour ne pas perdre tes fiches si tu changes de téléphone.
-        {/* Phase 2 : lien vers l'inscription */}
-      </div>
-
-      {fiches.length > 0 && (
-        <input
-          type="search"
-          placeholder="Rechercher une fiche"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+    <div style={{ minHeight: "100vh", background: BG, color: INK }}>
+      <main style={{ maxWidth: 640, margin: "0 auto", padding: "32px 16px 48px" }}>
+        <div
           style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 10,
-            border: "1px solid #ddd",
-            marginBottom: 12,
-          }}
-        />
-      )}
-
-      {fiches.length === 0 ? (
-        <p style={{ color: "#666" }}>
-          Aucune fiche pour le moment. Scanne un QR code : la fiche s'ajoutera
-          ici.
-        </p>
-      ) : (
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
-            display: "grid",
-            gap: 8,
+            color: RED,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
           }}
         >
-          {shown.map((f) => (
-            <li
-              key={f.slug}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: 10,
-                border: "1px solid #eee",
-                borderRadius: 12,
-              }}
-            >
-              {f.logo ? (
-                <img
-                  src={f.logo}
-                  alt=""
-                  width={44}
-                  height={44}
-                  style={{ borderRadius: 10, objectFit: "cover" }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 10,
-                    background: "#e4e4e7",
-                    display: "grid",
-                    placeItems: "center",
-                    fontWeight: 700,
-                  }}
-                >
-                  {f.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <a
-                href={`/f/${encodeURIComponent(f.slug)}`}
-                style={{ flex: 1, color: "inherit", textDecoration: "none" }}
-              >
-                <strong>{f.name}</strong>
-                <div style={{ fontSize: 12, color: "#777" }}>
-                  {new Date(f.scannedAt).toLocaleDateString("fr-FR")}
-                </div>
-              </a>
-              <button
-                type="button"
-                onClick={() => remove(f.slug)}
-                aria-label={`Retirer ${f.name}`}
+          Support Connecté
+        </div>
+        <h1 style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 500, margin: "4px 0 4px" }}>
+          Mes fiches
+        </h1>
+        <p style={{ color: MUTED, margin: "0 0 24px" }}>
+          Les fiches que tu as scannées, gardées sur ton téléphone.
+        </p>
+
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 20,
+            padding: 16,
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 200, fontSize: 14 }}>
+            <strong>Ne perds pas tes fiches</strong>
+            <div style={{ color: MUTED }}>
+              Crée un compte pour les retrouver si tu changes de téléphone.
+            </div>
+          </div>
+          {/* Phase 2 : lien vers l'inscription */}
+          <span style={{ ...pill("dark"), opacity: 0.5 }}>Bientôt</span>
+        </div>
+
+        {fiches.length > 0 && (
+          <input
+            type="search"
+            placeholder="Rechercher une fiche"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "12px 16px",
+              borderRadius: 14,
+              border: "1px solid #ddd",
+              background: "#fff",
+              fontSize: 15,
+              marginBottom: 16,
+            }}
+          />
+        )}
+
+        {fiches.length === 0 ? (
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 20,
+              padding: 24,
+              color: MUTED,
+              textAlign: "center",
+            }}
+          >
+            Aucune fiche pour le moment. Scanne un QR code : la fiche s'ajoutera ici.
+          </div>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 12 }}>
+            {shown.map((f) => (
+              <li
+                key={f.slug}
                 style={{
-                  border: 0,
-                  background: "none",
-                  cursor: "pointer",
-                  fontSize: 18,
+                  background: "#fff",
+                  borderRadius: 20,
+                  padding: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  flexWrap: "wrap",
                 }}
               >
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+                {f.logo ? (
+                  <img
+                    src={f.logo}
+                    alt=""
+                    width={56}
+                    height={56}
+                    style={{ borderRadius: "50%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: "50%",
+                      background: INK,
+                      color: "#e8c35a",
+                      display: "grid",
+                      placeItems: "center",
+                      fontWeight: 700,
+                      fontSize: 20,
+                    }}
+                  >
+                    {f.name.charAt(0).toLowerCase()}
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 120 }}>
+                  <div style={{ fontWeight: 700, fontSize: 17 }}>{f.name}</div>
+                  <div style={{ fontSize: 13, color: MUTED }}>
+                    Scannée le {new Date(f.scannedAt).toLocaleDateString("fr-FR")}
+                  </div>
+                </div>
+                <a href={`/f/${encodeURIComponent(f.slug)}`} style={pill("dark")}>
+                  Ouvrir
+                </a>
+                <button
+                  type="button"
+                  onClick={() => remove(f.slug)}
+                  aria-label={`Retirer ${f.name}`}
+                  style={pill("red")}
+                >
+                  Retirer
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    </div>
   );
 }
