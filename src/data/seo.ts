@@ -29,7 +29,7 @@ export const ZONE = "Saly";
 const lieu = ZONE ? ` à ${ZONE}` : "";
 
 /** Nom de marque affiché à la fin des titres. Garde l'accent et le « é ». */
-const MARQUE = "Support Connecté";
+const MARQUE = "Support Connecte";
 
 /* ───────────────────────── TYPE ───────────────────────── */
 
