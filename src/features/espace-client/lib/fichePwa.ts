@@ -107,5 +107,29 @@ export function applyFicheManifest(
 
 /** Manifest du porte-documents (visiteur). */
 export function applyPortefeuilleManifest(): () => void {
-  return applyManifest(buildPortefeuilleManifest());
+  let link = document.head.querySelector<HTMLLinkElement>(
+    'link[rel="manifest"]'
+  );
+  const created = !link;
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "manifest";
+    document.head.appendChild(link);
+  }
+  const prevHref = link.getAttribute("href");
+  const prevTitle = document.title;
+  const appleMeta = metaTag("apple-mobile-web-app-title");
+  const prevApple = appleMeta.content;
+
+  link.setAttribute("href", "/portefeuille.webmanifest");
+  document.title = "Mes fiches";
+  appleMeta.content = "Mes fiches";
+  metaTag("apple-mobile-web-app-capable").content = "yes";
+
+  return () => {
+    if (created) link!.remove();
+    else if (prevHref) link!.setAttribute("href", prevHref);
+    document.title = prevTitle;
+    appleMeta.content = prevApple;
+  };
 }

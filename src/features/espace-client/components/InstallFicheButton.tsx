@@ -21,10 +21,14 @@ export default function InstallFicheButton({
 }: Props) {
   const [showIOS, setShowIOS] = useState(Boolean(autoStart && isIOS));
 
+  // Le navigateur exige un geste : on lance le prompt au premier toucher.
   useEffect(() => {
-    if (autoStart && canInstall) install();
+    if (!autoStart || !canInstall || installed) return;
+    const go = () => install();
+    window.addEventListener("pointerdown", go, { once: true });
+    return () => window.removeEventListener("pointerdown", go);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart, canInstall]);
+  }, [autoStart, canInstall, installed]);
 
   if (installed) return null;
   if (!canInstall && !isIOS) return null;

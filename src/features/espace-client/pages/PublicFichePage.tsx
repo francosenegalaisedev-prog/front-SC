@@ -96,7 +96,7 @@ export default function PublicFichePage() {
             name={ficheDisplayName(ficheQuery.data)}
             {...pwa}
             label={isOwner ? undefined : "Garder mes fiches sur mon téléphone"}
-            autoStart={isOwner ? autoInstall : false}
+            autoStart={isOwner ? autoInstall : true}
           />
         </motion.main>
       )}
