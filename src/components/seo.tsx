@@ -1,4 +1,4 @@
-const SITE = "https://support-connect.com";
+const SITE = "https://support-connecte.com";
 const BRAND = "Support Connecte";
 const DEFAULT_IMAGE = "/og-image.png";
 
