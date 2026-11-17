@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FicheRecord } from "../../../types";
-import { applyFicheManifest } from "../lib/fichePwa";
+import { applyFicheManifest, applyPortefeuilleManifest } from "../lib/fichePwa";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -12,7 +12,8 @@ const isStandalone = () =>
   (navigator as unknown as { standalone?: boolean }).standalone === true;
 
 export function useFichePwa(
-  fiche: Pick<FicheRecord, "slug" | "entreprise" | "prenom" | "nom"> | undefined
+  fiche: Pick<FicheRecord, "slug" | "entreprise" | "prenom" | "nom"> | undefined,
+  mode: "owner" | "visitor" = "owner"
 ) {
   const [promptEvent, setPromptEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -25,13 +26,14 @@ export function useFichePwa(
 
   useEffect(() => {
     if (!slug) return;
+    if (mode === "visitor") return applyPortefeuilleManifest();
     return applyFicheManifest({
       slug,
       entreprise: entreprise ?? "",
       prenom: prenom ?? "",
       nom: nom ?? "",
     });
-  }, [slug, entreprise, prenom, nom]);
+  }, [slug, entreprise, prenom, nom, mode]);
 
   useEffect(() => {
     const onPrompt = (e: Event) => {

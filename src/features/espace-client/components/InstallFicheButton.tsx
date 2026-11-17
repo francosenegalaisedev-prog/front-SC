@@ -7,6 +7,7 @@ interface Props {
   isIOS: boolean;
   install: () => void;
   autoStart?: boolean; // vrai quand l'URL contient ?install=1
+  label?: string; // texte personnalisé (visiteur)
 }
 
 export default function InstallFicheButton({
@@ -16,6 +17,7 @@ export default function InstallFicheButton({
   isIOS,
   install,
   autoStart,
+  label,
 }: Props) {
   const [showIOS, setShowIOS] = useState(Boolean(autoStart && isIOS));
 
@@ -46,7 +48,8 @@ export default function InstallFicheButton({
       {showIOS ? (
         <p style={{ margin: 0, fontSize: 14 }}>
           Touchez <strong>Partager</strong> puis{" "}
-          <strong>« Sur l'écran d'accueil »</strong> pour ajouter « {name} ».
+          <strong>« Sur l'écran d'accueil »</strong> pour ajouter «{" "}
+          {label ? "Mes fiches" : name} ».
         </p>
       ) : (
         <button
@@ -59,7 +62,7 @@ export default function InstallFicheButton({
             width: "100%",
           }}
         >
-          Installer « {name} » sur mon téléphone
+          {label ?? <>Installer « {name} » sur mon téléphone</>}
         </button>
       )}
     </div>
