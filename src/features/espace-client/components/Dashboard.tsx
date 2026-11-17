@@ -441,6 +441,15 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
                           </a>
                         )}
 
+                        {h !== "draft" && (
+                          <a
+                            className="db-public-link"
+                            href={`/f/${encodeURIComponent(fiche.slug)}?install=1`}
+                          >
+                            Installer
+                          </a>
+                        )}
+
                         <button
                           className="pri"
                           onClick={() => onEdit(fiche.id)}

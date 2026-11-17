@@ -22,6 +22,8 @@ export default defineConfig({
         theme_color: "#ffffff",
         background_color: "#ffffff",
         display: "standalone",
+        id: "/",
+        scope: "/",
         start_url: "/espace-client",
         icons: [
           {

@@ -362,6 +362,12 @@ export default function CreateFicheForm({
             Ajoute maintenant ta présentation, tes réseaux sociaux et ta
             localisation depuis l'éditeur.
           </p>
+          <a
+            className="cf-btn"
+            href={`/f/${encodeURIComponent(created.slug)}?install=1`}
+          >
+            Installer cette fiche comme application
+          </a>
         </div>
       </div>
     );

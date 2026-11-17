@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Fiche from "../../espace-client/components/Fiche";
 import PublicFicheState from "../components/PublicFicheState";
+import InstallFicheButton from "../components/InstallFicheButton";
+import { useFichePwa } from "../hooks/useFichePwa";
+import { ficheDisplayName } from "../lib/fichePwa";
 import { useIsFicheOwner } from "../hooks/useIsFicheOwner";
 import { usePassage, type PassageSource } from "../hooks/usePassage";
 import { fetchFiche } from "../lib/ficheApi";
@@ -29,6 +32,8 @@ export default function PublicFichePage() {
   usePassage(slug, source, Boolean(ficheQuery.data));
   // Le QR et le bouton « NFC · QR » sont des outils du propriétaire : un visiteur ne les voit jamais.
   const isOwner = useIsFicheOwner(slug);
+  const pwa = useFichePwa(ficheQuery.data);
+  const autoInstall = searchParams.get("install") === "1";
 
   const [minLoadingTimeElapsed, setMinLoadingTimeElapsed] = useState(false);
 
@@ -80,6 +85,13 @@ export default function PublicFichePage() {
             scrollerRef={scrollerRef}
             ownerTools={isOwner}
           />
+          {(isOwner || autoInstall) && (
+            <InstallFicheButton
+              name={ficheDisplayName(ficheQuery.data)}
+              {...pwa}
+              autoStart={autoInstall}
+            />
+          )}
         </motion.main>
       )}
     </AnimatePresence>
