@@ -25,8 +25,12 @@ const pill = (variant: "dark" | "line" | "red"): React.CSSProperties => ({
 export default function PortefeuillePage() {
   const { fiches, remove } = usePortefeuille();
   const [q, setQ] = useState("");
+  const personOf = (f: (typeof fiches)[number]) =>
+    `${f.snapshot?.prenom ?? ""} ${f.snapshot?.nom ?? ""}`.trim();
   const shown = fiches.filter((f) =>
-    f.name.toLowerCase().includes(q.trim().toLowerCase())
+    `${f.name} ${personOf(f)}`
+      .toLowerCase()
+      .includes(q.trim().toLowerCase())
   );
 
   return (
@@ -145,6 +149,9 @@ export default function PortefeuillePage() {
                 )}
                 <div style={{ flex: 1, minWidth: 120 }}>
                   <div style={{ fontWeight: 700, fontSize: 17 }}>{f.name}</div>
+                  {personOf(f) && personOf(f) !== f.name && (
+                    <div style={{ fontSize: 14 }}>{personOf(f)}</div>
+                  )}
                   <div style={{ fontSize: 13, color: MUTED }}>
                     Scannée le {new Date(f.scannedAt).toLocaleDateString("fr-FR")}
                   </div>
