@@ -31,5 +31,5 @@ import { useSession } from "../lib/session";
  */
 export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const session = useSession();
-  return session ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+  return session ? <Navigate to="/espace-client" replace /> : <>{children}</>;
 }
