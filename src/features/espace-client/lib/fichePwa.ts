@@ -8,6 +8,12 @@ export function ficheDisplayName(
   );
 }
 
+const icons = (origin: string) => [
+  { src: `${origin}/favicon_io/android-chrome-192x192.png`, sizes: "192x192", type: "image/png" },
+  { src: `${origin}/favicon_io/android-chrome-512x512.png`, sizes: "512x512", type: "image/png" },
+  { src: `${origin}/favicon_io/android-chrome-512x512.png`, sizes: "512x512", type: "image/png", purpose: "maskable" },
+];
+
 export function buildFicheManifest(
   f: Pick<FicheRecord, "slug" | "entreprise" | "prenom" | "nom">
 ) {
@@ -24,24 +30,23 @@ export function buildFicheManifest(
     display: "standalone",
     theme_color: "#ffffff",
     background_color: "#ffffff",
-    icons: [
-      {
-        src: `${origin}/favicon_io/android-chrome-192x192.png`,
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        src: `${origin}/favicon_io/android-chrome-512x512.png`,
-        sizes: "512x512",
-        type: "image/png",
-      },
-      {
-        src: `${origin}/favicon_io/android-chrome-512x512.png`,
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
-    ],
+    icons: icons(origin),
+  };
+}
+
+export function buildPortefeuilleManifest() {
+  const origin = window.location.origin;
+  return {
+    id: "/portefeuille",
+    name: "Mes fiches",
+    short_name: "Mes fiches",
+    description: "Toutes les fiches que tu as scannées",
+    start_url: `${origin}/portefeuille`,
+    scope: `${origin}/`,
+    display: "standalone",
+    theme_color: "#ffffff",
+    background_color: "#ffffff",
+    icons: icons(origin),
   };
 }
 
@@ -57,11 +62,9 @@ function metaTag(name: string): HTMLMetaElement {
   return el;
 }
 
-/** Remplace le manifest global par celui de la fiche. Retourne une fonction de nettoyage. */
-export function applyFicheManifest(
-  f: Pick<FicheRecord, "slug" | "entreprise" | "prenom" | "nom">
-): () => void {
-  const manifest = buildFicheManifest(f);
+type Manifest = { name: string; [k: string]: unknown };
+
+function applyManifest(manifest: Manifest): () => void {
   const blob = new Blob([JSON.stringify(manifest)], {
     type: "application/manifest+json",
   });
@@ -77,7 +80,6 @@ export function applyFicheManifest(
     document.head.appendChild(link);
   }
   const prevHref = link.getAttribute("href");
-
   const prevTitle = document.title;
   const appleMeta = metaTag("apple-mobile-web-app-title");
   const prevApple = appleMeta.content;
@@ -93,5 +95,41 @@ export function applyFicheManifest(
     document.title = prevTitle;
     appleMeta.content = prevApple;
     URL.revokeObjectURL(url);
+  };
+}
+
+/** Manifest d'une fiche (propriétaire). Retourne une fonction de nettoyage. */
+export function applyFicheManifest(
+  f: Pick<FicheRecord, "slug" | "entreprise" | "prenom" | "nom">
+): () => void {
+  return applyManifest(buildFicheManifest(f));
+}
+
+/** Manifest du porte-documents (visiteur). */
+export function applyPortefeuilleManifest(): () => void {
+  let link = document.head.querySelector<HTMLLinkElement>(
+    'link[rel="manifest"]'
+  );
+  const created = !link;
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "manifest";
+    document.head.appendChild(link);
+  }
+  const prevHref = link.getAttribute("href");
+  const prevTitle = document.title;
+  const appleMeta = metaTag("apple-mobile-web-app-title");
+  const prevApple = appleMeta.content;
+
+  link.setAttribute("href", "/portefeuille.webmanifest");
+  document.title = "Mes fiches";
+  appleMeta.content = "Mes fiches";
+  metaTag("apple-mobile-web-app-capable").content = "yes";
+
+  return () => {
+    if (created) link!.remove();
+    else if (prevHref) link!.setAttribute("href", prevHref);
+    document.title = prevTitle;
+    appleMeta.content = prevApple;
   };
 }

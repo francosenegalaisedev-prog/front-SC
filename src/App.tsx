@@ -21,6 +21,7 @@ import { LEGAL_PATHS } from "./pages/LegalPage"; // à créer (voir plus bas)
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Seo } from "./components/seo";
 
+import PortefeuillePage from "./features/espace-client/pages/PortefeuillePage";
 const AProposPage = lazy(() => import("./pages/AProposPage"));
 const BrandingPage = lazy(() => import("./pages/BrandingPage"));
 const CartesPage = lazy(() => import("./pages/CartesPage"));
@@ -267,6 +268,7 @@ export default function App() {
         <Routes>
           {/* Ouverture publique des fiches connectées (sans le header du site) */}
           <Route path="/f/:slug" element={<PublicFichePage />} />
+          <Route path="/portefeuille" element={<PortefeuillePage />} />
           <Route path="/s/:slug/:section" element={<StickerSectionPage />} />
 
           {/* Pages publiques */}
