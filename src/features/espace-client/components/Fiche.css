@@ -81,35 +81,45 @@
   );
 }
 .f-hero[style] {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 310px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(8, 9, 10, 0.25) 0%,
-      rgba(8, 9, 10, 0.08) 42%,
-      rgba(8, 9, 10, 0.78) 100%
-    ),
-    var(--cover) center/cover no-repeat;
+  --cover-h: 150px;
+  background: var(--hero);
+  padding: calc(var(--cover-h) + 18px) 16px calc(18px + var(--pull) * 1px);
 }
 .sz-s .f-hero[style] {
-  min-height: 270px;
+  --cover-h: 120px;
 }
 .sz-l .f-hero[style] {
-  min-height: 355px;
+  --cover-h: 185px;
 }
 .ly-logo .f-hero[style],
 .ly-banniere .f-hero[style] {
-  min-height: 360px;
+  --cover-h: 170px;
+  min-height: 0;
 }
 .sz-l.ly-logo .f-hero[style],
 .sz-l.ly-banniere .f-hero[style] {
-  min-height: 400px;
+  --cover-h: 205px;
 }
 .f-hero[style]::before {
-  display: none;
+  display: block;
+  inset: 0 0 auto 0;
+  height: var(--cover-h);
+  opacity: 1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 9, 10, 0.34) 0%,
+      rgba(8, 9, 10, 0.04) 55%,
+      rgba(8, 9, 10, 0.28) 100%
+    ),
+    var(--cover) center/cover no-repeat;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+}
+.f-hero[style] .f-chips {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
 }
 .f-hero[style] .f-chips span,
 .f-hero[style] .f-chips button {
@@ -122,53 +132,14 @@
   background: #fff;
   color: #111;
 }
-.f-hero[style] .f-id {
-  margin-top: auto;
-  margin-bottom: 6px;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(8, 9, 10, 0.64);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-}
 .ly-portrait .f-hero[style] .f-id,
-.ly-duo .f-hero[style] .f-id {
-  margin-top: auto;
-  margin-bottom: 6px;
-}
-.ly-logo .f-hero[style] .f-id {
-  margin-top: auto;
-  margin-bottom: 6px;
+.ly-duo .f-hero[style] .f-id,
+.ly-logo .f-hero[style] .f-id,
+.ly-banniere .f-hero[style] .f-id {
+  margin: 0 0 8px;
 }
 .ly-logo .f-hero[style] .f-center {
-  margin: 4px 0;
-}
-.ly-banniere .f-hero[style] .f-id {
-  margin-top: auto;
-  margin-bottom: 6px;
-}
-.f-hero[style] .f-id h1 {
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-.f-hero[style] .f-id p {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-.f-hero[style] .f-org {
-  background: rgba(8, 9, 10, 0.38);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.55);
-}
-.th-or .f-hero[style] .f-org {
-  color: #f3dfaa;
-  border-color: rgba(214, 176, 106, 0.75);
-}
-.f-hero[style] .f-hint {
-  color: rgba(255, 255, 255, 0.88);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  margin: 0 0 4px;
 }
 .rel .f-hero {
   transition: padding 0.5s cubic-bezier(0.2, 1.25, 0.4, 1);
