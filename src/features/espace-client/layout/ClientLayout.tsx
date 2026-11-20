@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useSession } from "../../../lib/session";
 import "../../../styles/layout.css";
@@ -106,8 +106,16 @@ const MOBILE_LABEL: Record<string, string> = {
   Paramètres: "Réglages",
 };
 
+const MOBILE_PRIMARY_PATHS = new Set([
+  BASE,
+  `${BASE}/editeur`,
+  `${BASE}/demandes-rappel`,
+  `${BASE}/abonnements`,
+]);
+
 export default function ClientLayout({ children }: { children?: ReactNode }) {
   const { pathname } = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
   const user = useSession()?.user;
   const profile = useQuery({
     queryKey: ["auth", "me", user?.id],
@@ -119,6 +127,19 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
     mutationFn: resendVerificationEmail,
   });
 
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [moreOpen]);
+
   // Prévient le serveur puis supprime la session ; <RequireAuth> renvoie alors vers /login.
   const logout = () => void signOut();
 
@@ -126,6 +147,15 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
   if (!user) return null;
 
   const emailVerified = profile.data?.emailVerified ?? user.emailVerified;
+  const effectiveUser = {
+    ...user,
+    name: profile.data?.nom ?? user.name,
+    email: profile.data?.email ?? user.email,
+    emailVerified,
+  };
+  const mobilePrimary = NAV.filter(n => MOBILE_PRIMARY_PATHS.has(n.to));
+  const mobileSecondary = NAV.filter(n => !MOBILE_PRIMARY_PATHS.has(n.to));
+  const secondaryActive = mobileSecondary.some(n => n.match(pathname));
 
   return (
     <div className="cl">
@@ -177,11 +207,11 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
         </nav>
         <div className="cl-user">
           <span className="cl-av" aria-hidden="true">
-            {user.name.charAt(0)}
+            {effectiveUser.name.charAt(0)}
           </span>
           <span className="cl-who">
-            <b>{user.name}</b>
-            <small>{user.email}</small>
+            <b>{effectiveUser.name}</b>
+            <small>{effectiveUser.email}</small>
           </span>
           <button
             onClick={logout}
@@ -251,18 +281,74 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
             </button>
           </div>
         )}
-        {/* {children ?? <Outlet } */}
-
         {children ?? (
           <Suspense
             fallback={<div style={{ minHeight: "60vh" }} aria-busy="true" />}
           >
-            <Outlet context={{ user }} />
+            <Outlet context={{ user: effectiveUser }} />
           </Suspense>
         )}
       </main>
+      {moreOpen && (
+        <div
+          className="cl-more-backdrop"
+          onClick={() => setMoreOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      {moreOpen && (
+        <div
+          id="cl-mobile-more"
+          className="cl-more-sheet"
+          role="dialog"
+          aria-label="Plus d’options de navigation"
+        >
+          <div className="cl-more-head">
+            <div className="cl-more-user">
+              <b>{effectiveUser.name}</b>
+              <small>{effectiveUser.email}</small>
+            </div>
+            <button
+              type="button"
+              className="cl-more-close"
+              onClick={() => setMoreOpen(false)}
+              aria-label="Fermer le menu"
+            >
+              <Ico n="x" />
+            </button>
+          </div>
+          <ul className="cl-more-list">
+            {mobileSecondary.map(n => {
+              const on = n.match(pathname);
+              return (
+                <li key={n.to}>
+                  <Link
+                    to={n.to}
+                    className={on ? "on" : undefined}
+                    aria-current={on ? "page" : undefined}
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    <Ico n={n.icon} />
+                    <span>{n.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <button
+                type="button"
+                className="cl-more-logout"
+                onClick={logout}
+              >
+                <Ico n="out" />
+                <span>Se déconnecter</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      )}
       <nav className="cl-tabbar" aria-label="Navigation mobile">
-        {NAV.map(n => {
+        {mobilePrimary.map(n => {
           const on = n.match(pathname);
           const label = MOBILE_LABEL[n.label] ?? n.label;
           return (
@@ -280,12 +366,16 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
           );
         })}
         <button
-          onClick={logout}
-          aria-label="Se déconnecter"
-          title="Se déconnecter"
+          type="button"
+          className={moreOpen || secondaryActive ? "on" : undefined}
+          onClick={() => setMoreOpen(open => !open)}
+          aria-expanded={moreOpen}
+          aria-controls="cl-mobile-more"
+          aria-label="Plus d’options"
+          title="Plus d’options"
         >
-          <Ico n="out" />
-          <span>Quitter</span>
+          <Ico n={moreOpen ? "x" : "menu"} />
+          <span>Plus</span>
         </button>
       </nav>
     </div>
