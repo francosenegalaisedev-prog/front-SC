@@ -1,23 +1,38 @@
 import { useState } from "react";
 import { api } from "../../../../../lib/api";
+import { errMsg } from "../../../../../lib/apiError";
 import { I } from "../Icon";
 import type { ViewProps } from "../types";
+
+const isPreviewContext = () =>
+  typeof window !== "undefined" &&
+  window.location.pathname.startsWith("/espace-client");
 
 /** Contenu de l'onglet « rappel » vu par le visiteur. */
 export default function RappelView({ fiche }: ViewProps) {
   const [sent, setSent] = useState(false);
+  const [previewNotice, setPreviewNotice] = useState(false);
   const [rappelSubmitting, setRappelSubmitting] = useState(false);
   const [rappelError, setRappelError] = useState("");
-  return sent ? (
-    <p className="f-ok" role="status">
-      Merci ! Votre demande a bien été envoyée à l’établissement.
-    </p>
-  ) : (
+
+  if (sent) {
+    return (
+      <p className="f-ok" role="status">
+        Merci ! Votre demande a bien été envoyée à l’établissement.
+      </p>
+    );
+  }
+
+  return (
     <form
       className="f-form"
       onSubmit={async e => {
         e.preventDefault();
         if (rappelSubmitting) return;
+        if (isPreviewContext()) {
+          setPreviewNotice(true);
+          return;
+        }
         const form = e.currentTarget;
         const formData = new FormData(form);
         setRappelSubmitting(true);
@@ -28,12 +43,16 @@ export default function RappelView({ fiche }: ViewProps) {
             {
               nom: String(formData.get("nom") || "").trim(),
               telephone: String(formData.get("telephone") || "").trim(),
+              website: String(formData.get("website") || "").trim(),
             },
           );
           setSent(true);
-        } catch {
+        } catch (error) {
           setRappelError(
-            "Impossible d’envoyer la demande. Vérifiez vos coordonnées puis réessayez.",
+            errMsg(
+              error,
+              "Impossible d’envoyer la demande. Vérifiez vos coordonnées puis réessayez.",
+            ),
           );
         } finally {
           setRappelSubmitting(false);
@@ -60,6 +79,27 @@ export default function RappelView({ fiche }: ViewProps) {
         autoComplete="tel"
         placeholder="Votre téléphone"
       />
+      <input
+        name="website"
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          width: "1px",
+          height: "1px",
+          opacity: 0,
+          pointerEvents: "none",
+        }}
+      />
+      {previewNotice && (
+        <p className="f-txt" role="status">
+          Mode aperçu : l’envoi est désactivé ici. Vos visiteurs soumettront
+          leurs demandes depuis la fiche publique.
+        </p>
+      )}
       {rappelError && (
         <p className="f-error" role="alert">
           {rappelError}
