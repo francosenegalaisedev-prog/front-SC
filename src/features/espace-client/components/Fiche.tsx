@@ -164,8 +164,8 @@ export default function Fiche({
           )}
           {e.disposition === "banniere" && (
             <div className="f-ban">
-              {logo("badge-lg")}
-              <div>
+              {avatar()}
+              <div className="f-names">
                 <h1>{name}</h1>
                 <p>
                   {fiche.fonction}

@@ -83,17 +83,18 @@
 .f-hero[style] {
   --cover-h: 150px;
   background: var(--hero);
-  padding: calc(var(--cover-h) + 18px) 16px calc(18px + var(--pull) * 1px);
+  padding: calc(var(--cover-h) - var(--av) * 0.5) 16px
+    calc(18px + var(--pull) * 1px);
 }
 .sz-s .f-hero[style] {
-  --cover-h: 120px;
+  --cover-h: 125px;
 }
 .sz-l .f-hero[style] {
-  --cover-h: 185px;
+  --cover-h: 180px;
 }
 .ly-logo .f-hero[style],
 .ly-banniere .f-hero[style] {
-  --cover-h: 170px;
+  --cover-h: 175px;
   min-height: 0;
 }
 .sz-l.ly-logo .f-hero[style],
@@ -108,9 +109,9 @@
   background:
     linear-gradient(
       180deg,
-      rgba(8, 9, 10, 0.34) 0%,
-      rgba(8, 9, 10, 0.04) 55%,
-      rgba(8, 9, 10, 0.28) 100%
+      rgba(8, 9, 10, 0.28) 0%,
+      rgba(8, 9, 10, 0.03) 55%,
+      rgba(8, 9, 10, 0.18) 100%
     ),
     var(--cover) center/cover no-repeat;
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
@@ -136,10 +137,30 @@
 .ly-duo .f-hero[style] .f-id,
 .ly-logo .f-hero[style] .f-id,
 .ly-banniere .f-hero[style] .f-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
   margin: 0 0 8px;
 }
+.f-hero[style] .f-ban,
 .ly-logo .f-hero[style] .f-center {
-  margin: 0 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  margin: 0;
+}
+.f-hero[style] .f-av {
+  border: 4px solid #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.f-hero[style] .f-names {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .rel .f-hero {
   transition: padding 0.5s cubic-bezier(0.2, 1.25, 0.4, 1);

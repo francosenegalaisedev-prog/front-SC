@@ -13,6 +13,10 @@ interface Props {
   setE: (patch: Partial<EnteteComplete>) => void;
 }
 
+const EDITABLE_LAYOUTS = (["portrait", "banniere", "duo"] as const).map(
+  key => [key, LAYOUTS[key]] as const,
+);
+
 /** Disposition, taille et thème de l'entête : Signature uniquement. */
 export default function AppearanceBox({ sig, entete: e, setE }: Props) {
   return (
@@ -22,7 +26,7 @@ export default function AppearanceBox({ sig, entete: e, setE }: Props) {
         <>
           <p className="ed-k">Disposition de la photo et du logo</p>
           <div className="ed-layouts">
-            {Object.entries(LAYOUTS).map(([k, v]) => (
+            {EDITABLE_LAYOUTS.map(([k, v]) => (
               <button
                 key={k}
                 className={e.disposition === k ? "on" : ""}
@@ -70,7 +74,7 @@ export default function AppearanceBox({ sig, entete: e, setE }: Props) {
         </>
       ) : (
         <Lock>
-          Entête modulable (logo, bannière, duo), tailles et thèmes :
+          Entête modulable (portrait, bannière, duo), tailles et thèmes :
           disponibles en Signature.
         </Lock>
       )}
