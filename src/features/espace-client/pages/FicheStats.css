@@ -1280,6 +1280,39 @@
   font-weight: 600;
 }
 
+.callback-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.callback-export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0 0.9rem;
+  border: 1px solid #08090a;
+  border-radius: 12px;
+  background: #08090a;
+  color: #fff;
+  font: 650 0.8rem Inter, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+.callback-export-btn:hover:not(:disabled) {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+}
+
+.callback-export-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .callback-contact-cell {
   display: grid;
   gap: 0.15rem;

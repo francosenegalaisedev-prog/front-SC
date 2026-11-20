@@ -63,6 +63,7 @@ export default function CallbackRequestsPage() {
   const [search, setSearch] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const fichesQuery = useDashboardFiches();
   const trimmedSearch = search.trim();
@@ -141,6 +142,41 @@ export default function CallbackRequestsPage() {
     setPage(1);
   };
 
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setActionError(null);
+    try {
+      const params = new URLSearchParams();
+      if (ficheId) params.set("ficheId", ficheId);
+      if (statut) params.set("statut", statut);
+      if (trimmedSearch) params.set("search", trimmedSearch);
+      const query = params.toString();
+      const response = await api.get<Blob>(
+        `fiches/rappels/export${query ? `?${query}` : ""}`,
+        { responseType: "blob" },
+      );
+      const blob =
+        response.data instanceof Blob
+          ? response.data
+          : new Blob([String(response.data)], {
+              type: "text/csv;charset=utf-8",
+            });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `prospects-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setActionError(errMsg(err) || "Impossible d'exporter vos prospects.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const renderActions = (demande: CallbackRequest) => {
     const nextStatus: RappelStatus =
       demande.statut === "TRAITEE" ? "NOUVELLE" : "TRAITEE";
@@ -202,16 +238,26 @@ export default function CallbackRequestsPage() {
             contact » de toutes vos fiches.
           </p>
         </div>
-        <button
-          type="button"
-          className="fiche-passage-refresh"
-          onClick={() => void requestsQuery.refetch()}
-          disabled={requestsQuery.isFetching}
-          aria-label="Actualiser les prospects"
-          title="Actualiser"
-        >
-          {requestsQuery.isFetching ? "…" : "↻"}
-        </button>
+        <div className="callback-header-actions">
+          <button
+            type="button"
+            className="callback-export-btn"
+            onClick={() => void handleExport()}
+            disabled={exporting || !(pagination?.total ?? 0)}
+          >
+            {exporting ? "Export…" : "↓ Exporter CSV"}
+          </button>
+          <button
+            type="button"
+            className="fiche-passage-refresh"
+            onClick={() => void requestsQuery.refetch()}
+            disabled={requestsQuery.isFetching}
+            aria-label="Actualiser les prospects"
+            title="Actualiser"
+          >
+            {requestsQuery.isFetching ? "…" : "↻"}
+          </button>
+        </div>
       </header>
 
       <div

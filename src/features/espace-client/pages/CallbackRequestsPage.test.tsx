@@ -257,4 +257,83 @@ describe("CallbackRequestsPage", () => {
       data: undefined,
     });
   });
+
+  it("déclenche l'export CSV des prospects", async () => {
+    const requestedUrls: string[] = [];
+    const origCreate = URL.createObjectURL;
+    const origRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = () => "blob:test-export";
+    URL.revokeObjectURL = () => {};
+
+    api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
+      const url = String(config.url ?? "");
+      requestedUrls.push(url);
+      if (url.includes("client/dashboard/fiches")) {
+        return { status: 200, data: [], statusText: "", headers: {}, config };
+      }
+      if (url.includes("fiches/rappels/export")) {
+        return {
+          status: 200,
+          data: new Blob(['"Nom";"Téléphone"\r\n"Aminata";"+221771234567"'], {
+            type: "text/csv",
+          }),
+          statusText: "",
+          headers: {},
+          config,
+        };
+      }
+      return {
+        status: 200,
+        data: {
+          rappels: {
+            nouvellesCount: 1,
+            demandes: [
+              {
+                id: 10,
+                nom: "Aminata Fall",
+                telephone: "+221771234567",
+                email: "aminata@studio.sn",
+                societe: "Studio Dakar",
+                statut: "NOUVELLE",
+                traiteeAt: null,
+                createdAt: "2026-11-20T12:00:00.000Z",
+                fiche: {
+                  id: 1,
+                  slug: "le-sunset",
+                  prenom: "Moussa",
+                  nom: "Diop",
+                },
+              },
+            ],
+            pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+          },
+        },
+        statusText: "",
+        headers: {},
+        config,
+      };
+    };
+
+    try {
+      renderPage();
+      await waitFor(() => host.textContent?.includes("Aminata Fall") ?? false);
+
+      const exportBtn = Array.from(host.querySelectorAll("button")).find(btn =>
+        btn.textContent?.includes("Exporter CSV"),
+      )!;
+      await act(async () => {
+        exportBtn.click();
+      });
+      await waitFor(() =>
+        requestedUrls.some(url => url.includes("fiches/rappels/export")),
+      );
+
+      expect(
+        requestedUrls.some(url => url.includes("fiches/rappels/export")),
+      ).toBe(true);
+    } finally {
+      URL.createObjectURL = origCreate;
+      URL.revokeObjectURL = origRevoke;
+    }
+  });
 });

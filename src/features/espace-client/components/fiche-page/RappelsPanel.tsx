@@ -32,6 +32,7 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
   const queryClient = useQueryClient();
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const rappelsQuery = useQuery({
     queryKey: ["fiche-rappels", ficheId],
@@ -86,6 +87,36 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
 
   const isMutating = statusMutation.isPending || deleteMutation.isPending;
 
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setActionError(null);
+    try {
+      const response = await api.get<Blob>(
+        `fiches/rappels/export?ficheId=${ficheId}`,
+        { responseType: "blob" },
+      );
+      const blob =
+        response.data instanceof Blob
+          ? response.data
+          : new Blob([String(response.data)], {
+              type: "text/csv;charset=utf-8",
+            });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `prospects-fiche-${ficheId}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setActionError(errMsg(err) || "Impossible d'exporter vos prospects.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <section
       className="fiche-passage-panel fiche-rappels-panel"
@@ -96,16 +127,26 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
           <h2 id="fiche-rappels-title">Prospects</h2>
           <p>Les coordonnées laissées depuis le bouton « Échangez contact ».</p>
         </div>
-        <button
-          type="button"
-          className="fiche-passage-refresh"
-          onClick={() => void rappelsQuery.refetch()}
-          disabled={rappelsQuery.isFetching}
-          aria-label="Actualiser les prospects"
-          title="Actualiser"
-        >
-          {rappelsQuery.isFetching ? "…" : "↻"}
-        </button>
+        <div className="callback-header-actions">
+          <button
+            type="button"
+            className="callback-export-btn"
+            onClick={() => void handleExport()}
+            disabled={exporting || !(rappelsQuery.data?.total ?? 0)}
+          >
+            {exporting ? "Export…" : "↓ Exporter CSV"}
+          </button>
+          <button
+            type="button"
+            className="fiche-passage-refresh"
+            onClick={() => void rappelsQuery.refetch()}
+            disabled={rappelsQuery.isFetching}
+            aria-label="Actualiser les prospects"
+            title="Actualiser"
+          >
+            {rappelsQuery.isFetching ? "…" : "↻"}
+          </button>
+        </div>
       </div>
 
       {actionError && (
