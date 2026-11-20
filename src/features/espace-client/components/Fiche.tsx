@@ -71,9 +71,54 @@ export default function Fiche({
     () => new Set(sections.slice(0, 1).map(t => t.id)),
   );
   const [rappelOpen, setRappelOpen] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState("");
+  const shareTimerRef = useRef<number | null>(null);
 
-  const url = `${baseUrl ?? `${publicAppUrl}/f/`}${fiche.slug}?source=qr`;
+  const shareUrl = `${baseUrl ?? `${publicAppUrl}/f/`}${fiche.slug}`;
+  const url = `${shareUrl}?source=qr`;
   const name = `${fiche.prenom} ${fiche.nom}`.trim();
+
+  useEffect(
+    () => () => {
+      if (shareTimerRef.current !== null) {
+        window.clearTimeout(shareTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const flashShare = (label: string) => {
+    setShareFeedback(label);
+    if (shareTimerRef.current !== null) {
+      window.clearTimeout(shareTimerRef.current);
+    }
+    shareTimerRef.current = window.setTimeout(() => {
+      setShareFeedback("");
+      shareTimerRef.current = null;
+    }, 2200);
+  };
+
+  const handleShare = async () => {
+    const title = name || fiche.entreprise || "Support Connecté";
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, url: shareUrl });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      }
+    }
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        flashShare("Lien copié");
+        return;
+      } catch {
+        /* fallback ci-dessous */
+      }
+    }
+    flashShare("Copie impossible");
+  };
   const actions = [
     fiche.whatsapp && {
       k: "whatsapp",
@@ -133,7 +178,15 @@ export default function Fiche({
         }
       >
         <div className="f-chips">
-          <span>Fiche de contact</span>
+          <button
+            type="button"
+            className="f-share-btn"
+            onClick={() => void handleShare()}
+            aria-label="Partager la fiche"
+          >
+            <I n="share" s={12} />
+            {shareFeedback || "Partager"}
+          </button>
           {ownerTools && (
             <button onClick={() => setHeld(h => !h)} aria-pressed={held}>
               <I n="qr" s={12} />

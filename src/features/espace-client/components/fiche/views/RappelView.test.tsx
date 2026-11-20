@@ -119,6 +119,42 @@ describe("RappelView", () => {
     expect(dialog?.querySelector('input[name="societe"]')).not.toBeNull();
   });
 
+  it("affiche le bouton Partager à la place de Fiche de contact et copie le lien", async () => {
+    let copied = "";
+    const origShare = navigator.share;
+    const origClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: async (text: string) => {
+          copied = text;
+        },
+      },
+      configurable: true,
+    });
+
+    try {
+      act(() => {
+        root.render(h(Fiche, { fiche: FICHES[0] }));
+      });
+      expect(host.textContent).not.toContain("Fiche de contact");
+      const shareBtn = host.querySelector<HTMLButtonElement>(".f-share-btn");
+      expect(shareBtn).not.toBeNull();
+      expect(shareBtn?.textContent).toContain("Partager");
+
+      await act(async () => {
+        shareBtn!.click();
+        await Promise.resolve();
+      });
+
+      expect(copied).toContain(`/f/${FICHES[0].slug}`);
+      expect(shareBtn?.textContent).toContain("Lien copié");
+    } finally {
+      Object.defineProperty(navigator, "share", { value: origShare, configurable: true });
+      Object.defineProperty(navigator, "clipboard", { value: origClipboard, configurable: true });
+    }
+  });
+
   it("affiche le message d'erreur précis retourné par le serveur", async () => {
     api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
       throw new AxiosError("fail", "429", config, undefined, {
