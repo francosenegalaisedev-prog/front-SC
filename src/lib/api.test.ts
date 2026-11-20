@@ -143,7 +143,13 @@ describe("auth.service", () => {
     await login({ email: "awa@exemple.sn", password: "secret" });
     expect(getSession()).toEqual({
       token: "T2",
-      user: { id: 7, role: "CLIENT", name: "Awa", email: "awa@exemple.sn" },
+      user: {
+        id: 7,
+        role: "CLIENT",
+        name: "Awa",
+        email: "awa@exemple.sn",
+        emailVerified: true,
+      },
     });
   });
 

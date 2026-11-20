@@ -65,6 +65,7 @@ function metaTag(name: string): HTMLMetaElement {
 type Manifest = { name: string; [k: string]: unknown };
 
 function applyManifest(manifest: Manifest): () => void {
+  if (typeof URL.createObjectURL !== "function") return () => {};
   const blob = new Blob([JSON.stringify(manifest)], {
     type: "application/manifest+json",
   });
