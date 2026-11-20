@@ -73,6 +73,9 @@ const DraftsPage = lazy(
 const CallbackRequestsPage = lazy(
   () => import("./features/espace-client/pages/CallbackRequestsPage")
 );
+const ClientCartesPage = lazy(
+  () => import("./features/espace-client/pages/ClientCartesPage")
+);
 const FichePage = lazy(() =>
   import("./features/espace-client/pages/FichePage").then(m => ({
     default: m.FichePage,
@@ -307,6 +310,7 @@ export default function App() {
             <Route index element={<DashboardPage />} />
             <Route path="fiche/preview/:id" element={<FichePage />} />
             <Route path="prospects" element={<CallbackRequestsPage />} />
+            <Route path="cartes" element={<ClientCartesPage />} />
             <Route
               path="demandes-rappel"
               element={<Navigate to="/espace-client/prospects" replace />}
