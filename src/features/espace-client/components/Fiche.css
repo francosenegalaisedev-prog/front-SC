@@ -81,14 +81,32 @@
   );
 }
 .f-hero[style] {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 310px;
   background:
     linear-gradient(
       180deg,
-      rgba(8, 9, 10, 0.38) 0%,
-      rgba(8, 9, 10, 0.45) 45%,
-      rgba(8, 9, 10, 0.86) 100%
+      rgba(8, 9, 10, 0.25) 0%,
+      rgba(8, 9, 10, 0.08) 42%,
+      rgba(8, 9, 10, 0.78) 100%
     ),
     var(--cover) center/cover no-repeat;
+}
+.sz-s .f-hero[style] {
+  min-height: 270px;
+}
+.sz-l .f-hero[style] {
+  min-height: 355px;
+}
+.ly-logo .f-hero[style],
+.ly-banniere .f-hero[style] {
+  min-height: 360px;
+}
+.sz-l.ly-logo .f-hero[style],
+.sz-l.ly-banniere .f-hero[style] {
+  min-height: 400px;
 }
 .f-hero[style]::before {
   display: none;
@@ -105,16 +123,24 @@
   color: #111;
 }
 .f-hero[style] .f-id {
+  margin-top: auto;
+  margin-bottom: 6px;
   padding: 14px;
   border-radius: 18px;
-  background: rgba(8, 9, 10, 0.58);
+  background: rgba(8, 9, 10, 0.64);
   border: 1px solid rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
 }
+.ly-portrait .f-hero[style] .f-id,
+.ly-duo .f-hero[style] .f-id {
+  margin-top: auto;
+  margin-bottom: 6px;
+}
 .ly-logo .f-hero[style] .f-id {
-  margin: 16px 0 6px;
+  margin-top: auto;
+  margin-bottom: 6px;
 }
 .ly-logo .f-hero[style] .f-center {
   margin: 4px 0;
