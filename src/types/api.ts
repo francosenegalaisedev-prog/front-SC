@@ -47,6 +47,8 @@ export interface ApiFicheDetail {
   dateEcheance: string | null;
   scansTotal: number;
   updatedAt?: string;
+  /** Indique sur GET /fiches/public/:slug si le visiteur connecté est propriétaire de la fiche. */
+  isOwner?: boolean;
   data: Omit<FicheData, "galerie"> & { galerie?: ApiMedia[] };
 }
 

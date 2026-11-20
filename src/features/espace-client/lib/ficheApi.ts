@@ -56,6 +56,7 @@ export function toFicheRecord(dto: ApiFicheDetail): FicheRecord {
     dateEcheance: dto.dateEcheance,
     scansTotal: dto.scansTotal,
     updatedAt: dto.updatedAt,
+    ...(typeof dto.isOwner === "boolean" ? { isOwner: dto.isOwner } : {}),
     data,
   };
 }
