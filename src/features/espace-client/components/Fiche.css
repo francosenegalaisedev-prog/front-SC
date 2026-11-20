@@ -433,6 +433,44 @@
   border-color: transparent;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
+.f-rappel-cta {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 11px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  font:
+    700 12.5px Inter,
+    sans-serif;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: transform 0.15s, background 0.15s;
+}
+.f-rappel-cta:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.f-rappel-cta:active {
+  transform: scale(0.98);
+}
+.f-rappel-sheet {
+  padding-top: 22px;
+}
+.f-rappel-sheet h3 {
+  margin: 0 36px 10px 0;
+  font:
+    700 18px/1.25 Inter,
+    sans-serif;
+  color: var(--tx);
+}
 .f-body {
   padding: 4px 16px 20px;
 }

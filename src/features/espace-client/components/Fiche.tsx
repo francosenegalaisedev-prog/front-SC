@@ -2,15 +2,22 @@ import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import { cssVars } from "../../../lib/css";
 import { ENV } from "../../../lib/env";
-import { resolveHeader, visibleTabs } from "../../../lib/plans";
+import {
+  configuredTabs,
+  planOf,
+  resolveHeader,
+  visibleTabs,
+} from "../../../lib/plans";
 import type { FicheRecord } from "../../../types";
 import { downloadVCard } from "../lib/vcard";
 import "./Fiche.css";
 import { I } from "./fiche/Icon";
 import { QR } from "./fiche/QR";
 import { Section } from "./fiche/Section";
+import { Sheet } from "./fiche/Sheet";
 import { initials, wa } from "./fiche/format";
 import { usePullQR } from "./fiche/usePullQR";
+import RappelView from "./fiche/views/RappelView";
 
 /*
   Fiche (page publique ouverte par la carte NFC / le QR).
@@ -48,9 +55,22 @@ export default function Fiche({
   const [held, setHeld] = usePullQR(root, scrollerRef, ownerTools);
   const e = resolveHeader(fiche);
   const tabs = visibleTabs(fiche);
-  const [open, setOpen] = useState(
-    () => new Set(tabs.slice(0, 1).map(t => t.id))
+  const rappelTab = tabs.find(t => t.type === "rappel");
+  const callbackLabel =
+    rappelTab?.titre && rappelTab.titre !== "Être rappelé"
+      ? rappelTab.titre
+      : "Échangez contact";
+  const hasConfiguredRappel = configuredTabs(fiche).some(
+    t => t.type === "rappel",
   );
+  const canRequestCallback = Boolean(
+    planOf(fiche).hasForm && (rappelTab || !hasConfiguredRappel),
+  );
+  const sections = tabs.filter(t => t.type !== "rappel");
+  const [open, setOpen] = useState(
+    () => new Set(sections.slice(0, 1).map(t => t.id)),
+  );
+  const [rappelOpen, setRappelOpen] = useState(false);
 
   const url = `${baseUrl ?? `${publicAppUrl}/f/`}${fiche.slug}?source=qr`;
   const name = `${fiche.prenom} ${fiche.nom}`.trim();
@@ -193,9 +213,19 @@ export default function Fiche({
             </a>
           ))}
         </nav>
+        {canRequestCallback && (
+          <button
+            type="button"
+            className="f-rappel-cta"
+            onClick={() => setRappelOpen(true)}
+          >
+            <I n="chat" s={15} />
+            {callbackLabel}
+          </button>
+        )}
       </header>
       <main className="f-body">
-        {tabs.map(t => (
+        {sections.map(t => (
           <Section
             key={t.id}
             tab={t}
@@ -238,6 +268,27 @@ export default function Fiche({
         <I n="down" s={15} />
         Enregistrer le contact
       </button>
+      {rappelOpen && (
+        <Sheet
+          onClose={() => setRappelOpen(false)}
+          label={callbackLabel}
+        >
+          <div className="f-sheet-b f-rappel-sheet">
+            <h3>{callbackLabel}</h3>
+            <RappelView
+              fiche={fiche}
+              tab={
+                rappelTab ?? {
+                  id: "rappel",
+                  type: "rappel",
+                  titre: "Échangez contact",
+                  visible: true,
+                }
+              }
+            />
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }

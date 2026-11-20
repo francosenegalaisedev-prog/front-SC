@@ -33,7 +33,7 @@ function FicheDashboardPanel({
     },
     {
       id: "rappels" as const,
-      label: "Demandes de rappel",
+      label: "Prospects",
       description: "Coordonnées reçues",
     },
     { id: "carte" as const, label: "Carte", description: "Carte physique NFC" },
@@ -45,8 +45,7 @@ function FicheDashboardPanel({
         <div>
           <h2>Tableau de bord de la fiche</h2>
           <p>
-            Suivez les passages, les demandes de rappel et le suivi de votre
-            carte.
+            Suivez les passages, vos prospects et le suivi de votre carte.
           </p>
         </div>
       </header>

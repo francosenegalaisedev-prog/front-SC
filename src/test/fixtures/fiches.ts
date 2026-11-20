@@ -225,7 +225,7 @@ export const FICHES: FicheRecord[] = [
       onglets: [
         { id: "o1", type: "biens", titre: "Nos biens", visible: true },
         { id: "o2", type: "presentation", visible: true },
-        { id: "o3", type: "rappel", titre: "Être rappelé", visible: true },
+        { id: "o3", type: "rappel", titre: "Échangez contact", visible: true },
         { id: "o4", type: "avis", visible: true },
         { id: "o5", type: "localisation", visible: true },
         { id: "o6", type: "reseaux", visible: true },

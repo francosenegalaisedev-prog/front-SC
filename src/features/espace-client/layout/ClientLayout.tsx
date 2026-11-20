@@ -72,10 +72,12 @@ const NAV: {
     match: p => p.startsWith(`${BASE}/brouillons`),
   },
   {
-    to: `${BASE}/demandes-rappel`,
-    label: "Demandes de rappel",
+    to: `${BASE}/prospects`,
+    label: "Prospects",
     icon: "message",
-    match: p => p.startsWith(`${BASE}/demandes-rappel`),
+    match: p =>
+      p.startsWith(`${BASE}/prospects`) ||
+      p.startsWith(`${BASE}/demandes-rappel`),
   },
   {
     to: `${BASE}/abonnements`,
