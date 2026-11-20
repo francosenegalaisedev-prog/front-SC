@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Fiche from "../../espace-client/components/Fiche";
 import PublicFicheState from "../components/PublicFicheState";
@@ -8,7 +8,7 @@ import InstallFicheButton from "../components/InstallFicheButton";
 import { useFichePwa } from "../hooks/useFichePwa";
 import { ficheDisplayName } from "../lib/fichePwa";
 import { addFiche } from "../lib/portefeuille";
-import { useIsFicheOwner } from "../hooks/useIsFicheOwner";
+import { useFicheOwnerStatus } from "../hooks/useIsFicheOwner";
 import { usePassage, type PassageSource } from "../hooks/usePassage";
 import { fetchFiche } from "../lib/ficheApi";
 import "./FicheStats.css";
@@ -32,27 +32,20 @@ export default function PublicFichePage() {
 
   usePassage(slug, source, Boolean(ficheQuery.data));
   // Le QR et le bouton « NFC · QR » sont des outils du propriétaire : un visiteur ne les voit jamais.
-  const isOwner = useIsFicheOwner(slug);
+  const { isOwner, isPending: ownerPending } = useFicheOwnerStatus(
+    slug,
+    ficheQuery.data?.isOwner,
+  );
   const pwa = useFichePwa(ficheQuery.data, isOwner ? "owner" : "visitor");
   const autoInstall = searchParams.get("install") === "1";
 
   useEffect(() => {
     const f = ficheQuery.data;
-    if (!f || isOwner) return;
-    addFiche(f, ficheDisplayName(f), undefined); // TODO : logo
-  }, [ficheQuery.data, isOwner]);
+    if (!f || ownerPending || isOwner) return;
+    addFiche(f, ficheDisplayName(f), f.logo || undefined);
+  }, [ficheQuery.data, ownerPending, isOwner]);
 
-  const [minLoadingTimeElapsed, setMinLoadingTimeElapsed] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setMinLoadingTimeElapsed(true);
-    }, 1000);
-
-    return () => window.clearTimeout(timer);
-  }, [slug]);
-
-  const showLoader = ficheQuery.isPending || !minLoadingTimeElapsed;
+  const showLoader = ficheQuery.isPending;
 
   return (
     <AnimatePresence mode="wait" initial={false}>

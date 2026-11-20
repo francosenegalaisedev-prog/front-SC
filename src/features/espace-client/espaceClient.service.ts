@@ -4,7 +4,17 @@ import { toApiError } from "../../lib/apiError";
 import type { ApiFicheSummary, ApiSectionSticker, PlanType } from "../../types";
 import type { SubscriptionKpi } from "./pages/SubscriptionPage";
 
-export async function createFiche(data: any) {
+export type CreateFicheInput = {
+  prenom?: string;
+  nom?: string;
+  fonction?: string;
+  entreprise?: string;
+  telephone?: string;
+  whatsapp?: string;
+  secteur?: string;
+};
+
+export async function createFiche(data: CreateFicheInput) {
   const result = await api.post("/fiches", data);
   return result.data;
 }

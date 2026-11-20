@@ -200,5 +200,7 @@ export interface FicheRecord {
   scansTotal: number;
   /** Version de la fiche renvoyée par l'API ; renvoyée au PATCH pour détecter une modification concurrente. */
   updatedAt?: string;
+  /** Renseigné par GET /fiches/public/:slug quand le serveur indique la propriété. */
+  isOwner?: boolean;
   data: FicheData;
 }

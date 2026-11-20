@@ -129,4 +129,34 @@ describe("ClientLayout email verification", () => {
       "Votre adresse e-mail n’est pas vérifiée",
     );
   });
+
+  it("opens and closes the bottom mobile burger menu with all navigation links", async () => {
+    verified = true;
+    renderLayout(true);
+    await settle();
+
+    const burger = host.querySelector<HTMLButtonElement>(".cl-burger-btn");
+    expect(burger).toBeTruthy();
+    expect(burger?.getAttribute("aria-expanded")).toBe("false");
+    expect(host.querySelector("#cl-mobile-menu")).toBeNull();
+
+    act(() => burger?.click());
+
+    const sheet = host.querySelector("#cl-mobile-menu");
+    expect(sheet).toBeTruthy();
+    expect(burger?.getAttribute("aria-expanded")).toBe("true");
+    expect(sheet?.textContent).toContain("Tableau de bord");
+    expect(sheet?.textContent).toContain("Éditeur de fiches");
+    expect(sheet?.textContent).toContain("Brouillons");
+    expect(sheet?.textContent).toContain("Demandes de rappel");
+    expect(sheet?.textContent).toContain("Abonnements & formules");
+    expect(sheet?.textContent).toContain("Paiements");
+    expect(sheet?.textContent).toContain("Paramètres");
+    expect(sheet?.textContent).toContain("Se déconnecter");
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    expect(host.querySelector("#cl-mobile-menu")).toBeNull();
+  });
 });

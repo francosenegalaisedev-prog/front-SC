@@ -98,37 +98,69 @@ export default function CallbackRequestsPage() {
           </div>
 
           {data?.demandes.length ? (
-            <div className="fiche-passage-table-wrap callback-requests-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Contact</th>
-                    <th>Téléphone</th>
-                    <th>Fiche concernée</th>
-                    <th>Date de réception</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.demandes.map(demande => (
-                    <tr key={demande.id}>
-                      <td>{demande.nom}</td>
-                      <td><a className="callback-phone" href={`tel:${demande.telephone}`}>{demande.telephone}</a></td>
-                      <td>
-                        <a
-                          className="callback-fiche-link"
-                          href={`/f/${encodeURIComponent(demande.fiche.slug)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {[demande.fiche.prenom, demande.fiche.nom].filter(Boolean).join(" ") || demande.fiche.slug}
-                        </a>
-                      </td>
-                      <td>{formatDate(demande.createdAt)}</td>
+            <>
+              <div className="fiche-passage-table-wrap callback-requests-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Contact</th>
+                      <th>Téléphone</th>
+                      <th>Fiche concernée</th>
+                      <th>Date de réception</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {data.demandes.map(demande => (
+                      <tr key={demande.id}>
+                        <td>{demande.nom}</td>
+                        <td><a className="callback-phone" href={`tel:${demande.telephone}`}>{demande.telephone}</a></td>
+                        <td>
+                          <a
+                            className="callback-fiche-link"
+                            href={`/f/${encodeURIComponent(demande.fiche.slug)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {[demande.fiche.prenom, demande.fiche.nom].filter(Boolean).join(" ") || demande.fiche.slug}
+                          </a>
+                        </td>
+                        <td>{formatDate(demande.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="callback-requests-cards">
+                {data.demandes.map(demande => (
+                  <article key={demande.id} className="callback-request-card">
+                    <div className="callback-request-card-top">
+                      <strong>{demande.nom}</strong>
+                      <span className="callback-request-card-date">
+                        {formatDate(demande.createdAt)}
+                      </span>
+                    </div>
+                    <div className="callback-request-card-meta">
+                      <a
+                        className="callback-phone"
+                        href={`tel:${demande.telephone}`}
+                      >
+                        {demande.telephone}
+                      </a>
+                      <a
+                        className="callback-fiche-link"
+                        href={`/f/${encodeURIComponent(demande.fiche.slug)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {[demande.fiche.prenom, demande.fiche.nom]
+                          .filter(Boolean)
+                          .join(" ") || demande.fiche.slug}
+                      </a>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="callback-requests-empty">
               <h2>Aucune demande pour le moment</h2>

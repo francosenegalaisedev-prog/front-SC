@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FicheRecord, Plat } from "../../../../../types";
 import { I } from "../Icon";
 import { Sheet } from "../Sheet";
-import { fcfa, wa } from "../format";
+import { fcfa } from "../format";
 
 /** Onglet Menu : plats par catégorie, fiche détaillée avec photo et vidéo. */
 export default function MenuView({ fiche }: { fiche: FicheRecord }) {

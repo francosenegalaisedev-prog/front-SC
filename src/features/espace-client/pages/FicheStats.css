@@ -291,7 +291,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1120px) {
   .fiche-preview-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -303,6 +303,11 @@
 
   .fiche-preview-layout .fiche-preview-device {
     width: min(390px, 100%);
+  }
+
+  .fiche-preview-layout .fiche-preview-device-in {
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .fiche-passage-panel {
@@ -919,12 +924,7 @@
   color: #ef1733;
 }
 
-@media (max-width: 520px) {
-  .fiche-dashboard {
-    padding: 0.7rem;
-    border-radius: 17px;
-  }
-
+@media (max-width: 640px) {
   .fiche-dashboard-nav {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -933,13 +933,20 @@
     min-height: 0;
   }
 
+  .fiche-card-request {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .fiche-dashboard {
+    padding: 0.7rem;
+    border-radius: 17px;
+  }
+
   .fiche-passage-pagination {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .fiche-card-request {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .fiche-card-request-art {
@@ -959,6 +966,12 @@
     max-height: calc(100dvh - 1rem);
     padding: 0.65rem;
     border-radius: 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .fiche-card-model-faces {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1181,6 +1194,10 @@
   text-align: center;
 }
 
+.callback-requests-cards {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .callback-requests-page {
     padding: 1rem 0.75rem;
@@ -1194,6 +1211,52 @@
   .callback-requests-summary {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .callback-requests-table-wrap {
+    display: none;
+  }
+
+  .callback-requests-cards {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .callback-request-card {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid #e3e8f0;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgb(15 23 42 / 4%);
+  }
+
+  .callback-request-card-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .callback-request-card-top strong {
+    color: #111827;
+    font-size: 0.95rem;
+  }
+
+  .callback-request-card-date {
+    color: #64748b;
+    font-size: 0.76rem;
+  }
+
+  .callback-request-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.85rem;
+    font-size: 0.85rem;
   }
 
   .callback-requests-pagination {

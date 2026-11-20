@@ -9,7 +9,8 @@ import {
 } from "../lib/installPrompt";
 
 const isStandalone = () =>
-  window.matchMedia("(display-mode: standalone)").matches ||
+  (typeof window.matchMedia === "function" &&
+    window.matchMedia("(display-mode: standalone)").matches) ||
   (navigator as unknown as { standalone?: boolean }).standalone === true;
 
 export function useFichePwa(

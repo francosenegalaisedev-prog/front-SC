@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useSession } from "../../../lib/session";
 import "../../../styles/layout.css";
@@ -96,18 +96,9 @@ const NAV: {
     match: p => p.startsWith(`${BASE}/parametres`),
   },
 ];
-const MOBILE_LABEL: Record<string, string> = {
-  "Tableau de bord": "Accueil",
-  "Éditeur de fiches": "Éditer",
-  Brouillons: "Brouillons",
-  "Demandes de rappel": "Rappels",
-  "Abonnements & formules": "Formules",
-  Paiements: "Paiements",
-  Paramètres: "Réglages",
-};
-
 export default function ClientLayout({ children }: { children?: ReactNode }) {
   const { pathname } = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const user = useSession()?.user;
   const profile = useQuery({
     queryKey: ["auth", "me", user?.id],
@@ -119,6 +110,19 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
     mutationFn: resendVerificationEmail,
   });
 
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
+
   // Prévient le serveur puis supprime la session ; <RequireAuth> renvoie alors vers /login.
   const logout = () => void signOut();
 
@@ -126,6 +130,13 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
   if (!user) return null;
 
   const emailVerified = profile.data?.emailVerified ?? user.emailVerified;
+  const effectiveUser = {
+    ...user,
+    name: profile.data?.nom ?? user.name,
+    email: profile.data?.email ?? user.email,
+    emailVerified,
+  };
+  const activeNav = NAV.find(n => n.match(pathname));
 
   return (
     <div className="cl">
@@ -177,11 +188,11 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
         </nav>
         <div className="cl-user">
           <span className="cl-av" aria-hidden="true">
-            {user.name.charAt(0)}
+            {effectiveUser.name.charAt(0)}
           </span>
           <span className="cl-who">
-            <b>{user.name}</b>
-            <small>{user.email}</small>
+            <b>{effectiveUser.name}</b>
+            <small>{effectiveUser.email}</small>
           </span>
           <button
             onClick={logout}
@@ -251,41 +262,95 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
             </button>
           </div>
         )}
-        {/* {children ?? <Outlet } */}
-
         {children ?? (
           <Suspense
             fallback={<div style={{ minHeight: "60vh" }} aria-busy="true" />}
           >
-            <Outlet context={{ user }} />
+            <Outlet context={{ user: effectiveUser }} />
           </Suspense>
         )}
       </main>
-      <nav className="cl-tabbar" aria-label="Navigation mobile">
-        {NAV.map(n => {
-          const on = n.match(pathname);
-          const label = MOBILE_LABEL[n.label] ?? n.label;
-          return (
-            <Link
-              key={n.to}
-              to={n.to}
-              className={on ? "on" : undefined}
-              aria-current={on ? "page" : undefined}
-              aria-label={n.label}
-              title={n.label}
-            >
-              <Ico n={n.icon} />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
-        <button
-          onClick={logout}
-          aria-label="Se déconnecter"
-          title="Se déconnecter"
+      {menuOpen && (
+        <div
+          className="cl-more-backdrop"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      {menuOpen && (
+        <div
+          id="cl-mobile-menu"
+          className="cl-more-sheet"
+          role="dialog"
+          aria-label="Menu de navigation mobile"
         >
-          <Ico n="out" />
-          <span>Quitter</span>
+          <div className="cl-more-head">
+            <div className="cl-more-user">
+              <b>{effectiveUser.name}</b>
+              <small>{effectiveUser.email}</small>
+            </div>
+            <button
+              type="button"
+              className="cl-more-close"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Fermer le menu"
+            >
+              <Ico n="x" />
+            </button>
+          </div>
+          <nav aria-label="Menu mobile">
+            <ul className="cl-more-list">
+              {NAV.map(n => {
+                const on = n.match(pathname);
+                return (
+                  <li key={n.to}>
+                    <Link
+                      to={n.to}
+                      className={on ? "on" : undefined}
+                      aria-current={on ? "page" : undefined}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Ico n={n.icon} />
+                      <span>{n.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+              <li className="cl-more-sep">
+                <button
+                  type="button"
+                  className="cl-more-logout"
+                  onClick={logout}
+                >
+                  <Ico n="out" />
+                  <span>Se déconnecter</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      )}
+      <nav className="cl-tabbar cl-mobile-bottom" aria-label="Navigation mobile">
+        <div className="cl-mobile-current">
+          <img
+            src="/images/logo-vertical-blanc.webp"
+            alt=""
+            width={24}
+            height={24}
+            aria-hidden="true"
+          />
+          <span>{activeNav?.label ?? "Espace client"}</span>
+        </div>
+        <button
+          type="button"
+          className={`cl-burger-btn${menuOpen ? " on" : ""}`}
+          onClick={() => setMenuOpen(open => !open)}
+          aria-expanded={menuOpen}
+          aria-controls="cl-mobile-menu"
+          aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        >
+          <Ico n={menuOpen ? "x" : "menu"} />
+          <span>{menuOpen ? "Fermer" : "Menu"}</span>
         </button>
       </nav>
     </div>

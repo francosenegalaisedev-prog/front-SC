@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
-import { isAuthFailure, toApiError } from "../../../lib/apiError";
+import { isAuthFailure } from "../../../lib/apiError";
 import { clearSession } from "../../../lib/session";
 import "../../../styles/dashboard.css";
 import { deleteFiche, setFicheDraft } from "../espaceClient.service";
@@ -9,27 +8,18 @@ import {
   dashboardFichesKey,
   useDashboardFiches,
 } from "../hooks/useDashboardFiches";
-import type { Health } from "../lib/dashboard";
-import {
-  checks,
-  completion,
-  daysLeft,
-  displayName,
-  fmtDate,
-  health,
-  publicUrl,
-  SECTEUR_LABEL,
-  subscriptionEndsAt,
-} from "../lib/dashboard";
+import { checks, completion, displayName } from "../lib/dashboard";
 import {
   DEFAULT_FICHE_LIST_FILTERS,
   filterFiches,
   pageFiches,
   type FicheListFilters,
 } from "../lib/ficheList";
-import { renewPath } from "../lib/renewal";
 import CreateFicheForm from "../pages/CreateFicheForm";
 import { FicheListControls, FichePagination } from "./FicheListControls";
+import { DashboardFicheCard } from "./dashboard/DashboardFicheCard";
+import { DashboardAlerts, DashboardKpis } from "./dashboard/DashboardKpis";
+import { DeleteFicheModal } from "./dashboard/DeleteFicheModal";
 
 interface Props {
   user: { name: string };
@@ -38,17 +28,6 @@ interface Props {
 }
 
 type Fiche = NonNullable<ReturnType<typeof useDashboardFiches>["data"]>[number];
-
-const PILL: Record<
-  Health,
-  { cls: string; text: (d: number | null) => string }
-> = {
-  ok: { cls: "ok", text: () => "En ligne" },
-  soon: { cls: "warn", text: d => `Expire dans ${d} j` },
-  expired: { cls: "bad", text: () => "Expirée" },
-  suspended: { cls: "bad", text: () => "Suspendue" },
-  draft: { cls: "warn", text: () => "Brouillon" },
-};
 
 function Skeleton() {
   return (
@@ -85,7 +64,7 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
 
   const filteredFiches = useMemo(
     () => filterFiches(fiches ?? [], filters),
-    [fiches, filters]
+    [fiches, filters],
   );
 
   const pageData = pageFiches(filteredFiches, page);
@@ -98,33 +77,22 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
   const deleteMutation = useMutation({
     mutationKey: ["deleteFiche"],
     mutationFn: (ficheId: number) => deleteFiche(ficheId),
-
     onSuccess: async (_result, ficheId) => {
       setFicheToDelete(null);
-
-      // Si la fiche supprimée était sélectionnée, ne plus la sélectionner.
       setSel(current => {
         const deletedFiche = fiches?.find(f => f.id === ficheId);
         return current === deletedFiche?.slug ? undefined : current;
       });
-
-      // Actualiser les données du dashboard après la suppression.
-      await queryClient.invalidateQueries({
-        queryKey: dashboardFichesKey,
-      });
+      await queryClient.invalidateQueries({ queryKey: dashboardFichesKey });
     },
   });
 
   const draftMutation = useMutation({
     mutationKey: ["setFicheDraft"],
     mutationFn: (ficheId: number) => setFicheDraft(ficheId),
-
     onSuccess: async () => {
       setFicheToDelete(null);
-
-      await queryClient.invalidateQueries({
-        queryKey: dashboardFichesKey,
-      });
+      await queryClient.invalidateQueries({ queryKey: dashboardFichesKey });
     },
   });
 
@@ -134,30 +102,10 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
     setFicheToDelete(fiche);
   };
 
-  const confirmDelete = () => {
-    if (!ficheToDelete || deleteMutation.isPending || draftMutation.isPending) {
-      return;
-    }
-
-    deleteMutation.mutate(ficheToDelete.id);
-  };
-
   const handleCreated = () => {
     setCreateOpen(false);
-    void queryClient.invalidateQueries({
-      queryKey: dashboardFichesKey,
-    });
+    void queryClient.invalidateQueries({ queryKey: dashboardFichesKey });
   };
-
-  // Priorité à l'abonnement le plus récent fourni par l'API.
-  // Sinon, on recherche un abonnement actif dans la liste.
-  const selectedSubscription = ficheToDelete
-    ? (ficheToDelete.latestSubscription ??
-      ficheToDelete.subscriptions?.find(s => s.status === "ACTIVE") ??
-      ficheToDelete.subscriptions?.[0])
-    : undefined;
-
-  const hasActiveSubscription = selectedSubscription?.status === "ACTIVE";
 
   const createDialog = createOpen ? (
     <div
@@ -258,18 +206,8 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
   }
 
   const cur = pageData.items.find(f => f.slug === sel) ?? pageData.items[0];
-
-  const url = cur ? publicUrl(cur.slug) : "";
   const missing = cur ? checks(cur).filter(c => !c.ok) : [];
   const pc = cur ? completion(cur) : 0;
-
-  const scans = fiches.reduce((sum, fiche) => sum + fiche.scansTotal, 0);
-  const expiredCount = fiches.filter(fiche => health(fiche) === "expired").length;
-  const expiringCount = fiches.filter(fiche => health(fiche) === "soon").length;
-
-  const alerts = fiches.filter(
-    fiche => !["ok", "draft"].includes(health(fiche))
-  );
 
   return (
     <div className="db">
@@ -287,60 +225,8 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
         </div>
       </header>
 
-      {alerts.length > 0 && (
-        <ul className="db-alerts" role="status">
-          {alerts.map(fiche => (
-            <li key={fiche.id} className={PILL[health(fiche)].cls}>
-              <b>{displayName(fiche)}</b> —{" "}
-              {PILL[health(fiche)].text(daysLeft(subscriptionEndsAt(fiche)))}.{" "}
-              {health(fiche) === "expired" ? (
-                <Link to={renewPath(fiche.id)}>Renouveler</Link>
-              ) : (
-                <Link to="/espace-client/abonnements">Voir</Link>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <section className="db-kpis" aria-label="Chiffres clés">
-        <div className="db-kpi">
-          <span>Fiches</span>
-          <b>{fiches.length}</b>
-          <small>
-            {fiches.filter(f => health(f) === "ok").length} en ligne
-          </small>
-        </div>
-
-        <div className="db-kpi">
-          <span>Passages NFC · QR</span>
-          <b>{scans.toLocaleString("fr-FR")}</b>
-          <small>
-            {scans === 0
-              ? "partagez votre QR pour commencer"
-              : "toutes fiches confondues"}
-          </small>
-        </div>
-
-        <Link
-          className="db-kpi db-kpi-link"
-          to="/espace-client/abonnements?expiry=expired"
-          aria-label={`Fiches expirées : ${expiredCount}. Voir les abonnements`}
-        >
-          <span>Fiches expirées</span>
-          <b>{expiredCount}</b>
-          <small>Voir les abonnements</small>
-        </Link>
-        <Link
-          className="db-kpi db-kpi-link"
-          to="/espace-client/abonnements?expiry=expiring"
-          aria-label={`Fiches à renouveler bientôt : ${expiringCount}. Voir les abonnements`}
-        >
-          <span>À renouveler bientôt</span>
-          <b>{expiringCount}</b>
-          <small>Selon la durée de l’abonnement</small>
-        </Link>
-      </section>
+      <DashboardAlerts fiches={fiches} />
+      <DashboardKpis fiches={fiches} />
 
       <div className="db-grid">
         <section aria-label="Mes fiches">
@@ -361,122 +247,18 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
             </div>
           ) : (
             <ul className="db-list">
-              {pageData.items.map(fiche => {
-                const h = health(fiche);
-                const c = completion(fiche);
-
-                const subscription =
-                  fiche.subscriptions?.[0] ?? fiche.abonnementActif;
-
-                return (
-                  <li
-                    key={fiche.id}
-                    className={fiche.id === cur?.id ? "on" : ""}
-                  >
-                    <button
-                      className="db-pick"
-                      onClick={() => setSel(fiche.slug)}
-                      aria-pressed={fiche.id === cur?.id}
-                    >
-                      <span className="db-av">
-                        {fiche.logo ? (
-                          <img src={fiche.logo} alt="" />
-                        ) : (
-                          displayName(fiche).charAt(0)
-                        )}
-                      </span>
-
-                      <span className="db-meta">
-                        <b>{displayName(fiche)}</b>
-                        <small>{fiche.fonction}</small>
-                      </span>
-
-                      {fiche.secteur && (
-                        <em className="db-tag">
-                          {SECTEUR_LABEL[fiche.secteur]}
-                        </em>
-                      )}
-                    </button>
-
-                    <div className="db-row">
-                      <span className={`db-pill ${PILL[h].cls}`}>
-                        {PILL[h].text(daysLeft(subscriptionEndsAt(fiche)))}
-                      </span>
-
-                      {subscription && (
-                        <span className="db-plan">
-                          {subscription.plan?.nom ?? subscription.plan?.type}
-                        </span>
-                      )}
-
-                      {fiche.enLigneSeule && !subscription && (
-                        <span className="db-plan free">Créée gratuitement</span>
-                      )}
-
-                      <span className="db-scans">
-                        <b>{fiche.scansTotal}</b> passage
-                        {fiche.scansTotal > 1 ? "s" : ""}
-                      </span>
-
-                      <span className="db-act">
-                        <button onClick={() => onView(fiche.slug)}>Voir</button>
-
-                        {h === "expired" && (
-                          <Link
-                            className="db-public-link"
-                            to={renewPath(fiche.id)}
-                          >
-                            Renouveler
-                          </Link>
-                        )}
-
-                        {h !== "draft" && (
-                          <a
-                            className="db-public-link"
-                            href={`/f/${encodeURIComponent(fiche.slug)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Fiche publique
-                          </a>
-                        )}
-
-                        {h !== "draft" && (
-                          <a
-                            className="db-public-link"
-                            href={`/f/${encodeURIComponent(fiche.slug)}?install=1`}
-                          >
-                            Installer
-                          </a>
-                        )}
-
-                        <button
-                          className="pri"
-                          onClick={() => onEdit(fiche.id)}
-                        >
-                          Modifier
-                        </button>
-
-                        <button
-                          type="button"
-                          className="db-delete-btn"
-                          onClick={() => handleDelete(fiche)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          Supprimer
-                        </button>
-                      </span>
-                    </div>
-
-                    <div className="db-comp" title={`Fiche complète à ${c} %`}>
-                      <i>
-                        <u style={{ width: `${c}%` }} />
-                      </i>
-                      <span>{c} % complète</span>
-                    </div>
-                  </li>
-                );
-              })}
+              {pageData.items.map(fiche => (
+                <DashboardFicheCard
+                  key={fiche.id}
+                  fiche={fiche}
+                  selected={fiche.id === cur?.id}
+                  deletePending={deleteMutation.isPending}
+                  onSelect={() => setSel(fiche.slug)}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
             </ul>
           )}
 
@@ -525,122 +307,34 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
 
       {createDialog}
 
-      {/* Modal de confirmation de suppression */}
       {ficheToDelete && (
-        <div
-          className="db-modal-backdrop"
-          onMouseDown={event => {
-            if (
-              event.target === event.currentTarget &&
-              !deleteMutation.isPending
-            ) {
-              setFicheToDelete(null);
-              deleteMutation.reset();
+        <DeleteFicheModal
+          fiche={ficheToDelete}
+          isDeleting={deleteMutation.isPending}
+          isDrafting={draftMutation.isPending}
+          error={
+            draftMutation.isError
+              ? draftMutation.error
+              : deleteMutation.isError
+                ? deleteMutation.error
+                : null
+          }
+          onCancel={() => {
+            setFicheToDelete(null);
+            deleteMutation.reset();
+            draftMutation.reset();
+          }}
+          onSetDraft={() => {
+            if (!deleteMutation.isPending && !draftMutation.isPending) {
+              draftMutation.mutate(ficheToDelete.id);
             }
           }}
-        >
-          <section
-            className="db-delete-modal"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="db-delete-title"
-            aria-describedby="db-delete-description"
-          >
-            <div className="db-delete-icon" aria-hidden="true">
-              !
-            </div>
-
-            <h2 id="db-delete-title">Supprimer cette fiche ?</h2>
-
-            <p className="db-delete-name">{displayName(ficheToDelete)}</p>
-
-            {hasActiveSubscription ? (
-              <div className="db-delete-warning">
-                <strong>Attention : abonnement actif</strong>
-
-                <p id="db-delete-description">
-                  Cette fiche possède un abonnement actif
-                  {selectedSubscription?.plan?.type
-                    ? ` (${selectedSubscription.plan.type})`
-                    : ""}
-                  {selectedSubscription?.endsAt
-                    ? ` jusqu’au ${fmtDate(selectedSubscription.endsAt)}`
-                    : ""}
-                  .
-                </p>
-
-                <p>
-                  La suppression définitive retire la fiche et ses contenus,
-                  mais conserve ses abonnements et paiements dans l’historique
-                  financier administrateur. Vous pouvez aussi la mettre en
-                  brouillon sans la supprimer.
-                </p>
-              </div>
-            ) : (
-              <p id="db-delete-description">
-                Voulez-vous vraiment supprimer cette fiche ? Cette action peut
-                être définitive.
-              </p>
-            )}
-            {(deleteMutation.isError || draftMutation.isError) && (
-              <div className="db-delete-error" role="alert">
-                {
-                  toApiError(
-                    draftMutation.isError
-                      ? draftMutation.error
-                      : deleteMutation.error
-                  ).message
-                }
-              </div>
-            )}
-
-            <div className="db-delete-actions">
-              <button
-                type="button"
-                className="db-delete-cancel"
-                onClick={() => {
-                  setFicheToDelete(null);
-                  deleteMutation.reset();
-                  draftMutation.reset();
-                }}
-                disabled={deleteMutation.isPending || draftMutation.isPending}
-              >
-                Annuler
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (
-                    !ficheToDelete ||
-                    deleteMutation.isPending ||
-                    draftMutation.isPending
-                  ) {
-                    return;
-                  }
-
-                  draftMutation.mutate(ficheToDelete.id);
-                }}
-                disabled={deleteMutation.isPending || draftMutation.isPending}
-              >
-                {draftMutation.isPending
-                  ? "Mise en brouillon…"
-                  : "Mettre en brouillon"}
-              </button>
-
-              <button
-                type="button"
-                className="db-delete-confirm"
-                onClick={confirmDelete}
-                disabled={deleteMutation.isPending || draftMutation.isPending}
-              >
-                {deleteMutation.isPending
-                  ? "Suppression…"
-                  : "Supprimer définitivement"}
-              </button>
-            </div>
-          </section>
-        </div>
+          onConfirmDelete={() => {
+            if (!deleteMutation.isPending && !draftMutation.isPending) {
+              deleteMutation.mutate(ficheToDelete.id);
+            }
+          }}
+        />
       )}
     </div>
   );

@@ -10,7 +10,6 @@ import AppearanceBox from "./editor/sections/AppearanceBox";
 import BlocksBox from "./editor/sections/BlocksBox";
 import IdentityBox from "./editor/sections/IdentityBox";
 import PlanBanner from "./editor/sections/PlanBanner";
-import QrBox from "./editor/sections/QrBox";
 import StickerBox from "./editor/sections/StickerBox";
 import TemplateBox from "./editor/sections/TemplateBox";
 

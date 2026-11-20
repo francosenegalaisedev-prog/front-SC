@@ -123,6 +123,8 @@
   gap: 10px;
 }
 .db-list > li {
+  min-width: 0;
+  overflow: hidden;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
@@ -165,6 +167,9 @@
   flex: 1;
   min-width: 0;
   display: grid;
+}
+.db-meta b {
+  overflow-wrap: anywhere;
 }
 .db-meta small {
   color: #8d8a85;
@@ -222,6 +227,7 @@
 .db-act {
   margin-left: auto;
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 .db-act button,
@@ -358,7 +364,7 @@
 }
 @media (max-width: 900px) {
   .db-kpis {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .db-grid {
     grid-template-columns: 1fr;
@@ -369,6 +375,11 @@
   .db-act {
     margin-left: 0;
     width: 100%;
+  }
+}
+@media (max-width: 380px) {
+  .db-kpis {
+    grid-template-columns: 1fr;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -811,8 +822,11 @@
 }
 @media (max-width: 640px) {
   .db-head-row {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
+  }
+  .db-create-btn {
+    width: 100%;
   }
   .db-modal-backdrop {
     align-items: flex-start;

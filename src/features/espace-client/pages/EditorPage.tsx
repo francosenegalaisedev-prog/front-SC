@@ -193,11 +193,6 @@ function FicheEditor({ id }: { id: string }) {
                   </button>
                 </>
               )}
-              {publishError && (
-                <p className="edp-note edp-warn" role="alert">
-                  {publishError.message}
-                </p>
-              )}
               {saveError.issues.length > 0 && (
                 <ul className="edp-errors">
                   {saveError.issues.slice(0, 8).map((i, n) => (
@@ -211,6 +206,11 @@ function FicheEditor({ id }: { id: string }) {
                 </ul>
               )}
             </div>
+          )}
+          {publishError && (
+            <p className="edp-note edp-warn" role="alert">
+              {publishError.message}
+            </p>
           )}
           {!saveError &&
             notes.map(n => (

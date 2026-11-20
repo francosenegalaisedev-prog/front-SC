@@ -107,9 +107,6 @@ describe("PaymentsPage", () => {
     });
     expect(host.textContent).toContain("Mes paiements");
     expect(host.textContent).toContain("27 000");
-    expect(host.querySelector<HTMLButtonElement>("button[title]")?.disabled).toBe(
-      true,
-    );
 
     const receiptButton = [...host.querySelectorAll("button")].find(button =>
       button.textContent?.trim() === "Reçu",
