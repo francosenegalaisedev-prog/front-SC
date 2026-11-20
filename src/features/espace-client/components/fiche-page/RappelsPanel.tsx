@@ -9,6 +9,8 @@ type RappelRequest = {
   id: number;
   nom: string;
   telephone: string;
+  email: string | null;
+  societe: string | null;
   statut: RappelStatus;
   traiteeAt: string | null;
   createdAt: string;
@@ -146,8 +148,9 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
               <table>
                 <thead>
                   <tr>
-                    <th>Nom</th>
+                    <th>Contact</th>
                     <th>Téléphone</th>
+                    <th>E-mail</th>
                     <th>Statut</th>
                     <th>Date</th>
                     <th>Actions</th>
@@ -164,7 +167,16 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
 
                     return (
                       <tr key={demande.id}>
-                        <td>{demande.nom}</td>
+                        <td>
+                          <div className="callback-contact-cell">
+                            <strong>{demande.nom}</strong>
+                            {demande.societe && (
+                              <span className="callback-company">
+                                {demande.societe}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td>
                           <div className="callback-phone-group">
                             <a href={`tel:${demande.telephone}`}>
@@ -181,6 +193,18 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
                               </a>
                             )}
                           </div>
+                        </td>
+                        <td>
+                          {demande.email ? (
+                            <a
+                              className="callback-email-link"
+                              href={`mailto:${demande.email}`}
+                            >
+                              {demande.email}
+                            </a>
+                          ) : (
+                            <span className="callback-muted">—</span>
+                          )}
                         </td>
                         <td>
                           <span

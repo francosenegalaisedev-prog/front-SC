@@ -79,6 +79,8 @@ describe("CallbackRequestsPage", () => {
                 id: 10,
                 nom: "Aminata Fall",
                 telephone: "+221 77 123 45 67",
+                email: "aminata@studio.sn",
+                societe: "Studio Dakar",
                 statut: "NOUVELLE",
                 traiteeAt: null,
                 createdAt: "2026-11-20T12:00:00.000Z",
@@ -103,7 +105,12 @@ describe("CallbackRequestsPage", () => {
     await waitFor(() => host.textContent?.includes("Aminata Fall") ?? false);
 
     expect(host.textContent).toContain("Aminata Fall");
+    expect(host.textContent).toContain("Studio Dakar");
     expect(host.textContent).toContain("Nouvelle");
+    const mailLink = host.querySelector<HTMLAnchorElement>(
+      'a[href="mailto:aminata@studio.sn"]',
+    );
+    expect(mailLink).not.toBeNull();
     const waLink = host.querySelector<HTMLAnchorElement>(
       'a[href="https://wa.me/221771234567"]',
     );

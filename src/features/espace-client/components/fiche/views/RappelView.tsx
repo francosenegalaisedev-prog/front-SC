@@ -43,6 +43,8 @@ export default function RappelView({ fiche }: ViewProps) {
             {
               nom: String(formData.get("nom") || "").trim(),
               telephone: String(formData.get("telephone") || "").trim(),
+              email: String(formData.get("email") || "").trim(),
+              societe: String(formData.get("societe") || "").trim(),
               website: String(formData.get("website") || "").trim(),
             },
           );
@@ -76,6 +78,20 @@ export default function RappelView({ fiche }: ViewProps) {
         maxLength={25}
         autoComplete="tel"
         placeholder="Votre téléphone"
+      />
+      <input
+        name="email"
+        type="email"
+        maxLength={160}
+        autoComplete="email"
+        placeholder="Votre e-mail (optionnel)"
+      />
+      <input
+        name="societe"
+        type="text"
+        maxLength={120}
+        autoComplete="organization"
+        placeholder="Votre société (optionnel)"
       />
       <input
         name="website"

@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { api } from "../../../../../lib/api";
 import { FICHES } from "../../../../../test/fixtures/fiches";
+import Fiche from "../../Fiche";
 import RappelView from "./RappelView";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
@@ -28,7 +29,12 @@ describe("RappelView", () => {
     host.remove();
   });
 
-  const submitForm = async (nom: string, telephone: string) => {
+  const submitForm = async (
+    nom: string,
+    telephone: string,
+    email = "",
+    societe = "",
+  ) => {
     act(() => {
       root.render(
         h(RappelView, {
@@ -41,8 +47,16 @@ describe("RappelView", () => {
     const telInput = host.querySelector<HTMLInputElement>(
       'input[name="telephone"]',
     )!;
+    const emailInput = host.querySelector<HTMLInputElement>(
+      'input[name="email"]',
+    )!;
+    const societeInput = host.querySelector<HTMLInputElement>(
+      'input[name="societe"]',
+    )!;
     nomInput.value = nom;
     telInput.value = telephone;
+    emailInput.value = email;
+    societeInput.value = societe;
 
     await act(async () => {
       host
@@ -52,7 +66,7 @@ describe("RappelView", () => {
     });
   };
 
-  it("envoie la demande et affiche la confirmation", async () => {
+  it("envoie la demande avec e-mail et société et affiche la confirmation", async () => {
     let sentBody: unknown;
     api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
       sentBody = JSON.parse(String(config.data));
@@ -65,14 +79,43 @@ describe("RappelView", () => {
       };
     };
 
-    await submitForm("Moussa Diop", "+221 77 123 45 67");
+    await submitForm(
+      "Moussa Diop",
+      "+221 77 123 45 67",
+      "moussa@exemple.sn",
+      "Atelier Dakar",
+    );
 
     expect(sentBody).toEqual({
       nom: "Moussa Diop",
       telephone: "+221 77 123 45 67",
+      email: "moussa@exemple.sn",
+      societe: "Atelier Dakar",
       website: "",
     });
     expect(host.textContent).toContain("Votre demande a bien été envoyée");
+  });
+
+  it("affiche le bouton Être rappelé sous les boutons de contact et ouvre le formulaire en modale", async () => {
+    const signatureFiche = FICHES.find(f => f.formule === "signature") ?? FICHES[0];
+    act(() => {
+      root.render(h(Fiche, { fiche: signatureFiche }));
+    });
+
+    const cta = host.querySelector<HTMLButtonElement>(".f-rappel-cta");
+    expect(cta).not.toBeNull();
+    // Aucun formulaire ouvert avant le clic, et pas de section rappel dans .f-body
+    expect(host.querySelector(".f-body form.f-form")).toBeNull();
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+
+    await act(async () => {
+      cta!.click();
+    });
+
+    const dialog = host.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    expect(dialog?.querySelector('input[name="email"]')).not.toBeNull();
+    expect(dialog?.querySelector('input[name="societe"]')).not.toBeNull();
   });
 
   it("affiche le message d'erreur précis retourné par le serveur", async () => {

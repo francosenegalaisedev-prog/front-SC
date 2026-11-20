@@ -13,6 +13,8 @@ type CallbackRequest = {
   id: number;
   nom: string;
   telephone: string;
+  email: string | null;
+  societe: string | null;
   statut: RappelStatus;
   traiteeAt: string | null;
   createdAt: string;
@@ -222,7 +224,7 @@ export default function CallbackRequestsPage() {
           <input
             type="search"
             value={search}
-            placeholder="Nom ou téléphone…"
+            placeholder="Nom, téléphone, e-mail ou société…"
             onChange={e => {
               setSearch(e.target.value);
               setPage(1);
@@ -324,6 +326,7 @@ export default function CallbackRequestsPage() {
                     <tr>
                       <th>Contact</th>
                       <th>Téléphone</th>
+                      <th>E-mail</th>
                       <th>Fiche concernée</th>
                       <th>Statut</th>
                       <th>Date de réception</th>
@@ -336,7 +339,16 @@ export default function CallbackRequestsPage() {
                       const isTreated = demande.statut === "TRAITEE";
                       return (
                         <tr key={demande.id}>
-                          <td>{demande.nom}</td>
+                          <td>
+                            <div className="callback-contact-cell">
+                              <strong>{demande.nom}</strong>
+                              {demande.societe && (
+                                <span className="callback-company">
+                                  {demande.societe}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td>
                             <div className="callback-phone-group">
                               <a
@@ -357,6 +369,18 @@ export default function CallbackRequestsPage() {
                                 </a>
                               )}
                             </div>
+                          </td>
+                          <td>
+                            {demande.email ? (
+                              <a
+                                className="callback-email-link"
+                                href={`mailto:${demande.email}`}
+                              >
+                                {demande.email}
+                              </a>
+                            ) : (
+                              <span className="callback-muted">—</span>
+                            )}
                           </td>
                           <td>
                             <a
@@ -390,7 +414,14 @@ export default function CallbackRequestsPage() {
                   return (
                     <article key={demande.id} className="callback-request-card">
                       <div className="callback-request-card-top">
-                        <strong>{demande.nom}</strong>
+                        <div className="callback-contact-cell">
+                          <strong>{demande.nom}</strong>
+                          {demande.societe && (
+                            <span className="callback-company">
+                              {demande.societe}
+                            </span>
+                          )}
+                        </div>
                         <span
                           className={`callback-status-pill ${isTreated ? "is-done" : "is-new"}`}
                         >
@@ -400,6 +431,14 @@ export default function CallbackRequestsPage() {
                       <span className="callback-request-card-date">
                         {formatDate(demande.createdAt)}
                       </span>
+                      {demande.email && (
+                        <a
+                          className="callback-email-link"
+                          href={`mailto:${demande.email}`}
+                        >
+                          {demande.email}
+                        </a>
+                      )}
                       <div className="callback-request-card-meta">
                         <div className="callback-phone-group">
                           <a
