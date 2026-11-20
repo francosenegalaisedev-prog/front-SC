@@ -49,10 +49,8 @@ export default function RappelView({ fiche }: ViewProps) {
           setSent(true);
         } catch (error) {
           setRappelError(
-            errMsg(
-              error,
+            errMsg(error) ||
               "Impossible d’envoyer la demande. Vérifiez vos coordonnées puis réessayez.",
-            ),
           );
         } finally {
           setRappelSubmitting(false);

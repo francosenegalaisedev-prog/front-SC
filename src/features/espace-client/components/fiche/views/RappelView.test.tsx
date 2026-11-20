@@ -30,7 +30,12 @@ describe("RappelView", () => {
 
   const submitForm = async (nom: string, telephone: string) => {
     act(() => {
-      root.render(h(RappelView, { fiche: FICHES[0] }));
+      root.render(
+        h(RappelView, {
+          fiche: FICHES[0],
+          tab: { id: "rappel", type: "rappel", titre: "Être rappelé", visible: true },
+        }),
+      );
     });
     const nomInput = host.querySelector<HTMLInputElement>('input[name="nom"]')!;
     const telInput = host.querySelector<HTMLInputElement>(
