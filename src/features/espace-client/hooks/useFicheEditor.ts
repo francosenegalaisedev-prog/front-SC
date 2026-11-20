@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FicheRecord } from "../../../types";
 import { FicheError, ficheSource, toFicheError } from "../lib/ficheSource";
 import { dashboardFichesKey } from "./useDashboardFiches";
@@ -22,6 +22,7 @@ export function useFicheEditor(key: string) {
   const [publishError, setPublishError] = useState<FicheError | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [attempt, setAttempt] = useState(0);
+  const [savedRevision, setSavedRevision] = useState(0);
   const saved = useRef<FicheRecord | null>(null);
   const savedJson = useRef("");
 
@@ -40,6 +41,7 @@ export function useFicheEditor(key: string) {
         if (!live) return;
         saved.current = f;
         savedJson.current = JSON.stringify(f);
+        setSavedRevision(r => r + 1);
         setDraft(f);
         setStatus("ready");
       })
@@ -53,7 +55,10 @@ export function useFicheEditor(key: string) {
     };
   }, [key, attempt]);
 
-  const dirty = draft !== null && JSON.stringify(draft) !== savedJson.current;
+  const dirty = useMemo(
+    () => draft !== null && JSON.stringify(draft) !== savedJson.current,
+    [draft, savedRevision],
+  );
 
   const save = useCallback(async () => {
     if (!draft || !saved.current || saving) return;
@@ -65,6 +70,7 @@ export function useFicheEditor(key: string) {
       const { fiche, notes } = await ficheSource.save(draft, saved.current);
       saved.current = fiche;
       savedJson.current = JSON.stringify(fiche);
+      setSavedRevision(r => r + 1);
       // On adopte la version du serveur seulement si rien n'a été tapé pendant l'envoi ;
       // sinon on garde le brouillon courant (il reste « non enregistré ») au lieu d'écraser la saisie.
       setDraft(current => (current && JSON.stringify(current) !== sentJson ? current : fiche));
@@ -95,6 +101,7 @@ export function useFicheEditor(key: string) {
       const fiche = await ficheSource.publish(String(draft.id));
       saved.current = fiche;
       savedJson.current = JSON.stringify(fiche);
+      setSavedRevision(r => r + 1);
       setDraft(fiche);
       setNotes(["Votre fiche est publiée et son lien public est maintenant actif."]);
       void queryClient.invalidateQueries({ queryKey: dashboardFichesKey });
