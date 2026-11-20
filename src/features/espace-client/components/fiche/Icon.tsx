@@ -30,7 +30,68 @@ export const PATHS: Record<string, string> = {
   left: "M15 5l-7 7 7 7",
   right: "M9 5l7 7-7 7",
   qr: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2",
+  instagram:
+    "M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM16 11.4a4 4 0 1 1-7.9 1.2 4 4 0 0 1 7.9-1.2zM17.5 6.5h.01",
+  facebook:
+    "M15 3h-3a4 4 0 0 0-4 4v3H5v4h3v7h4v-7h3l1-4h-4V7a1 1 0 0 1 1-1h2z",
+  tiktok:
+    "M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5",
+  linkedin:
+    "M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zM4 4a2 2 0 1 0 0 .01",
+  x: "M4 4l16 16M20 4L4 20",
+  youtube:
+    "M21.5 8.5a2.8 2.8 0 0 0-2-2C17.8 6 12 6 12 6s-5.8 0-7.5.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 2 12a29 29 0 0 0 .5 3.5 2.8 2.8 0 0 0 2 2C6.2 18 12 18 12 18s5.8 0 7.5-.5a2.8 2.8 0 0 0 2-2A29 29 0 0 0 22 12a29 29 0 0 0-.5-3.5zM10 9.5l5 2.5-5 2.5z",
+  snapchat:
+    "M12 3c-3 0-5 2-5 5.2v2.1c-.6.2-1.4.2-1.8.6-.3.3-.1.9.5 1.1.5.2 1 .4 1 .8 0 .9-1.5 2.1-3.2 2.7-.5.2-.5.8 0 1 .9.4 2 .5 2.5 1 .4.4.4 1.1 1.3 1.2 1 .1 1.8-.3 2.7-.3s1.7.4 2.7.3c.9-.1.9-.8 1.3-1.2.5-.5 1.6-.6 2.5-1 .5-.2.5-.8 0-1-1.7-.6-3.2-1.8-3.2-2.7 0-.4.5-.6 1-.8.6-.2.8-.8.5-1.1-.4-.4-1.2-.4-1.8-.6V8.2C17 5 15 3 12 3z",
+  pinterest:
+    "M12 3a9 9 0 0 0-3.3 17.4l1.4-5.4s-.4-.7-.4-1.8c0-1.7 1-3 2.2-3 1 0 1.5.8 1.5 1.7 0 1-.7 2.6-1 4-.3 1.2.6 2.2 1.8 2.2 2.1 0 3.7-2.2 3.7-5.4 0-2.8-2-4.8-5-4.8-3.4 0-5.4 2.5-5.4 5.2 0 1 .4 2.1.9 2.7",
+  telegram: "M21 4L3 11l6.5 2.5L18 7l-6.5 8.5L17 20l4-16zM9.5 13.5V19l3-3",
+  threads:
+    "M19 12a7 7 0 1 1-2.2-5.1M15 11.5c0-2-1.2-3.5-3.2-3.5-2 0-3.3 1.5-3.3 3.5s1.3 3.5 3.3 3.5c1.8 0 3.2-1.1 3.2-3.5v1c0 1.7 1 2.5 2.2 2.5 1.5 0 2.3-1.3 2.3-3.2",
+  github:
+    "M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21",
 };
+
+const SOCIAL_MATCHERS: ReadonlyArray<{
+  icon: string;
+  hosts: RegExp;
+  labels: RegExp;
+}> = [
+  { icon: "instagram", hosts: /(^|\.)(instagram\.com|instagr\.am)$/i, labels: /\b(instagram|insta)\b/i },
+  { icon: "facebook", hosts: /(^|\.)(facebook\.com|fb\.com|fb\.me)$/i, labels: /\b(facebook|fb)\b/i },
+  { icon: "tiktok", hosts: /(^|\.)tiktok\.com$/i, labels: /\b(tiktok|tik\s*tok)\b/i },
+  { icon: "linkedin", hosts: /(^|\.)(linkedin\.com|lnkd\.in)$/i, labels: /\blinked\s*in\b/i },
+  { icon: "x", hosts: /(^|\.)(x\.com|twitter\.com)$/i, labels: /\b(twitter|x)\b/i },
+  { icon: "youtube", hosts: /(^|\.)(youtube\.com|youtu\.be)$/i, labels: /\b(youtube|yt)\b/i },
+  { icon: "wa", hosts: /(^|\.)(wa\.me|whatsapp\.com)$/i, labels: /\bwhatsapp\b/i },
+  { icon: "snapchat", hosts: /(^|\.)snapchat\.com$/i, labels: /\b(snapchat|snap)\b/i },
+  { icon: "pinterest", hosts: /(^|\.)(pinterest\.[a-z.]+|pin\.it)$/i, labels: /\bpinterest\b/i },
+  { icon: "telegram", hosts: /(^|\.)(t\.me|telegram\.me|telegram\.org)$/i, labels: /\btelegram\b/i },
+  { icon: "threads", hosts: /(^|\.)threads\.(net|com)$/i, labels: /\bthreads\b/i },
+  { icon: "github", hosts: /(^|\.)github\.com$/i, labels: /\bgithub\b/i },
+];
+
+/** Déduit l'icône d'un réseau social à partir de son URL (prioritaire) ou de son libellé, sinon `globe`. */
+export function socialIconFor(label?: string, url?: string): string {
+  const rawUrl = (url ?? "").trim();
+  if (rawUrl) {
+    try {
+      const host = new URL(
+        /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`,
+      ).hostname.toLowerCase();
+      const byHost = SOCIAL_MATCHERS.find(m => m.hosts.test(host));
+      if (byHost) return byHost.icon;
+    } catch {
+      /* URL incomplète en cours de saisie : on tente le libellé */
+    }
+  }
+  const rawLabel = (label ?? "").trim();
+  if (rawLabel) {
+    const byLabel = SOCIAL_MATCHERS.find(m => m.labels.test(rawLabel));
+    if (byLabel) return byLabel.icon;
+  }
+  return "globe";
+}
 export const I = ({ n, s = 18 }: { n: string; s?: number }) => (
   <svg
     width={s}
