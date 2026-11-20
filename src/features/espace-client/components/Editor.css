@@ -74,6 +74,10 @@
     flex-direction: column;
     align-items: center;
   }
+.demo-body.m-editeur .device-in {
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 @media (max-width: 520px) {
 .demo-body {

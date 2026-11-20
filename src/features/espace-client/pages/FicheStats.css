@@ -305,6 +305,11 @@
     width: min(390px, 100%);
   }
 
+  .fiche-preview-layout .fiche-preview-device-in {
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .fiche-passage-panel {
     width: 100%;
     box-sizing: border-box;
