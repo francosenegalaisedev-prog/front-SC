@@ -18,9 +18,25 @@ export class ApiError extends Error {
   }
 }
 
-type ErrorBody = {
-  error?: string | { code?: string; message?: string };
+type ErrorDetail = {
+  champ?: string;
   message?: string;
+};
+
+type ErrorBody = {
+  error?: string | { code?: string; message?: string; details?: ErrorDetail[] };
+  message?: string;
+};
+
+const HTTP_STATUS_FALLBACK: Record<number, string> = {
+  400: "Certaines informations saisies sont invalides.",
+  401: "Votre session a expiré. Veuillez vous reconnecter.",
+  403: "Vous n'avez pas les droits nécessaires pour cette action.",
+  404: "L'élément demandé est introuvable.",
+  409: "Conflit détecté avec les données existantes.",
+  413: "Le fichier ou la requête est trop volumineux.",
+  422: "Cette action dépasse les limites de votre formule.",
+  429: "Trop de tentatives. Patientez quelques instants puis réessayez.",
 };
 
 /** Statut HTTP d'une erreur, qu'elle soit une `ApiError` ou une `AxiosError`. */
@@ -65,12 +81,25 @@ export function toApiError(
     }
     const body = e.response.data as ErrorBody | undefined;
     const err = typeof body?.error === "object" ? body.error : undefined;
-    return new ApiError(
+    const firstDetail = Array.isArray(err?.details)
+      ? err.details.find(d => typeof d?.message === "string" && d.message.trim())
+          ?.message
+      : undefined;
+    const rawMessage =
       err?.message ??
-        (typeof body?.error === "string" ? body.error : undefined) ??
-        body?.message ??
-        fallback ??
-        "Une erreur est survenue.",
+      (typeof body?.error === "string" ? body.error : undefined) ??
+      body?.message;
+    const resolvedMessage =
+      rawMessage && rawMessage !== "Données invalides"
+        ? rawMessage
+        : firstDetail ??
+          rawMessage ??
+          fallback ??
+          HTTP_STATUS_FALLBACK[e.response.status] ??
+          "La requête n'a pas pu aboutir. Vérifiez vos informations puis réessayez.";
+
+    return new ApiError(
+      resolvedMessage,
       err?.code,
       e.response.status,
     );

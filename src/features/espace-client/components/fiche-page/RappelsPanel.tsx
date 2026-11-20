@@ -161,7 +161,7 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
         </p>
       ) : rappelsQuery.isError ? (
         <div className="fiche-passage-state" role="alert">
-          <p>Impossible de charger les prospects.</p>
+          <p>{errMsg(rappelsQuery.error)}</p>
           <button type="button" onClick={() => void rappelsQuery.refetch()}>
             Réessayer
           </button>

@@ -331,7 +331,7 @@ export default function CallbackRequestsPage() {
         </div>
       ) : requestsQuery.isError ? (
         <div className="callback-requests-state" role="alert">
-          <p>Impossible de charger les prospects.</p>
+          <p>{errMsg(requestsQuery.error)}</p>
           <button
             type="button"
             onClick={() => void requestsQuery.refetch()}

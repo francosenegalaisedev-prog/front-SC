@@ -31,7 +31,7 @@ describe("Fiche : outils du propriétaire", () => {
   it("par défaut (visiteur) : ni bouton « NFC · QR », ni QR code", () => {
     const out = html(h(Fiche, { fiche: fiche() }));
     for (const marker of OWNER_MARKERS) expect(out).not.toContain(marker);
-    expect(out).toContain("Fiche de contact"); // le reste de l'en-tête est inchangé
+    expect(out).toContain("Partager"); // le reste de l'en-tête est inchangé
   });
 
   it("propriétaire : bouton « NFC · QR » et QR code présents", () => {
@@ -180,7 +180,7 @@ describe("PublicFichePage : qui voit les outils", () => {
     const deadline = Date.now() + 4000;
     while (
       Date.now() < deadline &&
-      !/Fiche de contact|Fiche introuvable|Fiche indisponible/.test(
+      !/Partager|Fiche introuvable|Fiche indisponible/.test(
         host.textContent ?? "",
       )
     ) {
@@ -197,7 +197,7 @@ describe("PublicFichePage : qui voit les outils", () => {
 
   it("visiteur anonyme : aucun outil, et aucune requête vers l'espace client", async () => {
     const text = await open();
-    expect(text).toContain("Fiche de contact");
+    expect(text).toContain("Partager");
     expect(text).not.toContain("NFC · QR");
     expect(dashboardCalls()).toBe(0);
   });
@@ -212,7 +212,7 @@ describe("PublicFichePage : qui voit les outils", () => {
     saveSession({ token: "T", user });
     dashboard = () => ({ status: 200, data: [{ id: 2, slug: "autre-fiche" }] });
     const text = await open();
-    expect(text).toContain("Fiche de contact");
+    expect(text).toContain("Partager");
     expect(text).not.toContain("NFC · QR");
   });
 
