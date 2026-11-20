@@ -8,7 +8,7 @@ interface FiltersProps {
 }
 
 const fieldClass =
-  "min-h-10 rounded-lg border border-[#e3dfd8] bg-white px-3 text-sm text-[#25221e] outline-none focus:border-[#08090A] focus:ring-2 focus:ring-[#08090A]/10";
+  "min-h-10 w-full min-w-0 rounded-lg border border-[#e3dfd8] bg-white px-3 text-sm text-[#25221e] outline-none focus:border-[#08090A] focus:ring-2 focus:ring-[#08090A]/10";
 
 export function FicheListControls({ filters, onChange }: FiltersProps) {
   const update = <K extends keyof FicheListFilters>(
@@ -132,10 +132,10 @@ export function FichePagination({
           ? "Aucune fiche ne correspond aux filtres"
           : `${startIndex}–${endIndex} sur ${total} fiche${total > 1 ? "s" : ""}`}
       </p>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         <button
           type="button"
-          className={`${fieldClass} px-3 disabled:cursor-not-allowed disabled:opacity-45`}
+          className="min-h-10 rounded-lg border border-[#e3dfd8] bg-white px-3 text-sm text-[#25221e] outline-none focus:border-[#08090A] focus:ring-2 focus:ring-[#08090A]/10 disabled:cursor-not-allowed disabled:opacity-45"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
         >
@@ -146,7 +146,7 @@ export function FichePagination({
         </span>
         <button
           type="button"
-          className={`${fieldClass} px-3 disabled:cursor-not-allowed disabled:opacity-45`}
+          className="min-h-10 rounded-lg border border-[#e3dfd8] bg-white px-3 text-sm text-[#25221e] outline-none focus:border-[#08090A] focus:ring-2 focus:ring-[#08090A]/10 disabled:cursor-not-allowed disabled:opacity-45"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= pageCount}
         >
