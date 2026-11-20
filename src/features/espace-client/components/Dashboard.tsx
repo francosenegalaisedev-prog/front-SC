@@ -17,7 +17,6 @@ import {
   displayName,
   fmtDate,
   health,
-  publicUrl,
   SECTEUR_LABEL,
   subscriptionEndsAt,
 } from "../lib/dashboard";
@@ -259,7 +258,6 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
 
   const cur = pageData.items.find(f => f.slug === sel) ?? pageData.items[0];
 
-  const url = cur ? publicUrl(cur.slug) : "";
   const missing = cur ? checks(cur).filter(c => !c.ok) : [];
   const pc = cur ? completion(cur) : 0;
 
