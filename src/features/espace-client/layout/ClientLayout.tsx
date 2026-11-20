@@ -96,26 +96,9 @@ const NAV: {
     match: p => p.startsWith(`${BASE}/parametres`),
   },
 ];
-const MOBILE_LABEL: Record<string, string> = {
-  "Tableau de bord": "Accueil",
-  "Éditeur de fiches": "Éditer",
-  Brouillons: "Brouillons",
-  "Demandes de rappel": "Rappels",
-  "Abonnements & formules": "Formules",
-  Paiements: "Paiements",
-  Paramètres: "Réglages",
-};
-
-const MOBILE_PRIMARY_PATHS = new Set([
-  BASE,
-  `${BASE}/editeur`,
-  `${BASE}/demandes-rappel`,
-  `${BASE}/abonnements`,
-]);
-
 export default function ClientLayout({ children }: { children?: ReactNode }) {
   const { pathname } = useLocation();
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const user = useSession()?.user;
   const profile = useQuery({
     queryKey: ["auth", "me", user?.id],
@@ -128,17 +111,17 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
   });
 
   useEffect(() => {
-    setMoreOpen(false);
+    setMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!moreOpen) return;
+    if (!menuOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMoreOpen(false);
+      if (e.key === "Escape") setMenuOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [moreOpen]);
+  }, [menuOpen]);
 
   // Prévient le serveur puis supprime la session ; <RequireAuth> renvoie alors vers /login.
   const logout = () => void signOut();
@@ -153,9 +136,7 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
     email: profile.data?.email ?? user.email,
     emailVerified,
   };
-  const mobilePrimary = NAV.filter(n => MOBILE_PRIMARY_PATHS.has(n.to));
-  const mobileSecondary = NAV.filter(n => !MOBILE_PRIMARY_PATHS.has(n.to));
-  const secondaryActive = mobileSecondary.some(n => n.match(pathname));
+  const activeNav = NAV.find(n => n.match(pathname));
 
   return (
     <div className="cl">
@@ -289,19 +270,19 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
           </Suspense>
         )}
       </main>
-      {moreOpen && (
+      {menuOpen && (
         <div
           className="cl-more-backdrop"
-          onClick={() => setMoreOpen(false)}
+          onClick={() => setMenuOpen(false)}
           aria-hidden="true"
         />
       )}
-      {moreOpen && (
+      {menuOpen && (
         <div
-          id="cl-mobile-more"
+          id="cl-mobile-menu"
           className="cl-more-sheet"
           role="dialog"
-          aria-label="Plus d’options de navigation"
+          aria-label="Menu de navigation mobile"
         >
           <div className="cl-more-head">
             <div className="cl-more-user">
@@ -311,71 +292,65 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
             <button
               type="button"
               className="cl-more-close"
-              onClick={() => setMoreOpen(false)}
+              onClick={() => setMenuOpen(false)}
               aria-label="Fermer le menu"
             >
               <Ico n="x" />
             </button>
           </div>
-          <ul className="cl-more-list">
-            {mobileSecondary.map(n => {
-              const on = n.match(pathname);
-              return (
-                <li key={n.to}>
-                  <Link
-                    to={n.to}
-                    className={on ? "on" : undefined}
-                    aria-current={on ? "page" : undefined}
-                    onClick={() => setMoreOpen(false)}
-                  >
-                    <Ico n={n.icon} />
-                    <span>{n.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-            <li>
-              <button
-                type="button"
-                className="cl-more-logout"
-                onClick={logout}
-              >
-                <Ico n="out" />
-                <span>Se déconnecter</span>
-              </button>
-            </li>
-          </ul>
+          <nav aria-label="Menu mobile">
+            <ul className="cl-more-list">
+              {NAV.map(n => {
+                const on = n.match(pathname);
+                return (
+                  <li key={n.to}>
+                    <Link
+                      to={n.to}
+                      className={on ? "on" : undefined}
+                      aria-current={on ? "page" : undefined}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Ico n={n.icon} />
+                      <span>{n.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+              <li className="cl-more-sep">
+                <button
+                  type="button"
+                  className="cl-more-logout"
+                  onClick={logout}
+                >
+                  <Ico n="out" />
+                  <span>Se déconnecter</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       )}
-      <nav className="cl-tabbar" aria-label="Navigation mobile">
-        {mobilePrimary.map(n => {
-          const on = n.match(pathname);
-          const label = MOBILE_LABEL[n.label] ?? n.label;
-          return (
-            <Link
-              key={n.to}
-              to={n.to}
-              className={on ? "on" : undefined}
-              aria-current={on ? "page" : undefined}
-              aria-label={n.label}
-              title={n.label}
-            >
-              <Ico n={n.icon} />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
+      <nav className="cl-tabbar cl-mobile-bottom" aria-label="Navigation mobile">
+        <div className="cl-mobile-current">
+          <img
+            src="/images/logo-vertical-blanc.webp"
+            alt=""
+            width={24}
+            height={24}
+            aria-hidden="true"
+          />
+          <span>{activeNav?.label ?? "Espace client"}</span>
+        </div>
         <button
           type="button"
-          className={moreOpen || secondaryActive ? "on" : undefined}
-          onClick={() => setMoreOpen(open => !open)}
-          aria-expanded={moreOpen}
-          aria-controls="cl-mobile-more"
-          aria-label="Plus d’options"
-          title="Plus d’options"
+          className={`cl-burger-btn${menuOpen ? " on" : ""}`}
+          onClick={() => setMenuOpen(open => !open)}
+          aria-expanded={menuOpen}
+          aria-controls="cl-mobile-menu"
+          aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
         >
-          <Ico n={moreOpen ? "x" : "menu"} />
-          <span>Plus</span>
+          <Ico n={menuOpen ? "x" : "menu"} />
+          <span>{menuOpen ? "Fermer" : "Menu"}</span>
         </button>
       </nav>
     </div>
