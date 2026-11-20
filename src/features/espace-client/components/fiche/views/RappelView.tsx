@@ -18,7 +18,7 @@ export default function RappelView({ fiche }: ViewProps) {
   if (sent) {
     return (
       <p className="f-ok" role="status">
-        Merci ! Votre demande a bien été envoyée à l’établissement.
+        Merci ! Vos coordonnées ont bien été transmises.
       </p>
     );
   }
@@ -60,7 +60,7 @@ export default function RappelView({ fiche }: ViewProps) {
       }}
     >
       <p className="f-txt">
-        Laissez vos coordonnées, l’établissement vous rappelle rapidement.
+        Partagez vos coordonnées pour être recontacté rapidement.
       </p>
       <input
         name="nom"
@@ -120,7 +120,7 @@ export default function RappelView({ fiche }: ViewProps) {
         </p>
       )}
       <button className="f-btn gold" type="submit" disabled={rappelSubmitting}>
-        {rappelSubmitting ? "Envoi en cours…" : "Demander un rappel"}{" "}
+        {rappelSubmitting ? "Envoi en cours…" : "Envoyer mes coordonnées"}{" "}
         <I n="arrow" s={14} />
       </button>
     </form>

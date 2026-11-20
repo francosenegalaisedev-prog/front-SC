@@ -93,10 +93,10 @@ describe("RappelView", () => {
       societe: "Atelier Dakar",
       website: "",
     });
-    expect(host.textContent).toContain("Votre demande a bien été envoyée");
+    expect(host.textContent).toContain("Vos coordonnées ont bien été transmises");
   });
 
-  it("affiche le bouton Être rappelé sous les boutons de contact et ouvre le formulaire en modale", async () => {
+  it("affiche le bouton Échangez contact sous les boutons de contact et ouvre le formulaire en modale", async () => {
     const signatureFiche = FICHES.find(f => f.formule === "signature") ?? FICHES[0];
     act(() => {
       root.render(h(Fiche, { fiche: signatureFiche }));
@@ -104,6 +104,7 @@ describe("RappelView", () => {
 
     const cta = host.querySelector<HTMLButtonElement>(".f-rappel-cta");
     expect(cta).not.toBeNull();
+    expect(cta?.textContent).toContain("Échangez contact");
     // Aucun formulaire ouvert avant le clic, et pas de section rappel dans .f-body
     expect(host.querySelector(".f-body form.f-form")).toBeNull();
     expect(host.querySelector('[role="dialog"]')).toBeNull();

@@ -106,7 +106,7 @@ describe("CallbackRequestsPage", () => {
 
     expect(host.textContent).toContain("Aminata Fall");
     expect(host.textContent).toContain("Studio Dakar");
-    expect(host.textContent).toContain("Nouvelle");
+    expect(host.textContent).toContain("Nouveau");
     const mailLink = host.querySelector<HTMLAnchorElement>(
       'a[href="mailto:aminata@studio.sn"]',
     );
@@ -220,10 +220,10 @@ describe("CallbackRequestsPage", () => {
     };
 
     renderPage();
-    await waitFor(() => host.textContent?.includes("Marquer traitée") ?? false);
+    await waitFor(() => host.textContent?.includes("Marquer traité") ?? false);
 
     const treatButton = Array.from(host.querySelectorAll("button")).find(btn =>
-      btn.textContent?.includes("Marquer traitée"),
+      btn.textContent?.includes("Marquer traité"),
     )!;
     await act(async () => {
       treatButton.click();

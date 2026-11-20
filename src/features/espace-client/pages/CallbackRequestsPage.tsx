@@ -106,7 +106,7 @@ export default function CallbackRequestsPage() {
     },
     onError: err => {
       setActionError(
-        errMsg(err) || "Impossible de mettre à jour le statut de la demande.",
+        errMsg(err) || "Impossible de mettre à jour le statut du prospect.",
       );
     },
   });
@@ -124,7 +124,7 @@ export default function CallbackRequestsPage() {
       void queryClient.invalidateQueries({ queryKey: ["fiche-rappels"] });
     },
     onError: err => {
-      setActionError(errMsg(err) || "Impossible de supprimer cette demande.");
+      setActionError(errMsg(err) || "Impossible de supprimer ce prospect.");
     },
   });
 
@@ -156,7 +156,7 @@ export default function CallbackRequestsPage() {
             statusMutation.mutate({ id: demande.id, statut: nextStatus })
           }
         >
-          {demande.statut === "TRAITEE" ? "Réouvrir" : "Marquer traitée"}
+          {demande.statut === "TRAITEE" ? "Réouvrir" : "Marquer traité"}
         </button>
         {isConfirming ? (
           <>
@@ -196,10 +196,10 @@ export default function CallbackRequestsPage() {
       <header className="callback-requests-header">
         <div>
           <p className="callback-requests-eyebrow">Espace client</p>
-          <h1>Demandes de rappel</h1>
+          <h1>Prospects</h1>
           <p>
-            Retrouvez les coordonnées laissées depuis le formulaire public «
-            Être rappelé » de toutes vos fiches.
+            Retrouvez les coordonnées laissées depuis le bouton « Échangez
+            contact » de toutes vos fiches.
           </p>
         </div>
         <button
@@ -207,7 +207,7 @@ export default function CallbackRequestsPage() {
           className="fiche-passage-refresh"
           onClick={() => void requestsQuery.refetch()}
           disabled={requestsQuery.isFetching}
-          aria-label="Actualiser les demandes"
+          aria-label="Actualiser les prospects"
           title="Actualiser"
         >
           {requestsQuery.isFetching ? "…" : "↻"}
@@ -217,7 +217,7 @@ export default function CallbackRequestsPage() {
       <div
         className="callback-requests-filters"
         role="search"
-        aria-label="Filtrer les demandes de rappel"
+        aria-label="Filtrer les prospects"
       >
         <label>
           <span>Recherche</span>
@@ -241,8 +241,8 @@ export default function CallbackRequestsPage() {
             }}
           >
             <option value="">Tous les statuts</option>
-            <option value="NOUVELLE">Nouvelles</option>
-            <option value="TRAITEE">Traitées</option>
+            <option value="NOUVELLE">Nouveaux</option>
+            <option value="TRAITEE">Traités</option>
           </select>
         </label>
         <label>
@@ -281,11 +281,11 @@ export default function CallbackRequestsPage() {
 
       {requestsQuery.isPending ? (
         <div className="callback-requests-state" role="status">
-          Chargement des demandes…
+          Chargement des prospects…
         </div>
       ) : requestsQuery.isError ? (
         <div className="callback-requests-state" role="alert">
-          <p>Impossible de charger les demandes de rappel.</p>
+          <p>Impossible de charger les prospects.</p>
           <button
             type="button"
             onClick={() => void requestsQuery.refetch()}
@@ -300,12 +300,12 @@ export default function CallbackRequestsPage() {
             <div className="callback-requests-summary-metrics">
               <div>
                 <span>
-                  {hasFilters ? "Résultats filtrés" : "Total des demandes"}
+                  {hasFilters ? "Résultats filtrés" : "Total des prospects"}
                 </span>
                 <strong>{(pagination?.total ?? 0).toLocaleString("fr-FR")}</strong>
               </div>
               <div>
-                <span>Nouvelles à rappeler</span>
+                <span>Nouveaux prospects</span>
                 <strong className="is-accent">
                   {(data?.nouvellesCount ?? 0).toLocaleString("fr-FR")}
                 </strong>
@@ -314,7 +314,7 @@ export default function CallbackRequestsPage() {
             <p>
               {pagination?.total
                 ? `Page ${pagination.page} sur ${pagination.totalPages}`
-                : "Aucune demande enregistrée"}
+                : "Aucun prospect enregistré"}
             </p>
           </div>
 
@@ -396,7 +396,7 @@ export default function CallbackRequestsPage() {
                             <span
                               className={`callback-status-pill ${isTreated ? "is-done" : "is-new"}`}
                             >
-                              {isTreated ? "Traitée" : "Nouvelle"}
+                              {isTreated ? "Traité" : "Nouveau"}
                             </span>
                           </td>
                           <td>{formatDate(demande.createdAt)}</td>
@@ -425,7 +425,7 @@ export default function CallbackRequestsPage() {
                         <span
                           className={`callback-status-pill ${isTreated ? "is-done" : "is-new"}`}
                         >
-                          {isTreated ? "Traitée" : "Nouvelle"}
+                          {isTreated ? "Traité" : "Nouveau"}
                         </span>
                       </div>
                       <span className="callback-request-card-date">
@@ -477,13 +477,13 @@ export default function CallbackRequestsPage() {
             <div className="callback-requests-empty">
               <h2>
                 {hasFilters
-                  ? "Aucune demande ne correspond à ces filtres"
-                  : "Aucune demande pour le moment"}
+                  ? "Aucun prospect ne correspond à ces filtres"
+                  : "Aucun prospect pour le moment"}
               </h2>
               <p>
                 {hasFilters
                   ? "Essayez d'élargir vos critères de recherche."
-                  : "Les demandes envoyées depuis les fiches publiques apparaîtront ici."}
+                  : "Les contacts envoyés depuis vos fiches publiques apparaîtront ici."}
               </p>
             </div>
           )}
@@ -491,7 +491,7 @@ export default function CallbackRequestsPage() {
           {totalPages > 1 && (
             <nav
               className="callback-requests-pagination"
-              aria-label="Pagination des demandes de rappel"
+              aria-label="Pagination des prospects"
             >
               <button
                 type="button"
@@ -515,8 +515,8 @@ export default function CallbackRequestsPage() {
             </nav>
           )}
           <p className="callback-requests-footnote">
-            Affichage de {data?.demandes.length ?? 0} demande(s) par page, des
-            plus récentes aux plus anciennes.
+            Affichage de {data?.demandes.length ?? 0} prospect(s) par page, des
+            plus récents aux plus anciens.
           </p>
         </>
       )}

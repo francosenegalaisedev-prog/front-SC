@@ -60,7 +60,7 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
     },
     onError: err => {
       setActionError(
-        errMsg(err) || "Impossible de mettre à jour le statut de la demande.",
+        errMsg(err) || "Impossible de mettre à jour le statut du prospect.",
       );
     },
   });
@@ -80,7 +80,7 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
       });
     },
     onError: err => {
-      setActionError(errMsg(err) || "Impossible de supprimer cette demande.");
+      setActionError(errMsg(err) || "Impossible de supprimer ce prospect.");
     },
   });
 
@@ -93,15 +93,15 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
     >
       <div className="fiche-passage-heading">
         <div>
-          <h2 id="fiche-rappels-title">Demandes de rappel</h2>
-          <p>Les coordonnées laissées depuis le bloc « Être rappelé ».</p>
+          <h2 id="fiche-rappels-title">Prospects</h2>
+          <p>Les coordonnées laissées depuis le bouton « Échangez contact ».</p>
         </div>
         <button
           type="button"
           className="fiche-passage-refresh"
           onClick={() => void rappelsQuery.refetch()}
           disabled={rappelsQuery.isFetching}
-          aria-label="Actualiser les demandes"
+          aria-label="Actualiser les prospects"
           title="Actualiser"
         >
           {rappelsQuery.isFetching ? "…" : "↻"}
@@ -116,11 +116,11 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
 
       {rappelsQuery.isPending ? (
         <p className="fiche-passage-state" role="status">
-          Chargement des demandes…
+          Chargement des prospects…
         </p>
       ) : rappelsQuery.isError ? (
         <div className="fiche-passage-state" role="alert">
-          <p>Impossible de charger les demandes de rappel.</p>
+          <p>Impossible de charger les prospects.</p>
           <button type="button" onClick={() => void rappelsQuery.refetch()}>
             Réessayer
           </button>
@@ -129,13 +129,13 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
         <>
           <div className="fiche-passage-cards fiche-rappel-summary">
             <div className="fiche-passage-card">
-              <span>Total des demandes</span>
+              <span>Total des prospects</span>
               <strong>
                 {(rappelsQuery.data?.total ?? 0).toLocaleString("fr-FR")}
               </strong>
             </div>
             <div className="fiche-passage-card">
-              <span>Nouvelles à rappeler</span>
+              <span>Nouveaux prospects</span>
               <strong>
                 {(rappelsQuery.data?.nouvellesCount ?? 0).toLocaleString(
                   "fr-FR",
@@ -210,7 +210,7 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
                           <span
                             className={`callback-status-pill ${isTreated ? "is-done" : "is-new"}`}
                           >
-                            {isTreated ? "Traitée" : "Nouvelle"}
+                            {isTreated ? "Traité" : "Nouveau"}
                           </span>
                         </td>
                         <td>
@@ -275,11 +275,11 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
             </div>
           ) : (
             <p className="fiche-passage-empty">
-              Aucune demande de rappel pour le moment.
+              Aucun prospect pour le moment.
             </p>
           )}
           <p className="fiche-passage-filter-hint">
-            Les demandes les plus récentes sont affichées en premier (maximum
+            Les prospects les plus récents sont affichés en premier (maximum
             100).
           </p>
         </>

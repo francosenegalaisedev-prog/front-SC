@@ -56,6 +56,10 @@ export default function Fiche({
   const e = resolveHeader(fiche);
   const tabs = visibleTabs(fiche);
   const rappelTab = tabs.find(t => t.type === "rappel");
+  const callbackLabel =
+    rappelTab?.titre && rappelTab.titre !== "Être rappelé"
+      ? rappelTab.titre
+      : "Échangez contact";
   const hasConfiguredRappel = configuredTabs(fiche).some(
     t => t.type === "rappel",
   );
@@ -216,7 +220,7 @@ export default function Fiche({
             onClick={() => setRappelOpen(true)}
           >
             <I n="chat" s={15} />
-            {rappelTab?.titre || "Être rappelé"}
+            {callbackLabel}
           </button>
         )}
       </header>
@@ -267,17 +271,17 @@ export default function Fiche({
       {rappelOpen && (
         <Sheet
           onClose={() => setRappelOpen(false)}
-          label={rappelTab?.titre || "Être rappelé"}
+          label={callbackLabel}
         >
           <div className="f-sheet-b f-rappel-sheet">
-            <h3>{rappelTab?.titre || "Être rappelé"}</h3>
+            <h3>{callbackLabel}</h3>
             <RappelView
               fiche={fiche}
               tab={
                 rappelTab ?? {
                   id: "rappel",
                   type: "rappel",
-                  titre: "Être rappelé",
+                  titre: "Échangez contact",
                   visible: true,
                 }
               }
