@@ -198,7 +198,7 @@ export default function PaymentsPage() {
               </div>
               {data.pagination.totalPages > 1 && (
                 <nav
-                  className="flex items-center justify-between border-t border-[#eee9e1] px-5 py-4 sm:px-6"
+                  className="flex flex-wrap items-center justify-between gap-3 border-t border-[#eee9e1] px-5 py-4 sm:px-6"
                   aria-label="Pagination des paiements"
                 >
                   <span className="text-sm text-[#6d665d]">
@@ -244,7 +244,7 @@ export default function PaymentsPage() {
               .payment-print-actions { display: none !important; }
             }
           `}</style>
-          <article className="mx-auto my-6 max-w-2xl rounded-2xl border border-[#e3dfd8] bg-white p-8 text-[#111111] shadow-lg print:my-0 print:max-w-none print:border-0 print:shadow-none">
+          <article className="mx-auto my-4 max-w-2xl rounded-2xl border border-[#e3dfd8] bg-white p-5 text-[#111111] shadow-lg sm:my-6 sm:p-8 print:my-0 print:max-w-none print:border-0 print:shadow-none">
             <div className="flex items-start justify-between gap-4 border-b border-[#e3dfd8] pb-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#EF1733]">
@@ -292,7 +292,7 @@ export default function PaymentsPage() {
                 Reçu de paiement. Ce document n’est pas une facture.
               </p>
             </footer>
-            <div className="payment-print-actions mt-6 flex justify-end gap-3">
+            <div className="payment-print-actions mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end sm:gap-3">
               <button
                 type="button"
                 onClick={() => setReceipt(null)}
@@ -329,9 +329,9 @@ function DocumentField({
   strong?: boolean;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <dt className="text-xs uppercase tracking-wide text-[#8d8a85]">{label}</dt>
-      <dd className={`mt-1 ${strong ? "text-xl font-bold" : "font-medium"}`}>
+      <dd className={`mt-1 break-words ${strong ? "text-xl font-bold" : "font-medium"}`}>
         {value}
       </dd>
     </div>
