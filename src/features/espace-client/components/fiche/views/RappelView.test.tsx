@@ -155,6 +155,28 @@ describe("RappelView", () => {
     }
   });
 
+  it("affiche le bouton WhatsApp vert en permanence et le bouton Mon site quand le site est renseigné", () => {
+    const ficheWithSite = {
+      ...FICHES[0],
+      whatsapp: "+221 77 123 45 67",
+      site: "sunset-dakar.sn",
+    };
+    act(() => {
+      root.render(h(Fiche, { fiche: ficheWithSite }));
+    });
+
+    const waBtn = host.querySelector<HTMLAnchorElement>(".f-acts a.whatsapp");
+    expect(waBtn).not.toBeNull();
+    expect(waBtn?.textContent).toContain("WhatsApp");
+
+    const siteBtn = Array.from(
+      host.querySelectorAll<HTMLAnchorElement>(".f-acts a"),
+    ).find(a => a.textContent?.includes("Mon site"));
+    expect(siteBtn).not.toBeNull();
+    expect(siteBtn?.getAttribute("href")).toBe("https://sunset-dakar.sn");
+    expect(siteBtn?.getAttribute("target")).toBe("_blank");
+  });
+
   it("affiche le message d'erreur précis retourné par le serveur", async () => {
     api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
       throw new AxiosError("fail", "429", config, undefined, {

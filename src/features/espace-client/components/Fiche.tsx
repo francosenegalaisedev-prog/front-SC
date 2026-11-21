@@ -119,6 +119,11 @@ export default function Fiche({
     }
     flashShare("Copie impossible");
   };
+  const siteHref = fiche.site?.trim()
+    ? /^https?:\/\//i.test(fiche.site.trim())
+      ? fiche.site.trim()
+      : `https://${fiche.site.trim()}`
+    : "";
   const actions = [
     fiche.whatsapp && {
       k: "whatsapp",
@@ -137,6 +142,12 @@ export default function Fiche({
       n: "mail",
       l: "E-mail",
       href: `mailto:${fiche.email}`,
+    },
+    siteHref && {
+      k: "site",
+      n: "globe",
+      l: "Mon site",
+      href: siteHref,
     },
   ]
     .filter((a): a is Action => !!a)
@@ -257,11 +268,18 @@ export default function Fiche({
             <a
               key={a.k}
               href={a.href}
-              className={i === 0 ? "primary" : ""}
-              target={a.k === "whatsapp" ? "_blank" : undefined}
+              className={[
+                i === 0 ? "primary" : "",
+                a.k === "whatsapp" ? "whatsapp" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              target={
+                a.k === "whatsapp" || a.k === "site" ? "_blank" : undefined
+              }
               rel="noreferrer"
             >
-              <I n={a.n} s={16} />
+              <I n={a.n} s={14} />
               {a.l}
             </a>
           ))}
