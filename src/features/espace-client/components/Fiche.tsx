@@ -159,7 +159,7 @@ export default function Fiche({
           {ownerTools && (
             <button onClick={() => setHeld(h => !h)} aria-pressed={held}>
               <I n="qr" s={12} />
-              NFC · QR
+              Afficher QR code
             </button>
           )}
         </div>
