@@ -21,19 +21,22 @@ export default function IdentityBox({
       <div className="ed-grid">
         {(
           [
-            ["prenom", "Prénom / nom commercial"],
-            ["nom", "Nom"],
-            ["fonction", "Fonction"],
-            ["entreprise", "Entreprise"],
-            ["telephone", "Téléphone"],
-            ["whatsapp", "WhatsApp"],
-            ["email", "E-mail"],
-            ["adresse", "Adresse"],
+            ["prenom", "Prénom / nom commercial", ""],
+            ["nom", "Nom", ""],
+            ["fonction", "Fonction", ""],
+            ["entreprise", "Entreprise", ""],
+            ["telephone", "Téléphone", ""],
+            ["whatsapp", "WhatsApp", ""],
+            ["email", "E-mail", ""],
+            ["site", "Mon site", "https://…"],
+            ["adresse", "Adresse", ""],
           ] as const
-        ).map(([k, l]) => (
+        ).map(([k, l, ph]) => (
           <label key={k}>
             <span>{l}</span>
             <input
+              type={k === "site" ? "url" : k === "email" ? "email" : "text"}
+              placeholder={ph || undefined}
               value={fiche[k] || ""}
               onChange={ev => up({ [k]: ev.target.value })}
             />
