@@ -2,6 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "../../../lib/api";
 import { errMsg } from "../../../lib/apiError";
+import {
+  ManualProspectModal,
+  PhotoLightboxModal,
+  resolveProspectMediaUrl,
+  ScanProspectModal,
+  type ProspectItem,
+} from "../components/prospects/ProspectModals";
 import { useDashboardFiches } from "../hooks/useDashboardFiches";
 import "./FicheStats.css";
 
@@ -9,25 +16,8 @@ const PAGE_SIZE = 10;
 
 export type RappelStatus = "NOUVELLE" | "TRAITEE";
 
-type CallbackRequest = {
-  id: number;
-  nom: string;
-  telephone: string;
-  email: string | null;
-  societe: string | null;
-  statut: RappelStatus;
-  traiteeAt: string | null;
-  createdAt: string;
-  fiche: {
-    id: number;
-    slug: string;
-    prenom: string;
-    nom: string;
-  };
-};
-
 type CallbackRequestsResponse = {
-  demandes: CallbackRequest[];
+  demandes: ProspectItem[];
   nouvellesCount?: number;
   pagination: {
     page: number;
@@ -46,13 +36,20 @@ function formatDate(value: string) {
   }).format(date);
 }
 
-function whatsappHref(telephone: string) {
+function whatsappHref(telephone: string | null) {
+  if (!telephone) return null;
   const digits = telephone.replace(/\D/g, "");
   return digits ? `https://wa.me/${digits}` : null;
 }
 
 function ficheLabel(fiche: { slug: string; prenom?: string; nom?: string }) {
   return [fiche.prenom, fiche.nom].filter(Boolean).join(" ") || fiche.slug;
+}
+
+function sourceBadge(source?: "PUBLIC" | "MANUEL" | "SCAN") {
+  if (source === "SCAN") return { label: "Scan", cls: "is-scan" };
+  if (source === "MANUEL") return { label: "Manuel", cls: "is-manual" };
+  return { label: "Fiche", cls: "is-public" };
 }
 
 export default function CallbackRequestsPage() {
@@ -65,8 +62,19 @@ export default function CallbackRequestsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
+  const [scanOpen, setScanOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [convertTarget, setConvertTarget] = useState<ProspectItem | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
   const fichesQuery = useDashboardFiches();
+  const fiches = fichesQuery.data ?? [];
   const trimmedSearch = search.trim();
+
+  const invalidateProspects = () => {
+    void queryClient.invalidateQueries({ queryKey: ["all-callback-requests"] });
+    void queryClient.invalidateQueries({ queryKey: ["fiche-rappels"] });
+  };
 
   const requestsQuery = useQuery({
     queryKey: [
@@ -100,10 +108,7 @@ export default function CallbackRequestsPage() {
     },
     onSuccess: () => {
       setActionError(null);
-      void queryClient.invalidateQueries({
-        queryKey: ["all-callback-requests"],
-      });
-      void queryClient.invalidateQueries({ queryKey: ["fiche-rappels"] });
+      invalidateProspects();
     },
     onError: err => {
       setActionError(
@@ -119,13 +124,23 @@ export default function CallbackRequestsPage() {
     onSuccess: () => {
       setConfirmDeleteId(null);
       setActionError(null);
-      void queryClient.invalidateQueries({
-        queryKey: ["all-callback-requests"],
-      });
-      void queryClient.invalidateQueries({ queryKey: ["fiche-rappels"] });
+      invalidateProspects();
     },
     onError: err => {
       setActionError(errMsg(err) || "Impossible de supprimer ce prospect.");
+    },
+  });
+
+  const deletePhotoMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`fiches/rappels/${id}/photo`);
+    },
+    onSuccess: () => {
+      setActionError(null);
+      invalidateProspects();
+    },
+    onError: err => {
+      setActionError(errMsg(err) || "Impossible de supprimer la photo.");
     },
   });
 
@@ -133,7 +148,10 @@ export default function CallbackRequestsPage() {
   const pagination = data?.pagination;
   const totalPages = pagination?.totalPages ?? 0;
   const hasFilters = Boolean(ficheId || statut || trimmedSearch);
-  const isMutating = statusMutation.isPending || deleteMutation.isPending;
+  const isMutating =
+    statusMutation.isPending ||
+    deleteMutation.isPending ||
+    deletePhotoMutation.isPending;
 
   const resetFilters = () => {
     setFicheId("");
@@ -177,13 +195,58 @@ export default function CallbackRequestsPage() {
     }
   };
 
-  const renderActions = (demande: CallbackRequest) => {
+  const renderNote = (demande: ProspectItem) => {
+    const audioUrl = resolveProspectMediaUrl(demande.noteAudioUrl);
+    if (!demande.noteTexte && !audioUrl) return null;
+    return (
+      <div className="prospect-note-display">
+        {demande.noteTexte && (
+          <p className="prospect-note-text">{demande.noteTexte}</p>
+        )}
+        {audioUrl && (
+          <audio
+            controls
+            preload="metadata"
+            className="prospect-audio-player"
+            src={audioUrl}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const renderActions = (demande: ProspectItem) => {
     const nextStatus: RappelStatus =
       demande.statut === "TRAITEE" ? "NOUVELLE" : "TRAITEE";
     const isConfirming = confirmDeleteId === demande.id;
+    const isScanPending =
+      demande.source === "SCAN" || (!demande.nom && !demande.telephone);
+    const hasRemovablePhoto = Boolean(
+      demande.photoUrl && (demande.nom || demande.telephone),
+    );
 
     return (
       <div className="callback-actions">
+        {isScanPending && (
+          <button
+            type="button"
+            className="callback-action-btn is-convert"
+            disabled={isMutating}
+            onClick={() => setConvertTarget(demande)}
+          >
+            Saisir manuellement
+          </button>
+        )}
+        {hasRemovablePhoto && (
+          <button
+            type="button"
+            className="callback-action-btn is-ghost"
+            disabled={isMutating}
+            onClick={() => deletePhotoMutation.mutate(demande.id)}
+          >
+            Supprimer photo
+          </button>
+        )}
         <button
           type="button"
           className="callback-action-btn is-primary"
@@ -234,18 +297,92 @@ export default function CallbackRequestsPage() {
           <p className="callback-requests-eyebrow">Espace client</p>
           <h1>Prospects</h1>
           <p>
-            Retrouvez les coordonnées laissées depuis le bouton « Échangez
-            contact » de toutes vos fiches.
+            Retrouvez vos contacts reçus via « Échangez contact », ajoutés
+            manuellement ou scannés depuis une carte de visite.
           </p>
         </div>
         <div className="callback-header-actions">
+          <button
+            type="button"
+            className="callback-scan-btn"
+            onClick={() => setScanOpen(true)}
+            disabled={fiches.length === 0}
+            title={
+              fiches.length === 0
+                ? "Créez d'abord une fiche pour scanner une carte"
+                : "Prendre en photo une carte de visite"
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7V5a2 2 0 0 1 2-2h2" />
+              <path d="M16 3h2a2 2 0 0 1 2 2v2" />
+              <path d="M20 17v2a2 2 0 0 1-2 2h-2" />
+              <path d="M8 21H6a2 2 0 0 1-2-2v-2" />
+              <path d="M7 12h10" />
+            </svg>
+            <span>Scanner</span>
+          </button>
+          <button
+            type="button"
+            className="callback-add-btn"
+            onClick={() => setManualOpen(true)}
+            disabled={fiches.length === 0}
+            title={
+              fiches.length === 0
+                ? "Créez d'abord une fiche pour ajouter un prospect"
+                : "Ajouter un prospect manuellement"
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M19 8v6" />
+              <path d="M22 11h-6" />
+            </svg>
+            <span>Ajouter</span>
+          </button>
           <button
             type="button"
             className="callback-export-btn"
             onClick={() => void handleExport()}
             disabled={exporting || !(pagination?.total ?? 0)}
           >
-            {exporting ? "Export…" : "↓ Exporter CSV"}
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <path d="M7 10l5 5 5-5" />
+              <path d="M12 15V3" />
+            </svg>
+            <span>{exporting ? "Export…" : "Exporter CSV"}</span>
           </button>
           <button
             type="button"
@@ -270,7 +407,7 @@ export default function CallbackRequestsPage() {
           <input
             type="search"
             value={search}
-            placeholder="Nom, téléphone, e-mail ou société…"
+            placeholder="Nom, téléphone, e-mail, société ou note…"
             onChange={e => {
               setSearch(e.target.value);
               setPage(1);
@@ -301,7 +438,7 @@ export default function CallbackRequestsPage() {
             }}
           >
             <option value="">Toutes les fiches</option>
-            {(fichesQuery.data ?? []).map(fiche => (
+            {fiches.map(fiche => (
               <option key={fiche.id} value={String(fiche.id)}>
                 {ficheLabel(fiche)}
               </option>
@@ -370,51 +507,82 @@ export default function CallbackRequestsPage() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Contact</th>
+                      <th>Contact / Carte</th>
                       <th>Téléphone</th>
                       <th>E-mail</th>
-                      <th>Fiche concernée</th>
+                      <th>Note</th>
+                      <th>Fiche</th>
                       <th>Statut</th>
-                      <th>Date de réception</th>
+                      <th>Date</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.demandes.map(demande => {
                       const waUrl = whatsappHref(demande.telephone);
+                      const photoUrl = resolveProspectMediaUrl(demande.photoUrl);
                       const isTreated = demande.statut === "TRAITEE";
+                      const badge = sourceBadge(demande.source);
                       return (
                         <tr key={demande.id}>
                           <td>
-                            <div className="callback-contact-cell">
-                              <strong>{demande.nom}</strong>
-                              {demande.societe && (
-                                <span className="callback-company">
-                                  {demande.societe}
-                                </span>
+                            <div className="prospect-contact-wrap">
+                              {photoUrl && (
+                                <button
+                                  type="button"
+                                  className="prospect-thumb-btn"
+                                  onClick={() => setLightboxUrl(photoUrl)}
+                                  title="Voir la photo de la carte"
+                                >
+                                  <img
+                                    src={photoUrl}
+                                    alt="Carte scannée"
+                                  />
+                                </button>
                               )}
+                              <div className="callback-contact-cell">
+                                <div className="prospect-name-row">
+                                  <strong>
+                                    {demande.nom || "Carte scannée"}
+                                  </strong>
+                                  <span
+                                    className={`prospect-source-badge ${badge.cls}`}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                </div>
+                                {demande.societe && (
+                                  <span className="callback-company">
+                                    {demande.societe}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td>
-                            <div className="callback-phone-group">
-                              <a
-                                className="callback-phone"
-                                href={`tel:${demande.telephone}`}
-                              >
-                                {demande.telephone}
-                              </a>
-                              {waUrl && (
+                            {demande.telephone ? (
+                              <div className="callback-phone-group">
                                 <a
-                                  className="callback-wa-link"
-                                  href={waUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  aria-label={`Contacter ${demande.nom} sur WhatsApp`}
+                                  className="callback-phone"
+                                  href={`tel:${demande.telephone}`}
                                 >
-                                  WhatsApp
+                                  {demande.telephone}
                                 </a>
-                              )}
-                            </div>
+                                {waUrl && (
+                                  <a
+                                    className="callback-wa-link"
+                                    href={waUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Contacter ${demande.nom || "ce prospect"} sur WhatsApp`}
+                                  >
+                                    WhatsApp
+                                  </a>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="callback-muted">—</span>
+                            )}
                           </td>
                           <td>
                             {demande.email ? (
@@ -425,6 +593,11 @@ export default function CallbackRequestsPage() {
                                 {demande.email}
                               </a>
                             ) : (
+                              <span className="callback-muted">—</span>
+                            )}
+                          </td>
+                          <td>
+                            {renderNote(demande) ?? (
                               <span className="callback-muted">—</span>
                             )}
                           </td>
@@ -456,17 +629,38 @@ export default function CallbackRequestsPage() {
               <div className="callback-requests-cards">
                 {data.demandes.map(demande => {
                   const waUrl = whatsappHref(demande.telephone);
+                  const photoUrl = resolveProspectMediaUrl(demande.photoUrl);
                   const isTreated = demande.statut === "TRAITEE";
+                  const badge = sourceBadge(demande.source);
                   return (
                     <article key={demande.id} className="callback-request-card">
                       <div className="callback-request-card-top">
-                        <div className="callback-contact-cell">
-                          <strong>{demande.nom}</strong>
-                          {demande.societe && (
-                            <span className="callback-company">
-                              {demande.societe}
-                            </span>
+                        <div className="prospect-contact-wrap">
+                          {photoUrl && (
+                            <button
+                              type="button"
+                              className="prospect-thumb-btn"
+                              onClick={() => setLightboxUrl(photoUrl)}
+                              title="Voir la photo de la carte"
+                            >
+                              <img src={photoUrl} alt="Carte scannée" />
+                            </button>
                           )}
+                          <div className="callback-contact-cell">
+                            <div className="prospect-name-row">
+                              <strong>{demande.nom || "Carte scannée"}</strong>
+                              <span
+                                className={`prospect-source-badge ${badge.cls}`}
+                              >
+                                {badge.label}
+                              </span>
+                            </div>
+                            {demande.societe && (
+                              <span className="callback-company">
+                                {demande.societe}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <span
                           className={`callback-status-pill ${isTreated ? "is-done" : "is-new"}`}
@@ -485,25 +679,28 @@ export default function CallbackRequestsPage() {
                           {demande.email}
                         </a>
                       )}
+                      {renderNote(demande)}
                       <div className="callback-request-card-meta">
-                        <div className="callback-phone-group">
-                          <a
-                            className="callback-phone"
-                            href={`tel:${demande.telephone}`}
-                          >
-                            {demande.telephone}
-                          </a>
-                          {waUrl && (
+                        {demande.telephone && (
+                          <div className="callback-phone-group">
                             <a
-                              className="callback-wa-link"
-                              href={waUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              className="callback-phone"
+                              href={`tel:${demande.telephone}`}
                             >
-                              WhatsApp
+                              {demande.telephone}
                             </a>
-                          )}
-                        </div>
+                            {waUrl && (
+                              <a
+                                className="callback-wa-link"
+                                href={waUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                WhatsApp
+                              </a>
+                            )}
+                          </div>
+                        )}
                         <a
                           className="callback-fiche-link"
                           href={`/f/${encodeURIComponent(demande.fiche.slug)}`}
@@ -529,7 +726,7 @@ export default function CallbackRequestsPage() {
               <p>
                 {hasFilters
                   ? "Essayez d'élargir vos critères de recherche."
-                  : "Les contacts envoyés depuis vos fiches publiques apparaîtront ici."}
+                  : "Scannez une carte de visite, ajoutez un prospect manuellement ou partagez votre fiche."}
               </p>
             </div>
           )}
@@ -565,6 +762,33 @@ export default function CallbackRequestsPage() {
             plus récents aux plus anciens.
           </p>
         </>
+      )}
+
+      {scanOpen && (
+        <ScanProspectModal
+          fiches={fiches}
+          onClose={() => setScanOpen(false)}
+          onSaved={invalidateProspects}
+        />
+      )}
+
+      {(manualOpen || convertTarget) && (
+        <ManualProspectModal
+          fiches={fiches}
+          convertTarget={convertTarget}
+          onClose={() => {
+            setManualOpen(false);
+            setConvertTarget(null);
+          }}
+          onSaved={invalidateProspects}
+        />
+      )}
+
+      {lightboxUrl && (
+        <PhotoLightboxModal
+          url={lightboxUrl}
+          onClose={() => setLightboxUrl(null)}
+        />
       )}
     </section>
   );
