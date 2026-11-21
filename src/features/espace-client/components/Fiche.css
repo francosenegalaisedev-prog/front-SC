@@ -404,25 +404,27 @@
   z-index: 2;
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 6px;
 }
 .f-acts a {
   display: flex;
   min-width: 0;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 2px;
   border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 12px;
-  padding: 10px 4px;
+  border-radius: 10px;
+  padding: 6px 4px;
   font:
-    700 11px Inter,
+    700 10.5px/1.15 Inter,
     sans-serif;
+  white-space: nowrap;
   background: rgba(0, 0, 0, 0.2);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  transition: transform 0.15s;
+  transition: transform 0.15s, background 0.15s;
 }
 .f-acts a:active {
   transform: scale(0.97);
@@ -432,6 +434,16 @@
   color: var(--btn-tx);
   border-color: transparent;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+.f-acts a.whatsapp,
+.f-acts a.whatsapp.primary {
+  background: #25d366;
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.32);
+}
+.f-acts a.whatsapp:hover {
+  background: #1ebe5d;
 }
 .f-rappel-cta {
   position: relative;
