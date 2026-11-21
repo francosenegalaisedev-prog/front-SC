@@ -309,7 +309,24 @@ export default function CallbackRequestsPage() {
                 : "Prendre en photo une carte de visite"
             }
           >
-            📷 Scanner
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7V5a2 2 0 0 1 2-2h2" />
+              <path d="M16 3h2a2 2 0 0 1 2 2v2" />
+              <path d="M20 17v2a2 2 0 0 1-2 2h-2" />
+              <path d="M8 21H6a2 2 0 0 1-2-2v-2" />
+              <path d="M7 12h10" />
+            </svg>
+            <span>Scanner</span>
           </button>
           <button
             type="button"
@@ -322,7 +339,23 @@ export default function CallbackRequestsPage() {
                 : "Ajouter un prospect manuellement"
             }
           >
-            + Ajouter
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M19 8v6" />
+              <path d="M22 11h-6" />
+            </svg>
+            <span>Ajouter</span>
           </button>
           <button
             type="button"
@@ -330,7 +363,22 @@ export default function CallbackRequestsPage() {
             onClick={() => void handleExport()}
             disabled={exporting || !(pagination?.total ?? 0)}
           >
-            {exporting ? "Export…" : "↓ Exporter CSV"}
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <path d="M7 10l5 5 5-5" />
+              <path d="M12 15V3" />
+            </svg>
+            <span>{exporting ? "Export…" : "Exporter CSV"}</span>
           </button>
           <button
             type="button"

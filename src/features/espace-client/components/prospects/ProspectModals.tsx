@@ -336,7 +336,23 @@ export function ScanProspectModal({
                   className="prospect-photo-preview"
                 />
               ) : (
-                <span>📷 Prendre en photo ou choisir une image</span>
+                <span className="prospect-photo-drop-label">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                    <circle cx="12" cy="13" r="3" />
+                  </svg>
+                  <span>Prendre en photo ou choisir une image</span>
+                </span>
               )}
             </label>
             {photoPreview && (
