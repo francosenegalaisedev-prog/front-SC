@@ -119,7 +119,7 @@ describe("RappelView", () => {
     expect(dialog?.querySelector('input[name="societe"]')).not.toBeNull();
   });
 
-  it("affiche le bouton Partager à la place de Fiche de contact et copie le lien", async () => {
+  it("affiche le bouton Partager et ouvre la modale avec QR code et copie du lien", async () => {
     let copied = "";
     const origShare = navigator.share;
     const origClipboard = navigator.clipboard;
@@ -144,11 +144,23 @@ describe("RappelView", () => {
 
       await act(async () => {
         shareBtn!.click();
+      });
+
+      const dialog = host.querySelector('[role="dialog"]');
+      expect(dialog).not.toBeNull();
+      expect(dialog?.querySelector("svg.qr")).not.toBeNull();
+      expect(dialog?.textContent).toContain("Partager le QR code");
+
+      const copyBtn = Array.from(dialog!.querySelectorAll("button")).find(btn =>
+        btn.textContent?.includes("Copier le lien"),
+      )!;
+      await act(async () => {
+        copyBtn.click();
         await Promise.resolve();
       });
 
       expect(copied).toContain(`/f/${FICHES[0].slug}`);
-      expect(shareBtn?.textContent).toContain("Lien copié");
+      expect(dialog?.textContent).toContain("Lien copié");
     } finally {
       Object.defineProperty(navigator, "share", { value: origShare, configurable: true });
       Object.defineProperty(navigator, "clipboard", { value: origClipboard, configurable: true });
