@@ -38,24 +38,44 @@ function formatTimer(sec: number) {
   return `${m}:${s}`;
 }
 
+export function resolveProspectMediaUrl(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/(\/api\/media\/prospects\/[^?\s#]+)/i);
+  if (match) {
+    const base = String(api.defaults.baseURL ?? "/api").replace(/\/+$/, "");
+    if (base === "/api" || base.startsWith("/")) {
+      return match[1];
+    }
+    const origin = base.replace(/\/api$/i, "");
+    return `${origin}${match[1]}`;
+  }
+  return trimmed;
+}
+
 async function uploadProspectMedia(blob: Blob, contentType: string): Promise<string> {
   const response = await api.post<{ media: { url: string; ref: string } }>(
     "fiches/rappels/media",
     blob,
     { headers: { "Content-Type": contentType } },
   );
-  return response.data.media.url;
+  return response.data.media.ref || response.data.media.url;
 }
 
 function VoiceRecorder({
   audioBlob,
   onChange,
+  onRecordingChange,
   disabled,
 }: {
   audioBlob: { blob: Blob; mime: string; previewUrl: string } | null;
   onChange: (
     next: { blob: Blob; mime: string; previewUrl: string } | null,
   ) => void;
+  onRecordingChange?: (recording: boolean) => void;
   disabled?: boolean;
 }) {
   const [recording, setRecording] = useState(false);
@@ -66,23 +86,31 @@ function VoiceRecorder({
   const timerRef = useRef<number | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const stopTracks = () => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
+  const clearTimer = () => {
     if (timerRef.current !== null) {
       window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
   };
 
+  const stopTracks = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    clearTimer();
+  };
+
   useEffect(() => () => stopTracks(), []);
 
   const stopRecording = () => {
-    if (recorderRef.current && recorderRef.current.state !== "inactive") {
-      recorderRef.current.stop();
-    }
+    clearTimer();
     setRecording(false);
-    stopTracks();
+    onRecordingChange?.(false);
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      // Ne PAS couper les pistes micro avant `onstop` sinon le dernier chunk audio peut être perdu.
+      recorderRef.current.stop();
+    } else {
+      stopTracks();
+    }
   };
 
   const startRecording = async () => {
@@ -100,31 +128,43 @@ function VoiceRecorder({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      const preferred = ["audio/webm", "audio/mp4", "audio/ogg"].find(m =>
-        MediaRecorder.isTypeSupported(m),
-      );
+      const preferred = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+      ].find(m => MediaRecorder.isTypeSupported(m));
       const recorder = preferred
         ? new MediaRecorder(stream, { mimeType: preferred })
         : new MediaRecorder(stream);
       chunksRef.current = [];
       recorder.ondataavailable = ev => {
-        if (ev.data.size > 0) chunksRef.current.push(ev.data);
+        if (ev.data && ev.data.size > 0) chunksRef.current.push(ev.data);
       };
       recorder.onstop = () => {
-        const mime = (recorder.mimeType || preferred || "audio/webm")
+        const rawMime = (recorder.mimeType || preferred || "audio/webm")
           .split(";")[0]
-          .trim();
+          .trim()
+          .toLowerCase();
+        const mime = rawMime === "video/webm" ? "audio/webm" : rawMime;
         const blob = new Blob(chunksRef.current, { type: mime });
+        stopTracks();
         if (blob.size > 0) {
           if (audioBlob?.previewUrl) URL.revokeObjectURL(audioBlob.previewUrl);
           onChange({ blob, mime, previewUrl: URL.createObjectURL(blob) });
+        } else {
+          setRecError(
+            "Aucun son n'a été capturé. Réessayez en parlant au moins 1 seconde.",
+          );
         }
-        stopTracks();
       };
       recorderRef.current = recorder;
       setSeconds(0);
       setRecording(true);
-      recorder.start();
+      onRecordingChange?.(true);
+      // Timeslice 250ms : garantit la capture progressive même sur un enregistrement très court.
+      recorder.start(250);
       timerRef.current = window.setInterval(() => {
         setSeconds(prev => {
           if (prev + 1 >= MAX_AUDIO_SECONDS) {
@@ -136,6 +176,8 @@ function VoiceRecorder({
       }, 1000);
     } catch {
       stopTracks();
+      setRecording(false);
+      onRecordingChange?.(false);
       setRecError(
         "Accès au micro refusé. Autorisez le microphone pour enregistrer une note vocale.",
       );
@@ -214,6 +256,7 @@ export function ScanProspectModal({
     mime: string;
     previewUrl: string;
   } | null>(null);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -241,6 +284,10 @@ export function ScanProspectModal({
     }
     if (!photoFile) {
       setError("Veuillez prendre ou importer une photo de la carte de visite.");
+      return;
+    }
+    if (isRecordingAudio) {
+      setError("Arrêtez d'abord l'enregistrement vocal avant d'enregistrer.");
       return;
     }
 
@@ -410,6 +457,7 @@ export function ScanProspectModal({
             <VoiceRecorder
               audioBlob={audioData}
               onChange={setAudioData}
+              onRecordingChange={setIsRecordingAudio}
               disabled={submitting}
             />
           )}
@@ -475,14 +523,20 @@ export function ManualProspectModal({
     mime: string;
     previewUrl: string;
   } | null>(null);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [photoPrompt, setPhotoPrompt] = useState(false);
   const [deletingPhoto, setDeletingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resolvedConvertPhoto = resolveProspectMediaUrl(convertTarget?.photoUrl);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (submitting) return;
+    if (isRecordingAudio) {
+      setError("Arrêtez d'abord l'enregistrement vocal avant d'enregistrer.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -588,9 +642,9 @@ export function ManualProspectModal({
 
         {photoPrompt ? (
           <div className="prospect-modal-form">
-            {convertTarget?.photoUrl && (
+            {resolvedConvertPhoto && (
               <img
-                src={convertTarget.photoUrl}
+                src={resolvedConvertPhoto}
                 alt="Carte de visite scannée"
                 className="prospect-photo-preview"
               />
@@ -626,9 +680,9 @@ export function ManualProspectModal({
             className="prospect-modal-form"
             onSubmit={e => void handleSubmit(e)}
           >
-            {convertTarget?.photoUrl && (
+            {resolvedConvertPhoto && (
               <img
-                src={convertTarget.photoUrl}
+                src={resolvedConvertPhoto}
                 alt="Carte de visite à recopier"
                 className="prospect-photo-preview"
               />
@@ -745,6 +799,7 @@ export function ManualProspectModal({
                   <VoiceRecorder
                     audioBlob={audioData}
                     onChange={setAudioData}
+                    onRecordingChange={setIsRecordingAudio}
                     disabled={submitting}
                   />
                 )}

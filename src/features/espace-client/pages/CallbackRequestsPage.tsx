@@ -5,6 +5,7 @@ import { errMsg } from "../../../lib/apiError";
 import {
   ManualProspectModal,
   PhotoLightboxModal,
+  resolveProspectMediaUrl,
   ScanProspectModal,
   type ProspectItem,
 } from "../components/prospects/ProspectModals";
@@ -195,16 +196,19 @@ export default function CallbackRequestsPage() {
   };
 
   const renderNote = (demande: ProspectItem) => {
-    if (!demande.noteTexte && !demande.noteAudioUrl) return null;
+    const audioUrl = resolveProspectMediaUrl(demande.noteAudioUrl);
+    if (!demande.noteTexte && !audioUrl) return null;
     return (
       <div className="prospect-note-display">
-        {demande.noteTexte && <p className="prospect-note-text">{demande.noteTexte}</p>}
-        {demande.noteAudioUrl && (
+        {demande.noteTexte && (
+          <p className="prospect-note-text">{demande.noteTexte}</p>
+        )}
+        {audioUrl && (
           <audio
             controls
-            preload="none"
+            preload="metadata"
             className="prospect-audio-player"
-            src={demande.noteAudioUrl}
+            src={audioUrl}
           />
         )}
       </div>
@@ -516,23 +520,22 @@ export default function CallbackRequestsPage() {
                   <tbody>
                     {data.demandes.map(demande => {
                       const waUrl = whatsappHref(demande.telephone);
+                      const photoUrl = resolveProspectMediaUrl(demande.photoUrl);
                       const isTreated = demande.statut === "TRAITEE";
                       const badge = sourceBadge(demande.source);
                       return (
                         <tr key={demande.id}>
                           <td>
                             <div className="prospect-contact-wrap">
-                              {demande.photoUrl && (
+                              {photoUrl && (
                                 <button
                                   type="button"
                                   className="prospect-thumb-btn"
-                                  onClick={() =>
-                                    setLightboxUrl(demande.photoUrl!)
-                                  }
+                                  onClick={() => setLightboxUrl(photoUrl)}
                                   title="Voir la photo de la carte"
                                 >
                                   <img
-                                    src={demande.photoUrl}
+                                    src={photoUrl}
                                     alt="Carte scannée"
                                   />
                                 </button>
@@ -626,20 +629,21 @@ export default function CallbackRequestsPage() {
               <div className="callback-requests-cards">
                 {data.demandes.map(demande => {
                   const waUrl = whatsappHref(demande.telephone);
+                  const photoUrl = resolveProspectMediaUrl(demande.photoUrl);
                   const isTreated = demande.statut === "TRAITEE";
                   const badge = sourceBadge(demande.source);
                   return (
                     <article key={demande.id} className="callback-request-card">
                       <div className="callback-request-card-top">
                         <div className="prospect-contact-wrap">
-                          {demande.photoUrl && (
+                          {photoUrl && (
                             <button
                               type="button"
                               className="prospect-thumb-btn"
-                              onClick={() => setLightboxUrl(demande.photoUrl!)}
+                              onClick={() => setLightboxUrl(photoUrl)}
                               title="Voir la photo de la carte"
                             >
-                              <img src={demande.photoUrl} alt="Carte scannée" />
+                              <img src={photoUrl} alt="Carte scannée" />
                             </button>
                           )}
                           <div className="callback-contact-cell">
