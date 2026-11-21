@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import { cssVars } from "../../../lib/css";
-import { ENV } from "../../../lib/env";
+import { publicAppOrigin } from "../../../lib/env";
 import {
   configuredTabs,
   planOf,
@@ -46,12 +46,10 @@ interface Action {
 export default function Fiche({
   fiche,
   scrollerRef,
-  baseUrl = `${ENV.VITE_PUBLIC_APP_URL}/f/`,
+  baseUrl,
   ownerTools = false,
 }: FicheProps) {
-  const publicAppUrl = (
-    import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin
-  ).replace(/\/+$/, "");
+  const publicAppUrl = publicAppOrigin();
   const root = useRef<HTMLDivElement>(null);
   const [held, setHeld] = usePullQR(root, scrollerRef, ownerTools);
   const e = resolveHeader(fiche);
