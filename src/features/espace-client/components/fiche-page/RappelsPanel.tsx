@@ -1,20 +1,39 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { api } from "../../../../lib/api";
+import { errMsg } from "../../../../lib/apiError";
+
+type RappelStatus = "NOUVELLE" | "TRAITEE";
 
 type RappelRequest = {
   id: number;
   nom: string;
   telephone: string;
+  email: string | null;
+  societe: string | null;
+  statut: RappelStatus;
+  traiteeAt: string | null;
   createdAt: string;
 };
 
 type RappelsResponse = {
   ficheId: number;
   total: number;
+  nouvellesCount?: number;
   demandes: RappelRequest[];
 };
 
+function whatsappHref(telephone: string) {
+  const digits = telephone.replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}` : null;
+}
+
 export function RappelsPanel({ ficheId }: { ficheId: number }) {
+  const queryClient = useQueryClient();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
   const rappelsQuery = useQuery({
     queryKey: ["fiche-rappels", ficheId],
     enabled: Number.isInteger(ficheId) && ficheId > 0,
@@ -27,6 +46,77 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async (input: { id: number; statut: RappelStatus }) => {
+      await api.patch(`fiches/rappels/${input.id}`, { statut: input.statut });
+    },
+    onSuccess: () => {
+      setActionError(null);
+      void queryClient.invalidateQueries({
+        queryKey: ["fiche-rappels", ficheId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["all-callback-requests"],
+      });
+    },
+    onError: err => {
+      setActionError(
+        errMsg(err) || "Impossible de mettre à jour le statut du prospect.",
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`fiches/rappels/${id}`);
+    },
+    onSuccess: () => {
+      setConfirmDeleteId(null);
+      setActionError(null);
+      void queryClient.invalidateQueries({
+        queryKey: ["fiche-rappels", ficheId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["all-callback-requests"],
+      });
+    },
+    onError: err => {
+      setActionError(errMsg(err) || "Impossible de supprimer ce prospect.");
+    },
+  });
+
+  const isMutating = statusMutation.isPending || deleteMutation.isPending;
+
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setActionError(null);
+    try {
+      const response = await api.get<Blob>(
+        `fiches/rappels/export?ficheId=${ficheId}`,
+        { responseType: "blob" },
+      );
+      const blob =
+        response.data instanceof Blob
+          ? response.data
+          : new Blob([String(response.data)], {
+              type: "text/csv;charset=utf-8",
+            });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `prospects-fiche-${ficheId}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setActionError(errMsg(err) || "Impossible d'exporter vos prospects.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <section
       className="fiche-passage-panel fiche-rappels-panel"
@@ -34,28 +124,44 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
     >
       <div className="fiche-passage-heading">
         <div>
-          <h2 id="fiche-rappels-title">Demandes de rappel</h2>
-          <p>Les coordonnées laissées depuis le bloc « Être rappelé ».</p>
+          <h2 id="fiche-rappels-title">Prospects</h2>
+          <p>Les coordonnées laissées depuis le bouton « Échangez contact ».</p>
         </div>
-        <button
-          type="button"
-          className="fiche-passage-refresh"
-          onClick={() => void rappelsQuery.refetch()}
-          disabled={rappelsQuery.isFetching}
-          aria-label="Actualiser les demandes"
-          title="Actualiser"
-        >
-          {rappelsQuery.isFetching ? "…" : "↻"}
-        </button>
+        <div className="callback-header-actions">
+          <button
+            type="button"
+            className="callback-export-btn"
+            onClick={() => void handleExport()}
+            disabled={exporting || !(rappelsQuery.data?.total ?? 0)}
+          >
+            {exporting ? "Export…" : "↓ Exporter CSV"}
+          </button>
+          <button
+            type="button"
+            className="fiche-passage-refresh"
+            onClick={() => void rappelsQuery.refetch()}
+            disabled={rappelsQuery.isFetching}
+            aria-label="Actualiser les prospects"
+            title="Actualiser"
+          >
+            {rappelsQuery.isFetching ? "…" : "↻"}
+          </button>
+        </div>
       </div>
+
+      {actionError && (
+        <div className="callback-action-error" role="alert">
+          {actionError}
+        </div>
+      )}
 
       {rappelsQuery.isPending ? (
         <p className="fiche-passage-state" role="status">
-          Chargement des demandes…
+          Chargement des prospects…
         </p>
       ) : rappelsQuery.isError ? (
         <div className="fiche-passage-state" role="alert">
-          <p>Impossible de charger les demandes de rappel.</p>
+          <p>{errMsg(rappelsQuery.error)}</p>
           <button type="button" onClick={() => void rappelsQuery.refetch()}>
             Réessayer
           </button>
@@ -64,9 +170,17 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
         <>
           <div className="fiche-passage-cards fiche-rappel-summary">
             <div className="fiche-passage-card">
-              <span>Total des demandes enregistrées</span>
+              <span>Total des prospects</span>
               <strong>
                 {(rappelsQuery.data?.total ?? 0).toLocaleString("fr-FR")}
+              </strong>
+            </div>
+            <div className="fiche-passage-card">
+              <span>Nouveaux prospects</span>
+              <strong>
+                {(rappelsQuery.data?.nouvellesCount ?? 0).toLocaleString(
+                  "fr-FR",
+                )}
               </strong>
             </div>
           </div>
@@ -75,38 +189,138 @@ export function RappelsPanel({ ficheId }: { ficheId: number }) {
               <table>
                 <thead>
                   <tr>
-                    <th>Nom</th>
+                    <th>Contact</th>
                     <th>Téléphone</th>
-                    <th>Date de la demande</th>
+                    <th>E-mail</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rappelsQuery.data.demandes.map(demande => (
-                    <tr key={demande.id}>
-                      <td>{demande.nom}</td>
-                      <td>
-                        <a href={`tel:${demande.telephone}`}>
-                          {demande.telephone}
-                        </a>
-                      </td>
-                      <td>
-                        {new Intl.DateTimeFormat("fr-FR", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }).format(new Date(demande.createdAt))}
-                      </td>
-                    </tr>
-                  ))}
+                  {rappelsQuery.data.demandes.map(demande => {
+                    const waUrl = whatsappHref(demande.telephone);
+                    const isTreated = demande.statut === "TRAITEE";
+                    const nextStatus: RappelStatus = isTreated
+                      ? "NOUVELLE"
+                      : "TRAITEE";
+                    const isConfirming = confirmDeleteId === demande.id;
+
+                    return (
+                      <tr key={demande.id}>
+                        <td>
+                          <div className="callback-contact-cell">
+                            <strong>{demande.nom}</strong>
+                            {demande.societe && (
+                              <span className="callback-company">
+                                {demande.societe}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="callback-phone-group">
+                            <a href={`tel:${demande.telephone}`}>
+                              {demande.telephone}
+                            </a>
+                            {waUrl && (
+                              <a
+                                className="callback-wa-link"
+                                href={waUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                WhatsApp
+                              </a>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          {demande.email ? (
+                            <a
+                              className="callback-email-link"
+                              href={`mailto:${demande.email}`}
+                            >
+                              {demande.email}
+                            </a>
+                          ) : (
+                            <span className="callback-muted">—</span>
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            className={`callback-status-pill ${isTreated ? "is-done" : "is-new"}`}
+                          >
+                            {isTreated ? "Traité" : "Nouveau"}
+                          </span>
+                        </td>
+                        <td>
+                          {new Intl.DateTimeFormat("fr-FR", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          }).format(new Date(demande.createdAt))}
+                        </td>
+                        <td>
+                          <div className="callback-actions">
+                            <button
+                              type="button"
+                              className="callback-action-btn is-primary"
+                              disabled={isMutating}
+                              onClick={() =>
+                                statusMutation.mutate({
+                                  id: demande.id,
+                                  statut: nextStatus,
+                                })
+                              }
+                            >
+                              {isTreated ? "Réouvrir" : "Traiter"}
+                            </button>
+                            {isConfirming ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="callback-action-btn is-danger"
+                                  disabled={isMutating}
+                                  onClick={() =>
+                                    deleteMutation.mutate(demande.id)
+                                  }
+                                >
+                                  Confirmer
+                                </button>
+                                <button
+                                  type="button"
+                                  className="callback-action-btn is-ghost"
+                                  disabled={isMutating}
+                                  onClick={() => setConfirmDeleteId(null)}
+                                >
+                                  Annuler
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                className="callback-action-btn is-danger-outline"
+                                disabled={isMutating}
+                                onClick={() => setConfirmDeleteId(demande.id)}
+                              >
+                                Supprimer
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           ) : (
             <p className="fiche-passage-empty">
-              Aucune demande de rappel pour le moment.
+              Aucun prospect pour le moment.
             </p>
           )}
           <p className="fiche-passage-filter-hint">
-            Les demandes les plus récentes sont affichées en premier (maximum
+            Les prospects les plus récents sont affichés en premier (maximum
             100).
           </p>
         </>

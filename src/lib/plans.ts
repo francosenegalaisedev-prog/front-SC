@@ -39,7 +39,7 @@ export const TAB_TYPES: Record<TabType, TabTypeInfo> = {
   videos: { label: "Vidéos", icon: "play" },
   liens: { label: "Liens", icon: "link" },
   rendezvous: { label: "Rendez-vous", icon: "cal" },
-  rappel: { label: "Être rappelé", icon: "chat" },
+  rappel: { label: "Échangez contact", icon: "chat" },
   horaires: { label: "Horaires", icon: "clock" },
   avis: { label: "Avis Google", icon: "star" },
   reseaux: { label: "Réseaux sociaux", icon: "globe" },

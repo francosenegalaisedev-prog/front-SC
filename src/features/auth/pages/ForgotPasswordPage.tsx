@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { errMsg } from "../../../lib/apiError";
 import { forgotPassword } from "../auth.service";
 
 export const ForgotPasswordPage = () => {
@@ -20,10 +21,8 @@ export const ForgotPasswordPage = () => {
     try {
       await forgotPassword(email);
       setSuccess(true);
-    } catch {
-      setError(
-        "Une erreur est survenue. Vérifiez votre connexion et réessayez."
-      );
+    } catch (err) {
+      setError(errMsg(err));
     } finally {
       setLoading(false);
     }

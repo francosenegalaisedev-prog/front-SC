@@ -91,6 +91,19 @@ describe("toApiError", () => {
     const e = new ApiError("x", "C", 418);
     expect(toApiError(e)).toBe(e);
   });
+
+  it("remonte le détail explicite quand le message serveur est générique (Données invalides)", () => {
+    const e = toApiError(
+      axiosErr(400, {
+        error: {
+          code: "DONNEES_INVALIDES",
+          message: "Données invalides",
+          details: [{ champ: "telephone", message: "Numéro invalide." }],
+        },
+      }),
+    );
+    expect(e.message).toBe("Numéro invalide.");
+  });
 });
 
 describe("statut d'authentification", () => {

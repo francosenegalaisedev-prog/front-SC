@@ -306,7 +306,11 @@ export default function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="fiche/preview/:id" element={<FichePage />} />
-            <Route path="demandes-rappel" element={<CallbackRequestsPage />} />
+            <Route path="prospects" element={<CallbackRequestsPage />} />
+            <Route
+              path="demandes-rappel"
+              element={<Navigate to="/espace-client/prospects" replace />}
+            />
             <Route path="brouillons" element={<DraftsPage />} />
             <Route path="editeur" element={<EditorPage />} />
             <Route path="editeur/:id" element={<EditorPage />} />

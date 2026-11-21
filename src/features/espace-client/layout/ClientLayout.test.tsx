@@ -148,7 +148,7 @@ describe("ClientLayout email verification", () => {
     expect(sheet?.textContent).toContain("Tableau de bord");
     expect(sheet?.textContent).toContain("Éditeur de fiches");
     expect(sheet?.textContent).toContain("Brouillons");
-    expect(sheet?.textContent).toContain("Demandes de rappel");
+    expect(sheet?.textContent).toContain("Prospects");
     expect(sheet?.textContent).toContain("Abonnements & formules");
     expect(sheet?.textContent).toContain("Paiements");
     expect(sheet?.textContent).toContain("Paramètres");
