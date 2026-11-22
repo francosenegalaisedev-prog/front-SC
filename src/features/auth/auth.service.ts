@@ -32,6 +32,28 @@ export async function register(registerData: IRegister) {
   }
 }
 
+export async function loginWithGoogle(
+  credential: string,
+): Promise<LoginResponse> {
+  try {
+    const res = await api.post<LoginResponse>("/auth/google", { credential });
+    const { token, user } = res.data;
+    saveSession({
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        name: user.nom,
+        email: user.email,
+        emailVerified: user.emailVerified,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export async function login(loginData: Login): Promise<LoginResponse> {
   try {
     const res = await api.post<LoginResponse>("/auth/login", loginData);
@@ -146,11 +168,7 @@ export async function resetPassword(payload: {
 export async function verifyAdminSession(): Promise<void> {
   const refuse = () => {
     clearSession();
-    return new ApiError(
-      "Ce compte n’est pas administrateur.",
-      "INTERDIT",
-      403,
-    );
+    return new ApiError("Ce compte n’est pas administrateur.", "INTERDIT", 403);
   };
   try {
     const res = await api.get<Record<string, unknown>>("/auth/me");

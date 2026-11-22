@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import AuthField from "../../../components/auth/AuthField";
 import AuthShell from "../../../components/auth/AuthShell";
+import GoogleSignInButton from "../../../components/auth/GoogleSignInButton";
 import { Icon } from "../../../components/Icons";
 import {
   AFTER_ADMIN_LOGIN,
@@ -12,7 +13,7 @@ import {
 } from "../../../data/auth";
 import { useSession } from "../../../lib/session";
 import { EMAIL_RE, safePath } from "../../../utils/auth";
-import { login } from "../auth.service";
+import { login, loginWithGoogle } from "../auth.service";
 
 // Page Connexion — /login (e-mail + mot de passe). ?from=/chemin ou state.from : retour à la page demandée.
 type Errors = { email?: string; password?: string };
@@ -28,12 +29,12 @@ export default function LoginPage() {
   const target = safePath(
     (location.state as { from?: string } | null)?.from ??
       new URLSearchParams(location.search).get("from"),
-    AFTER_LOGIN
+    AFTER_LOGIN,
   );
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: login,
-    onSuccess: res => {
+    onSuccess: (res) => {
       // Un administrateur sans page demandée arrive dans le back-office plutôt que dans l'espace client.
       const toAdmin = res.user.role === "ADMIN" && target === AFTER_LOGIN;
       navigate(toAdmin ? AFTER_ADMIN_LOGIN : target, { replace: true });
@@ -65,6 +66,11 @@ export default function LoginPage() {
     mutate({ email, password });
   };
 
+  const googleMutation = useMutation({
+    mutationFn: loginWithGoogle,
+    onSuccess: () => navigate(target, { replace: true }),
+  });
+
   return (
     <AuthShell
       title={T.title}
@@ -86,9 +92,9 @@ export default function LoginPage() {
           autoComplete="email"
           error={err.email}
           disabled={sending}
-          onChange={v => {
+          onChange={(v) => {
             setEmail(v);
-            setErr(x => ({ ...x, email: undefined }));
+            setErr((x) => ({ ...x, email: undefined }));
           }}
         />
         <AuthField
@@ -100,9 +106,9 @@ export default function LoginPage() {
           error={err.password}
           disabled={sending}
           maxLength={128}
-          onChange={v => {
+          onChange={(v) => {
             setPassword(v);
-            setErr(x => ({ ...x, password: undefined }));
+            setErr((x) => ({ ...x, password: undefined }));
           }}
         />
         <div className="au-row">
@@ -118,6 +124,9 @@ export default function LoginPage() {
         <button type="submit" className="btn btn-red" disabled={sending}>
           {sending ? T.sending : T.submit} <Icon id="arr" />
         </button>
+        <GoogleSignInButton
+          onCredential={(cred) => googleMutation.mutate(cred)}
+        />
         <p className="au-alt">
           {T.noAccount}{" "}
           <Link to="/register" className="au-link">
