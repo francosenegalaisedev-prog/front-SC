@@ -1,9 +1,6 @@
-import axios, { isAxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { InternalAxiosRequestConfig, isAxiosError } from "axios";
+import { NETWORK_ERROR_MESSAGE, SERVER_ERROR_MESSAGE } from "./apiError";
 import { clearSession, getToken } from "./session";
-import {
-  NETWORK_ERROR_MESSAGE,
-  SERVER_ERROR_MESSAGE,
-} from "./apiError";
 
 // VITE_API_URL doit contenir la base de l’API, y compris /api (ex. https://api.example.com/api).
 
@@ -16,7 +13,7 @@ export const api = axios.create({
 
 /** Routes d'authentification : appelées sans session, elles n'envoient jamais le jeton. */
 const AUTH_ENDPOINTS =
-  /^\/?auth\/(admin\/login|login|register|forgot-password|reset-password|verify-email)\b/;
+  /^\/?auth\/(admin\/login|login|google|register|forgot-password|reset-password|verify-email)\b/;
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getToken();

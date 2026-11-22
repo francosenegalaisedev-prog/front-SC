@@ -8,5 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
+
+  // Google OAuth Client ID for authentication with Google accounts.
+  readonly VITE_GOOGLE_CLIENT_ID?: string;
   /** « true » : l'éditeur de fiche utilise des données fictives au lieu de l'API. */
 }
