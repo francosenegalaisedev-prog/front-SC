@@ -336,4 +336,144 @@ describe("CallbackRequestsPage", () => {
       URL.revokeObjectURL = origRevoke;
     }
   });
+
+  it("permet de convertir un prospect scanné manuellement puis de supprimer la photo", async () => {
+    const calls: { method: string; url: string; data?: unknown }[] = [];
+    api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
+      const method = (config.method ?? "get").toUpperCase();
+      const url = String(config.url ?? "");
+      calls.push({
+        method,
+        url,
+        data: config.data ? JSON.parse(String(config.data)) : undefined,
+      });
+
+      if (url.includes("client/dashboard/fiches")) {
+        return {
+          status: 200,
+          data: [{ id: 1, slug: "le-sunset", prenom: "Moussa", nom: "Diop" }],
+          statusText: "",
+          headers: {},
+          config,
+        };
+      }
+      if (method === "PUT") {
+        return {
+          status: 200,
+          data: { ok: true, demande: { id: 25, source: "MANUEL" } },
+          statusText: "",
+          headers: {},
+          config,
+        };
+      }
+      if (method === "DELETE" && url.endsWith("/photo")) {
+        return {
+          status: 200,
+          data: { ok: true, demande: { id: 25, photoUrl: null } },
+          statusText: "",
+          headers: {},
+          config,
+        };
+      }
+      return {
+        status: 200,
+        data: {
+          rappels: {
+            nouvellesCount: 1,
+            demandes: [
+              {
+                id: 25,
+                source: "SCAN",
+                nom: null,
+                telephone: null,
+                email: null,
+                societe: null,
+                photoUrl: "https://api.example.com/api/media/prospects/card.webp",
+                noteTexte: "Rencontré au salon",
+                noteAudioUrl: null,
+                statut: "NOUVELLE",
+                traiteeAt: null,
+                createdAt: "2026-11-21T20:00:00.000Z",
+                fiche: {
+                  id: 1,
+                  slug: "le-sunset",
+                  prenom: "Moussa",
+                  nom: "Diop",
+                },
+              },
+            ],
+            pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+          },
+        },
+        statusText: "",
+        headers: {},
+        config,
+      };
+    };
+
+    renderPage();
+    await waitFor(() =>
+      host.textContent?.includes("Saisir manuellement") ?? false,
+    );
+    expect(host.textContent).toContain("Rencontré au salon");
+
+    const convertBtn = Array.from(host.querySelectorAll("button")).find(btn =>
+      btn.textContent?.includes("Saisir manuellement"),
+    )!;
+    await act(async () => {
+      convertBtn.click();
+    });
+
+    const dialog = host.querySelector('[role="dialog"]')!;
+    const nomInput = dialog.querySelector<HTMLInputElement>('input[name="nom"]')!;
+    const telInput = dialog.querySelector<HTMLInputElement>(
+      'input[name="telephone"]',
+    )!;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )!.set!;
+    await act(async () => {
+      setter.call(nomInput, "Ousmane Ba");
+      nomInput.dispatchEvent(new Event("input", { bubbles: true }));
+      setter.call(telInput, "77 123 45 67");
+      telInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      dialog
+        .querySelector("form")!
+        .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+    await waitFor(() =>
+      dialog.textContent?.includes("Supprimer la photo maintenant") ?? false,
+    );
+
+    expect(calls).toContainEqual({
+      method: "PUT",
+      url: "fiches/rappels/25",
+      data: {
+        nom: "Ousmane Ba",
+        telephone: "77 123 45 67",
+        email: "",
+        societe: "",
+        noteTexte: "Rencontré au salon",
+        deletePhoto: false,
+      },
+    });
+
+    const deletePhotoBtn = Array.from(dialog.querySelectorAll("button")).find(
+      btn => btn.textContent?.includes("Supprimer la photo maintenant"),
+    )!;
+    await act(async () => {
+      deletePhotoBtn.click();
+    });
+    await waitFor(() => calls.some(c => c.url === "fiches/rappels/25/photo"));
+
+    expect(calls).toContainEqual({
+      method: "DELETE",
+      url: "fiches/rappels/25/photo",
+      data: undefined,
+    });
+  });
 });

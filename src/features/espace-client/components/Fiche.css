@@ -404,25 +404,27 @@
   z-index: 2;
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 6px;
 }
 .f-acts a {
   display: flex;
   min-width: 0;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 2px;
   border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 12px;
-  padding: 10px 4px;
+  border-radius: 10px;
+  padding: 6px 4px;
   font:
-    700 11px Inter,
+    700 10.5px/1.15 Inter,
     sans-serif;
+  white-space: nowrap;
   background: rgba(0, 0, 0, 0.2);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  transition: transform 0.15s;
+  transition: transform 0.15s, background 0.15s;
 }
 .f-acts a:active {
   transform: scale(0.97);
@@ -432,6 +434,16 @@
   color: var(--btn-tx);
   border-color: transparent;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+.f-acts a.whatsapp,
+.f-acts a.whatsapp.primary {
+  background: #25d366;
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.32);
+}
+.f-acts a.whatsapp:hover {
+  background: #1ebe5d;
 }
 .f-rappel-cta {
   position: relative;
@@ -464,12 +476,107 @@
 .f-rappel-sheet {
   padding-top: 22px;
 }
-.f-rappel-sheet h3 {
-  margin: 0 36px 10px 0;
+.f-rappel-sheet h3,
+.f-share-sheet h3 {
+  margin: 0 36px 12px 0;
   font:
     700 18px/1.25 Inter,
     sans-serif;
   color: var(--tx);
+}
+.f-share-sheet {
+  padding-top: 22px;
+  display: grid;
+  gap: 12px;
+}
+.f-share-qr-box {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--sur);
+}
+.f-share-qr-box .qr {
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+.f-share-qr-box p {
+  margin: 0;
+  font:
+    600 13px/1.3 Inter,
+    sans-serif;
+  color: var(--tx);
+}
+.f-share-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+.f-share-actions .f-btn {
+  margin-top: 0;
+  width: 100%;
+}
+.f-share-sec {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--sur);
+  color: var(--tx);
+  font:
+    650 12.5px Inter,
+    sans-serif;
+  cursor: pointer;
+}
+.f-share-sec:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.f-share-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--mut);
+  font:
+    600 11px Inter,
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.f-share-divider::before,
+.f-share-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.f-share-url {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--sur);
+  color: var(--mut);
+  font:
+    500 12px/1.35 Inter,
+    sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.f-share-feedback {
+  margin: 0;
+  text-align: center;
+  color: #15803d;
+  font:
+    650 12.5px Inter,
+    sans-serif;
 }
 .f-body {
   padding: 4px 16px 20px;

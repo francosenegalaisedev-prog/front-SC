@@ -1,15 +1,10 @@
 import { useSyncExternalStore } from "react";
 
 /*
-  Session du client connecté : UNIQUE endroit qui sait où et comment elle est stockée.
-  Le reste de l'application passe par ce module (`getToken`, `useSession`, `saveSession`, `clearSession`) ;
-  plus aucun `localStorage.getItem("client_token")` ailleurs.
-
-  Stockage actuel : jeton JWT renvoyé par POST /auth/login, gardé dans localStorage.
-  Pour passer à un cookie httpOnly (recommandé), il faut aussi modifier l'API :
-  voir src/features/auth/README.md. Seuls ce fichier et lib/api.ts changeraient côté front.
-
-  Les clés `client_token` / `client_user` sont conservées : les sessions déjà ouvertes restent valides.
+  Session du client connecté (cookie httpOnly côté serveur).
+  - Le JWT n'est JAMAIS stocké dans localStorage (protection contre l'exfiltration par XSS).
+  - Seules les métadonnées publiques de l'utilisateur (`client_user`) sont conservées en local
+    pour l'affichage immédiat de l'interface ; le serveur reste seul juge via le cookie `sc_session`.
 */
 
 export interface SessionUser {
@@ -18,13 +13,14 @@ export interface SessionUser {
   id?: number;
   role?: "CLIENT" | "ADMIN";
   emailVerified?: boolean;
+  hasPassword?: boolean;
 }
 export interface Session {
   token: string;
   user: SessionUser;
 }
 
-const TOKEN_KEY = "client_token";
+const LEGACY_TOKEN_KEY = "client_token";
 const USER_KEY = "client_user";
 
 /* ───────── stockage (localStorage, avec repli mémoire si indisponible : navigation privée, quota…) ───────── */
@@ -63,7 +59,7 @@ const isSessionUser = (v: unknown): v is SessionUser =>
   typeof (v as SessionUser).name === "string" &&
   typeof (v as SessionUser).email === "string";
 
-/** Date d'expiration (ms) lue dans le champ `exp` d'un JWT, sans le vérifier (le serveur reste juge). */
+/** Date d'expiration (ms) lue dans le champ `exp` d'un JWT en mémoire uniquement (le serveur reste juge). */
 function expiryOf(token: string): number | null {
   try {
     const part = token.split(".")[1];
@@ -84,15 +80,14 @@ let cache: { raw: string; session: Session | null; expiresAt: number | null } =
   };
 
 function read(): Session | null {
-  const token = store.get(TOKEN_KEY);
   const rawUser = store.get(USER_KEY);
-  const raw = `${token ?? ""}\u0000${rawUser ?? ""}`;
+  const raw = rawUser ?? "";
   if (raw !== cache.raw) {
     let session: Session | null = null;
-    if (token && rawUser) {
+    if (rawUser) {
       try {
         const user: unknown = JSON.parse(rawUser);
-        if (isSessionUser(user)) session = { token, user };
+        if (isSessionUser(user)) session = { token: "", user };
       } catch {
         /* utilisateur illisible : session ignorée */
       }
@@ -100,15 +95,16 @@ function read(): Session | null {
     cache = {
       raw,
       session,
-      expiresAt: session ? expiryOf(session.token) : null,
+      expiresAt: session ? cache.expiresAt : null,
     };
   }
   if (
     cache.session &&
     cache.expiresAt !== null &&
     Date.now() >= cache.expiresAt
-  )
+  ) {
     return null;
+  }
   return cache.session;
 }
 
@@ -118,7 +114,6 @@ const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
 let timer: ReturnType<typeof setTimeout> | undefined;
 
-/** Programme la déconnexion locale à l'expiration du jeton (le plafond évite le dépassement du délai maximal de setTimeout). */
 function armExpiry() {
   clearTimeout(timer);
   const s = read();
@@ -133,7 +128,7 @@ function armExpiry() {
 export function subscribeSession(listener: () => void): () => void {
   listeners.add(listener);
   const onStorage = (e: StorageEvent) => {
-    if (e.key === null || e.key === TOKEN_KEY || e.key === USER_KEY) {
+    if (e.key === null || e.key === USER_KEY || e.key === LEGACY_TOKEN_KEY) {
       armExpiry();
       listener();
     }
@@ -148,20 +143,31 @@ export function subscribeSession(listener: () => void): () => void {
 /* ───────── API publique ───────── */
 
 export const getSession = (): Session | null => read();
-export const getToken = (): string | null => read()?.token ?? null;
 
-export function saveSession(session: Session): void {
-  store.set(TOKEN_KEY, session.token);
-  store.set(USER_KEY, JSON.stringify(session.user));
+/** Le JWT vit désormais dans un cookie httpOnly inaccessible au JavaScript. */
+export const getToken = (): string | null => null;
+
+export function saveSession(session: { user: SessionUser; token?: string }): void {
+  // Nettoyage de l'ancienne clé JWT si présente (migration douce vers cookie httpOnly).
+  store.remove(LEGACY_TOKEN_KEY);
+  const expiresAt = session.token ? expiryOf(session.token) : null;
+  const serialized = JSON.stringify(session.user);
+  store.set(USER_KEY, serialized);
+  cache = {
+    raw: serialized,
+    session: { token: "", user: session.user },
+    expiresAt,
+  };
   armExpiry();
   notify();
 }
 
-/** Supprime la session locale (déconnexion, jeton refusé ou expiré). Ne touche à rien d'autre dans le stockage. */
+/** Supprime la session locale (déconnexion, session refusée ou expirée). Ne touche à rien d'autre dans le stockage. */
 export function clearSession(): void {
   clearTimeout(timer);
-  store.remove(TOKEN_KEY);
+  store.remove(LEGACY_TOKEN_KEY);
   store.remove(USER_KEY);
+  cache = { raw: "", session: null, expiresAt: null };
   notify();
 }
 
@@ -169,5 +175,6 @@ export function clearSession(): void {
 export const useSession = (): Session | null =>
   useSyncExternalStore(subscribeSession, getSession, () => null);
 
+// Nettoyage automatique de l'ancien jeton localStorage s'il existe encore.
+store.remove(LEGACY_TOKEN_KEY);
 armExpiry();
-// src/lib/session.ts

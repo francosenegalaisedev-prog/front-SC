@@ -1,8 +1,8 @@
 // Calculs du tableau de bord à partir des fiches renvoyées par l'API.
-import { ENV } from "../../../lib/env";
+import { publicAppOrigin } from "../../../lib/env";
 import type { ApiFicheSummary, ApiSecteur } from "../../../types";
 
-export const publicUrl = (slug: string) => `${ENV.VITE_PUBLIC_APP_URL}/f/${slug}`;
+export const publicUrl = (slug: string) => `${publicAppOrigin()}/f/${slug}`;
 export const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", {
     day: "numeric",

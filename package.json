@@ -12,7 +12,8 @@
     "test:e2e:install": "playwright install --with-deps chromium",
     "test": "vitest run",
     "test:watch": "vitest",
-    "postbuild": "tsx scripts/postbuild-seo.ts"
+    "postbuild": "tsx scripts/postbuild-seo.ts",
+    "tunnel": "cloudflared tunnel --url http://localhost:5173"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

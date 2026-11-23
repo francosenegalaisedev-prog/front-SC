@@ -5,7 +5,7 @@ import { api } from "../../lib/api";
 import { getSession, clearSession } from "../../lib/session";
 import { adminLogin, verifyAdminSession } from "./auth.service";
 
-type Call = { url?: string; auth?: string };
+type Call = { url?: string; auth?: string; withCredentials?: boolean };
 let calls: Call[] = [];
 let respond: (config: InternalAxiosRequestConfig) => {
   status: number;
@@ -20,6 +20,7 @@ beforeEach(() => {
     calls.push({
       url: config.url,
       auth: config.headers.Authorization as string | undefined,
+      withCredentials: config.withCredentials,
     });
     const { status, data } = respond(config);
     const response = { status, data, statusText: "", headers: {}, config };
@@ -34,7 +35,7 @@ afterEach(() => {
 });
 
 describe("adminLogin", () => {
-  it("ouvre une session ADMIN : le jeton n'est pas envoyé au login, il l'est pour /auth/me", async () => {
+  it("ouvre une session ADMIN via cookie httpOnly sans en-tête Authorization", async () => {
     respond = c =>
       c.url === "/auth/admin/login"
         ? { status: 200, data: { token: "TOKEN" } }
@@ -44,11 +45,11 @@ describe("adminLogin", () => {
           };
     await adminLogin({ email: "root@sc.sn", password: "x" });
     expect(calls).toEqual([
-      { url: "/auth/admin/login", auth: undefined },
-      { url: "/auth/me", auth: "Bearer TOKEN" },
+      { url: "/auth/admin/login", auth: undefined, withCredentials: true },
+      { url: "/auth/me", auth: undefined, withCredentials: true },
     ]);
     expect(getSession()).toEqual({
-      token: "TOKEN",
+      token: "",
       user: { id: 3, role: "ADMIN", name: "Root", email: "root@sc.sn" },
     });
   });

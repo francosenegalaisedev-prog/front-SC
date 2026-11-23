@@ -1,6 +1,6 @@
 import { api } from "../../lib/api";
 import { ApiError, errorStatus, toApiError } from "../../lib/apiError";
-import { clearSession, getToken, saveSession } from "../../lib/session";
+import { clearSession, saveSession } from "../../lib/session";
 import { IRegister, Login } from "../../types";
 
 /*
@@ -15,6 +15,7 @@ export interface LoginResponse {
     nom: string;
     role: "CLIENT" | "ADMIN";
     emailVerified: boolean;
+    hasPassword?: boolean;
   };
   token: string;
 }
@@ -25,6 +26,29 @@ export async function register(registerData: IRegister) {
       email: registerData.email,
       password: registerData.password,
       nom: registerData.name,
+    });
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function loginWithGoogle(
+  credential: string,
+): Promise<LoginResponse> {
+  try {
+    const res = await api.post<LoginResponse>("/auth/google", { credential });
+    const { token, user } = res.data;
+    saveSession({
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        name: user.nom,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        hasPassword: user.hasPassword,
+      },
     });
     return res.data;
   } catch (error) {
@@ -44,6 +68,7 @@ export async function login(loginData: Login): Promise<LoginResponse> {
         name: user.nom,
         email: user.email,
         emailVerified: user.emailVerified,
+        hasPassword: user.hasPassword,
       },
     });
     return res.data;
@@ -91,6 +116,52 @@ export async function changeCurrentPassword(payload: {
   try {
     await api.patch("/auth/me/password", payload);
     return { ok: true };
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function requestAccountDeletion(payload: {
+  password?: string;
+  confirmEmail?: string;
+  reason?: string;
+}): Promise<{ ok: true; deletionScheduledAt: string; graceDays: number }> {
+  try {
+    const res = await api.post<{
+      ok: true;
+      deletionScheduledAt: string;
+      graceDays: number;
+    }>("/auth/me/delete-request", payload);
+    clearSession();
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function cancelAccountDeletion(payload: {
+  email?: string;
+  password?: string;
+  credential?: string;
+}): Promise<LoginResponse> {
+  try {
+    const res = await api.post<LoginResponse>(
+      "/auth/cancel-deletion",
+      payload,
+    );
+    const { token, user } = res.data;
+    saveSession({
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        name: user.nom,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        hasPassword: user.hasPassword,
+      },
+    });
+    return res.data;
   } catch (error) {
     throw toApiError(error);
   }
@@ -146,11 +217,7 @@ export async function resetPassword(payload: {
 export async function verifyAdminSession(): Promise<void> {
   const refuse = () => {
     clearSession();
-    return new ApiError(
-      "Ce compte n’est pas administrateur.",
-      "INTERDIT",
-      403,
-    );
+    return new ApiError("Ce compte n’est pas administrateur.", "INTERDIT", 403);
   };
   try {
     const res = await api.get<Record<string, unknown>>("/auth/me");
@@ -171,10 +238,8 @@ export async function verifyAdminSession(): Promise<void> {
     }
     const email = typeof u.email === "string" ? u.email : "";
     const name = typeof u.nom === "string" ? u.nom : "";
-    const token = getToken();
-    if (!token) throw refuse();
     saveSession({
-      token,
+      token: "",
       user: {
         id: typeof u.id === "number" ? u.id : undefined,
         role: "ADMIN",
@@ -187,18 +252,17 @@ export async function verifyAdminSession(): Promise<void> {
   }
 }
 
-/** Connexion administrateur : POST /auth/admin/login, puis vérification du rôle. */
+/** Connexion administrateur : POST /auth/admin/login (pose le cookie httpOnly), puis vérification du rôle. */
 export async function adminLogin(loginData: Login): Promise<void> {
   try {
-    const res = await api.post<{ token?: string }>(
+    const res = await api.post<{ token?: string; user?: unknown }>(
       "/auth/admin/login",
       loginData,
     );
-    if (!res.data.token)
-      throw new ApiError("Réponse de connexion inattendue (pas de jeton).");
-    // Session provisoire : l'intercepteur de lib/api.ts a besoin du jeton pour appeler /auth/me.
+    if (!res.data.token && !res.data.user)
+      throw new ApiError("Réponse de connexion inattendue.");
     saveSession({
-      token: res.data.token,
+      token: res.data.token ?? "",
       user: { name: "", email: loginData.email, role: "ADMIN" },
     });
     await verifyAdminSession();

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, type FormEvent } from "react";
-import { ENV } from "../../../../../lib/env";
+import { publicAppOrigin } from "../../../../../lib/env";
 import { toApiError } from "../../../../../lib/apiError";
 import { TAB_TYPES } from "../../../../../lib/plans";
 import type { ApiSectionSticker, FicheRecord } from "../../../../../types";
@@ -23,8 +23,7 @@ import { I } from "../../fiche/Icon";
 import { QR } from "../../fiche/QR";
 import { Lock, downloadSvg } from "../shared";
 
-const origin = () =>
-  (ENV.VITE_PUBLIC_APP_URL || window.location.origin).replace(/\/+$/, "");
+const origin = () => publicAppOrigin();
 
 interface Preview {
   /** Section actuellement affichée dans l'aperçu téléphone (null = fiche complète). */

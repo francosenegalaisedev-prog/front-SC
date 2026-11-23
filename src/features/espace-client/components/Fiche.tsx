@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import { cssVars } from "../../../lib/css";
-import { ENV } from "../../../lib/env";
+import { publicAppOrigin } from "../../../lib/env";
 import {
   configuredTabs,
   planOf,
@@ -14,6 +14,7 @@ import "./Fiche.css";
 import { I } from "./fiche/Icon";
 import { QR } from "./fiche/QR";
 import { Section } from "./fiche/Section";
+import { ShareSheet } from "./fiche/ShareSheet";
 import { Sheet } from "./fiche/Sheet";
 import { initials, wa } from "./fiche/format";
 import { usePullQR } from "./fiche/usePullQR";
@@ -45,12 +46,10 @@ interface Action {
 export default function Fiche({
   fiche,
   scrollerRef,
-  baseUrl = `${ENV.VITE_PUBLIC_APP_URL}/f/`,
+  baseUrl,
   ownerTools = false,
 }: FicheProps) {
-  const publicAppUrl = (
-    import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin
-  ).replace(/\/+$/, "");
+  const publicAppUrl = publicAppOrigin();
   const root = useRef<HTMLDivElement>(null);
   const [held, setHeld] = usePullQR(root, scrollerRef, ownerTools);
   const e = resolveHeader(fiche);
@@ -71,54 +70,16 @@ export default function Fiche({
     () => new Set(sections.slice(0, 1).map(t => t.id)),
   );
   const [rappelOpen, setRappelOpen] = useState(false);
-  const [shareFeedback, setShareFeedback] = useState("");
-  const shareTimerRef = useRef<number | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const shareUrl = `${baseUrl ?? `${publicAppUrl}/f/`}${fiche.slug}`;
   const url = `${shareUrl}?source=qr`;
   const name = `${fiche.prenom} ${fiche.nom}`.trim();
-
-  useEffect(
-    () => () => {
-      if (shareTimerRef.current !== null) {
-        window.clearTimeout(shareTimerRef.current);
-      }
-    },
-    [],
-  );
-
-  const flashShare = (label: string) => {
-    setShareFeedback(label);
-    if (shareTimerRef.current !== null) {
-      window.clearTimeout(shareTimerRef.current);
-    }
-    shareTimerRef.current = window.setTimeout(() => {
-      setShareFeedback("");
-      shareTimerRef.current = null;
-    }, 2200);
-  };
-
-  const handleShare = async () => {
-    const title = name || fiche.entreprise || "Support Connecté";
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title, url: shareUrl });
-        return;
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-      }
-    }
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        flashShare("Lien copié");
-        return;
-      } catch {
-        /* fallback ci-dessous */
-      }
-    }
-    flashShare("Copie impossible");
-  };
+  const siteHref = fiche.site?.trim()
+    ? /^https?:\/\//i.test(fiche.site.trim())
+      ? fiche.site.trim()
+      : `https://${fiche.site.trim()}`
+    : "";
   const actions = [
     fiche.whatsapp && {
       k: "whatsapp",
@@ -137,6 +98,12 @@ export default function Fiche({
       n: "mail",
       l: "E-mail",
       href: `mailto:${fiche.email}`,
+    },
+    siteHref && {
+      k: "site",
+      n: "globe",
+      l: "Mon site",
+      href: siteHref,
     },
   ]
     .filter((a): a is Action => !!a)
@@ -181,16 +148,16 @@ export default function Fiche({
           <button
             type="button"
             className="f-share-btn"
-            onClick={() => void handleShare()}
+            onClick={() => setShareOpen(true)}
             aria-label="Partager la fiche"
           >
             <I n="share" s={12} />
-            {shareFeedback || "Partager"}
+            Partager
           </button>
           {ownerTools && (
             <button onClick={() => setHeld(h => !h)} aria-pressed={held}>
               <I n="qr" s={12} />
-              NFC · QR
+              Afficher QR code
             </button>
           )}
         </div>
@@ -257,11 +224,18 @@ export default function Fiche({
             <a
               key={a.k}
               href={a.href}
-              className={i === 0 ? "primary" : ""}
-              target={a.k === "whatsapp" ? "_blank" : undefined}
+              className={[
+                i === 0 ? "primary" : "",
+                a.k === "whatsapp" ? "whatsapp" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              target={
+                a.k === "whatsapp" || a.k === "site" ? "_blank" : undefined
+              }
               rel="noreferrer"
             >
-              <I n={a.n} s={16} />
+              <I n={a.n} s={14} />
               {a.l}
             </a>
           ))}
@@ -321,6 +295,14 @@ export default function Fiche({
         <I n="down" s={15} />
         Enregistrer le contact
       </button>
+      {shareOpen && (
+        <ShareSheet
+          fiche={fiche}
+          shareUrl={shareUrl}
+          qrUrl={url}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
       {rappelOpen && (
         <Sheet
           onClose={() => setRappelOpen(false)}

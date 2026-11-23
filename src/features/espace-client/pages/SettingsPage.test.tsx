@@ -7,6 +7,7 @@ import { ApiError } from "../../../lib/apiError";
 import {
   changeCurrentPassword,
   forgotPassword,
+  requestAccountDeletion,
   updateCurrentProfile,
 } from "../../auth/auth.service";
 import SettingsPage from "./SettingsPage";
@@ -15,6 +16,7 @@ vi.mock("../../auth/auth.service", () => ({
   forgotPassword: vi.fn(),
   updateCurrentProfile: vi.fn(),
   changeCurrentPassword: vi.fn(),
+  requestAccountDeletion: vi.fn(),
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
@@ -28,6 +30,7 @@ describe("Paramètres client : réinitialisation du mot de passe", () => {
     vi.mocked(forgotPassword).mockReset();
     vi.mocked(updateCurrentProfile).mockReset();
     vi.mocked(changeCurrentPassword).mockReset();
+    vi.mocked(requestAccountDeletion).mockReset();
     host = document.createElement("div");
     root = createRoot(host);
     const user = { name: "Awa Ndiaye", email: "awa@example.sn" };
@@ -156,5 +159,46 @@ describe("Paramètres client : réinitialisation du mot de passe", () => {
       password: "NewPass456",
     });
     expect(host.textContent).toContain("Votre mot de passe a été modifié.");
+  });
+
+  it("permet de programmer la suppression du compte avec mot de passe (délai 30 jours)", async () => {
+    vi.mocked(requestAccountDeletion).mockResolvedValue({
+      ok: true,
+      deletionScheduledAt: "2026-12-23T12:00:00.000Z",
+      graceDays: 30,
+    });
+
+    const openBtn = Array.from(host.querySelectorAll("button")).find(b =>
+      b.textContent?.includes("Demander la suppression de mon compte"),
+    )!;
+    await act(async () => {
+      openBtn.click();
+    });
+
+    const forms = host.querySelectorAll<HTMLFormElement>("form");
+    const deleteForm = forms[2];
+    const pwdInput = deleteForm.querySelector<HTMLInputElement>(
+      'input[type="password"]',
+    )!;
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )!.set!;
+
+    await act(async () => {
+      nativeSetter.call(pwdInput, "MonMotDePasse1");
+      pwdInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      deleteForm.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(requestAccountDeletion).toHaveBeenCalledWith({
+      password: "MonMotDePasse1",
+    });
   });
 });

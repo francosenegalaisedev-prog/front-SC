@@ -53,6 +53,11 @@ export interface Stats {
   clients: number;
   demandesSticker: number;
   demandesCarte: number;
+  suppressions?: {
+    enAttente: number;
+    supprimesTotal: number;
+    supprimesSur30Jours: number;
+  };
   derniersClients: {
     id: number;
     nom: string | null;
@@ -145,6 +150,9 @@ export interface UserRow {
   role: "client" | "admin";
   active: boolean;
   emailVerifie: boolean;
+  deletionRequestedAt?: string | null;
+  deletionScheduledAt?: string | null;
+  deletionRequestedBy?: string | null;
   createdAt: string;
   nbFiches: number;
 }
