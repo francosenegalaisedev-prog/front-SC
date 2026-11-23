@@ -109,9 +109,6 @@ const AdminBilling = lazy(() => import("./features/admin/pages/Billing"));
 const AdminLeads = lazy(() => import("./features/admin/pages/Leads"));
 const AdminRelances = lazy(() => import("./features/admin/pages/Relances"));
 const AdminProduction = lazy(() => import("./features/admin/pages/Production"));
-const AdminModelesCartes = lazy(
-  () => import("./features/admin/pages/ModelesCartes")
-);
 const AdminQrCodes = lazy(() => import("./features/admin/pages/QrCodes"));
 const AdminFormules = lazy(() => import("./features/admin/pages/Formules"));
 const AdminActionLogs = lazy(
@@ -341,7 +338,6 @@ export default function App() {
             <Route path="demandes" element={<AdminLeads />} />
             <Route path="relances" element={<AdminRelances />} />
             <Route path="production" element={<AdminProduction />} />
-            <Route path="cartes" element={<AdminModelesCartes />} />
             <Route path="qrcodes" element={<AdminQrCodes />} />
             <Route path="formules" element={<AdminFormules />} />
             <Route path="historique" element={<AdminActionLogs />} />

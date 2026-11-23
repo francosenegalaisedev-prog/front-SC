@@ -1,14 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { ApiFicheSummary } from "../../../types";
 import {
   FicheListControls,
   FichePagination,
 } from "../components/FicheListControls";
 import { StatCard } from "../components/StatCard";
-import { CardRequestDialog } from "../components/subscription/CardRequestDialog";
 import { PaymentModal } from "../components/subscription/PaymentModal";
 import { PlansPanel } from "../components/subscription/PlansPanel";
 import { SubscriptionFichesList } from "../components/subscription/SubscriptionFichesList";
@@ -44,6 +43,7 @@ const getExpiryFilter = (
 };
 
 export default function SubscriptionPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [paymentFiche, setPaymentFiche] = useState<ApiFicheSummary | null>(
     null,
@@ -64,22 +64,12 @@ export default function SubscriptionPage() {
     setPaymentFiche(null);
     if (searchParams.has("renew")) clearRenewParam();
   };
-  const [cardFiche, setCardFiche] = useState<ApiFicheSummary | null>(null);
   const [showPlans, setShowPlans] = useState(false);
   const [filters, setFilters] = useState<FicheListFilters>(() => ({
     ...DEFAULT_FICHE_LIST_FILTERS,
     expiry: getExpiryFilter(searchParams.get("expiry")),
   }));
   const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    if (!cardFiche) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setCardFiche(null);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cardFiche]);
 
   const {
     data: fiches,
@@ -256,7 +246,9 @@ export default function SubscriptionPage() {
                   <SubscriptionFichesList
                     items={pageData.items}
                     onSelectPayment={setPaymentFiche}
-                    onSelectCard={setCardFiche}
+                    onSelectCard={fiche =>
+                      navigate(`/espace-client/cartes?ficheId=${fiche.id}`)
+                    }
                   />
                 )}
                 <FichePagination
@@ -291,13 +283,6 @@ export default function SubscriptionPage() {
               queryKey: ["kpiSubscription"],
             });
           }}
-        />
-      )}
-
-      {cardFiche && (
-        <CardRequestDialog
-          fiche={cardFiche}
-          onClose={() => setCardFiche(null)}
         />
       )}
     </div>

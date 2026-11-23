@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { adminApi } from '../admin.service';
 import { SectionStickersTab } from '../components/SectionStickers';
 import { Badge, Btn, Empty, ErrorBox, Icon, Kpi, Loading, Modal, Tabs, useAction, useToast } from '../components/ui';
@@ -8,18 +8,18 @@ import { NouveauStickerModal } from '../components/ProductionModals';
 import { FORMULE_TONE, ago, fdate } from '../lib/format';
 import { CARD, download, phoneStickerSVG, stickerSVG, svgDataUrl, svgToPng } from '../lib/print';
 import { qrPayload } from '../../../lib/qr';
-import type { Carte, ModeleCarte, QrLien, StatutCarte, StatutSticker, Sticker } from '../../../types/admin';
+import type { Carte, QrLien, StatutCarte, StatutSticker, Sticker } from '../../../types/admin';
 import { carteStatusOptions, FN, LBL, PS, SS, TITLE, TONE, VAL } from '../lib/production';
 
 /*
   Production : tout ce qu'il faut pour imprimer, encoder, paramétrer et tester.
-  • Cartes (Evolis) : modèle actif par formule en aperçu, adresse à encoder dans la puce NFC, suivi imprimée → encodée → testée → livrée.
+  • Cartes (Evolis) : aperçu recto/verso de la carte commandée + métadonnées complètes (textes, photos/logo,
+    couleurs texte & accent en hexadécimal), adresse à encoder dans la puce NFC, suivi imprimée → encodée → testée → livrée.
   • Stickers à fonction : paramètres (Wi-Fi, liens…), QR dynamique à régler, fichier vectoriel.
   • Stickers téléphone 30 mm : copie du QR de la fiche, personnalisation, fichier.
   • QR dynamiques : cible modifiable à distance, scans.
-  L'aperçu des cartes utilise le modèle actif configuré pour leur formule.
 */
-type Vue = { type: 'carte'; c: Carte; modele: ModeleCarte | null } | { type: 'sticker'; x: Sticker };
+type Vue = { type: 'carte'; c: Carte } | { type: 'sticker'; x: Sticker };
 type Creation = null | 'sticker';
 type CardStatusFilter = StatutCarte | 'tous';
 type StickerStatusFilter = StatutSticker | 'tous';
@@ -61,23 +61,67 @@ function CopyLink({ text }: { text: string }) {
 }
 const client = (f: { entreprise: string; nom: string } | null) => f?.entreprise || f?.nom || '—';
 
+function HexSwatch({ label, hex }: { label: string; hex?: unknown }) {
+  if (typeof hex !== 'string' || !hex) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: 4,
+          border: '1px solid rgba(0,0,0,0.2)',
+          background: hex,
+          display: 'inline-block',
+          flexShrink: 0,
+        }}
+        aria-hidden="true"
+      />
+      <span>{label} : <code>{hex}</code></span>
+      <CopyLink text={hex} />
+    </div>
+  );
+}
+
 export default function Production() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sum, rSum, eSum] = useData(() => adminApi.productionSummary());
   const [cartes, rC, eC] = useData(() => adminApi.listCartes());
   const [stickers, rS, eS] = useData(() => adminApi.listStickers());
   const [qr, rQ, eQ] = useData(() => adminApi.listQr());
   const [sec, rSec, eSec] = useData(() => adminApi.listSectionStickers());
-  const [modeles, rM, eM] = useData(() => adminApi.listModelesCartes());
-  const [tab, setTab] = useState<'cartes' | 'fonction' | 'telephone' | 'qr' | 'sections'>('cartes');
+
+  const initialTab = searchParams.get('tab');
+  const [tab, setTab] = useState<'cartes' | 'fonction' | 'telephone' | 'qr' | 'sections'>(
+    initialTab === 'fonction' || initialTab === 'telephone' || initialTab === 'qr' || initialTab === 'sections'
+      ? initialTab
+      : 'cartes',
+  );
   const [cardStatus, setCardStatus] = useState<CardStatusFilter>('tous');
   const [stickerStatus, setStickerStatus] = useState<StickerStatusFilter>('tous');
-  const [vue, setVue] = useState<Vue | null>(null), [creation, setCreation] = useState<Creation>(null), [busy, setBusy] = useState<string | null>(null);
+  const [vue, setVue] = useState<Vue | null>(null);
+  const [creation, setCreation] = useState<Creation>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const run = useAction();
 
-  const refresh = () => { rSum(); rC(); rS(); rQ(); rSec(); rM(); };
-  const err = eSum || eC || eS || eQ || eM;
+  // Ouverture directe de l'aperçu si ?carteId=<id> est présent (redirection depuis Demandes)
+  useEffect(() => {
+    const carteIdParam = Number(searchParams.get('carteId'));
+    if (!carteIdParam || !cartes?.cartes.length) return;
+    const found = cartes.cartes.find(c => c.id === carteIdParam);
+    if (found) {
+      setTab('cartes');
+      setVue({ type: 'carte', c: found });
+      const next = new URLSearchParams(searchParams);
+      next.delete('carteId');
+      setSearchParams(next, { replace: true });
+    }
+  }, [cartes, searchParams, setSearchParams]);
+
+  const refresh = () => { rSum(); rC(); rS(); rQ(); rSec(); };
+  const err = eSum || eC || eS || eQ;
   if (err) return <ErrorBox message={err} onRetry={refresh} />;
-  if (!sum || !cartes || !stickers || !qr || !modeles) return <Loading />;
+  if (!sum || !cartes || !stickers || !qr) return <Loading />;
 
   const fonc = stickers.stickers.filter((x) => x.kind === 'fonction'), tel = stickers.stickers.filter((x) => x.kind === 'telephone');
   const cartesFiltrees = cartes.cartes.filter(c => cardStatus === 'tous' || c.statut === cardStatus);
@@ -93,7 +137,7 @@ export default function Production() {
   return (
     <>
       <header className="ph row">
-        <div><p className="eyebrow">Atelier</p><h1>Production</h1><p className="lede">Les commandes de cartes affichent l’aperçu du modèle actif par formule et l’adresse à encoder dans la puce. Les stickers arrivent classés par fonction, avec tout ce qu’il faut pour les paramétrer.</p></div>
+        <div><p className="eyebrow">Atelier</p><h1>Production</h1><p className="lede">Les commandes de cartes affichent l’aperçu recto/verso validé par le client, les métadonnées complètes (textes, photos, couleurs hexadécimales) et l’adresse à encoder dans la puce NFC.</p></div>
         <div className="ph-actions"><Btn icon="plus" onClick={() => setCreation('sticker')}>Nouveau sticker</Btn></div>
       </header>
 
@@ -113,7 +157,7 @@ export default function Production() {
           </select>
         </label>
         {cartesFiltrees.length ? <div className="table-wrap"><table className="adm-tbl">
-        <thead><tr><th>Client</th><th>Carte</th><th>Puce NFC : adresse à encoder</th><th>Modèle actif</th><th>Statut</th></tr></thead>
+        <thead><tr><th>Client</th><th>Carte</th><th>Puce NFC : adresse à encoder</th><th>Aperçu & métadonnées</th><th>Statut</th></tr></thead>
         <tbody>{cartesFiltrees.map((c) => (
           <tr key={c.id}>
             <td data-l="Client">{c.fiche?.id ? <Link to={`/admin/fiches/${c.fiche.id}`}><b>{client(c.fiche)}</b></Link> : <b>{client(c.fiche)}</b>}<small>{c.fiche?.nom} · {fdate(c.createdAt)}</small>
@@ -125,9 +169,9 @@ export default function Production() {
             <td data-l="Carte"><Badge tone={FORMULE_TONE[c.tier]}>{c.tier}</Badge><small>/{c.fiche?.slug}</small></td>
             <td data-l="Puce NFC"><code className="nfc">{c.nfcUrl}</code><CopyLink text={c.nfcUrl} />
               {c.adresseChangee && <small className="adm-red">L’adresse de la fiche a changé : la puce déjà écrite ne mène plus à la fiche. À ré-encoder.</small>}</td>
-            <td data-l="Modèle actif"><div className="row-a left">
-              <Btn icon="eye" onClick={() => setVue({ type: 'carte', c, modele: modeles.modeles.find(m => m.tier === c.tier && m.actif) ?? null })}>Aperçu</Btn>
-              <small>{modeles.modeles.find(m => m.tier === c.tier && m.actif)?.nom ?? `Aucun modèle actif pour ${c.tier}`}</small>
+            <td data-l="Aperçu & métadonnées"><div className="row-a left">
+              <Btn icon="eye" onClick={() => setVue({ type: 'carte', c })}>Aperçu & infos</Btn>
+              <small>{c.rectoUrl ? 'Visuels prêts' : 'Sans aperçu'}{c.design ? ' · métadonnées' : ''}</small>
             </div>
             </td>
             <td data-l="Statut"><select aria-label={`Statut de la carte ${c.id}`} value={c.statut} onChange={(e) => setCarte(c, e.target.value as StatutCarte)}>
@@ -217,18 +261,134 @@ function QrRow({ q, onSave }: { q: QrLien; onSave: (b: { targetUrl?: string | nu
 }
 
 function Apercu({ vue, onClose }: { vue: Vue; onClose: () => void }) {
-  const recto = vue.type === 'carte' ? vue.modele?.rectoUrl : null;
-  const verso = vue.type === 'carte' ? vue.modele?.versoUrl : null;
+  if (vue.type !== 'carte') {
+    return (
+      <Modal title="Aperçu du sticker" onClose={onClose} wide>
+        <div className="prod-prev one">
+          <img src={svgDataUrl(stickerFile(vue.x))} alt="Sticker" />
+          <p className="adm-muted small">Fichier vectoriel à la taille réelle, fond perdu et trait de coupe « CutContour » (magenta) pour la découpe.</p>
+        </div>
+      </Modal>
+    );
+  }
+
+  const c = vue.c;
+  const design = (c.design && typeof c.design === 'object' ? c.design : null) as Record<string, unknown> | null;
+  const texte = (design?.texte && typeof design.texte === 'object' ? design.texte : null) as Record<string, unknown> | null;
+  const logoUrl = typeof design?.logoUrl === 'string' ? design.logoUrl : null;
+  const photoRectoUrl = typeof design?.photoRectoUrl === 'string' ? design.photoRectoUrl : null;
+  const photoVersoUrl = typeof design?.photoVersoUrl === 'string' ? design.photoVersoUrl : null;
+
   return (
-    <Modal title={vue.type === 'carte' ? `Carte /${vue.c.fiche?.slug ?? ''}` : 'Aperçu du sticker'} onClose={onClose} wide>
-      {vue.type === 'carte' ? <div className="prod-prev">
-        {vue.modele ? <>
-          <figure>{recto ? <img src={recto} alt="Recto" /> : <p className="adm-red"><b>Recto indisponible</b></p>}<figcaption>Recto · modèle actif {vue.modele.nom}</figcaption></figure>
-          <figure>{verso ? <img src={verso} alt="Verso" /> : <p className="adm-red"><b>Verso indisponible</b></p>}<figcaption>Verso · modèle actif {vue.modele.nom}</figcaption></figure>
-        </> : <p className="adm-red"><b>Aucun modèle actif configuré pour la formule {vue.c.tier}.</b></p>}
-        <p className="adm-muted small">{CARD.printer}. Carte {vue.c.tier}. Encodage NFC : enregistrement NDEF de type URI avec l’adresse ci-dessus. Tester la lecture NFC et le QR avec un téléphone avant livraison.</p></div>
-        : <div className="prod-prev one"><img src={svgDataUrl(stickerFile(vue.x))} alt="Sticker" />
-          <p className="adm-muted small">Fichier vectoriel à la taille réelle, fond perdu et trait de coupe « CutContour » (magenta) pour la découpe.</p></div>}
+    <Modal title={`Carte #${c.id} · /${c.fiche?.slug ?? ''}`} onClose={onClose} wide>
+      <div className="prod-prev">
+        {c.rectoUrl || c.versoUrl ? (
+          <>
+            <figure>
+              {c.rectoUrl ? (
+                <>
+                  <img src={c.rectoUrl} alt="Recto de la carte" />
+                  <figcaption>
+                    Recto ·{' '}
+                    <a href={c.rectoUrl} download={`carte-${c.fiche?.slug ?? c.id}-recto.webp`} target="_blank" rel="noreferrer" className="link">
+                      Télécharger
+                    </a>
+                  </figcaption>
+                </>
+              ) : (
+                <p className="adm-red"><b>Recto indisponible</b></p>
+              )}
+            </figure>
+            <figure>
+              {c.versoUrl ? (
+                <>
+                  <img src={c.versoUrl} alt="Verso de la carte" />
+                  <figcaption>
+                    Verso ·{' '}
+                    <a href={c.versoUrl} download={`carte-${c.fiche?.slug ?? c.id}-verso.webp`} target="_blank" rel="noreferrer" className="link">
+                      Télécharger
+                    </a>
+                  </figcaption>
+                </>
+              ) : (
+                <p className="adm-red"><b>Verso indisponible</b></p>
+              )}
+            </figure>
+          </>
+        ) : (
+          <p className="adm-muted">Aucun aperçu image joint à cette commande.</p>
+        )}
+      </div>
+
+      {design && (
+        <div className="panel" style={{ marginTop: 16 }}>
+          <h3 style={{ marginBottom: 10 }}>Métadonnées de la carte</h3>
+          <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <div>
+              <p className="eyebrow">Textes imprimés</p>
+              <dl className="small" style={{ display: 'grid', gap: 4, marginTop: 6 }}>
+                <div><b>Nom :</b> {String(texte?.nom ?? c.fiche?.nom ?? '—')}</div>
+                <div><b>Fonction :</b> {String(texte?.fonction ?? c.fiche?.fonction ?? '—')}</div>
+                <div><b>Entreprise :</b> {String(texte?.entreprise ?? c.fiche?.entreprise ?? '—')}</div>
+                <div><b>Téléphone :</b> {String(texte?.telephone ?? c.fiche?.telephone ?? '—')}</div>
+                <div><b>E-mail :</b> {String(texte?.email ?? c.fiche?.email ?? '—')}</div>
+              </dl>
+            </div>
+
+            <div>
+              <p className="eyebrow">Couleurs (hexadécimal) & fonds</p>
+              <div className="small" style={{ display: 'grid', gap: 6, marginTop: 6 }}>
+                <HexSwatch label="Accent" hex={design.couleurAccentHex} />
+                <HexSwatch label="Texte recto" hex={design.couleurTexteRectoHex} />
+                <HexSwatch label="Texte verso" hex={design.couleurTexteVersoHex} />
+                <div><b>Fond recto :</b> {String(design.fondRectoLabel ?? design.fondRecto ?? '—')}</div>
+                <div><b>Fond verso :</b> {String(design.fondVersoLabel ?? design.fondVerso ?? '—')}</div>
+                {design.tailleLogo != null && <div><b>Taille logo :</b> {String(design.tailleLogo)} %</div>}
+                {design.zoom != null && (
+                  <div><b>Cadrage recto :</b> zoom {String(design.zoom)} % · X {String(design.posX ?? 50)} % · Y {String(design.posY ?? 50)} % · assombrir {String(design.assombrirRecto ?? 0)} %</div>
+                )}
+                {design.assombrirVerso != null && <div><b>Assombrir verso :</b> {String(design.assombrirVerso)} %</div>}
+              </div>
+            </div>
+
+            {(logoUrl || photoRectoUrl || photoVersoUrl) && (
+              <div>
+                <p className="eyebrow">Photos & logo source</p>
+                <div className="small" style={{ display: 'grid', gap: 8, marginTop: 6 }}>
+                  {logoUrl && (
+                    <div>
+                      <b>Logo :</b>{' '}
+                      <a href={logoUrl} target="_blank" rel="noreferrer" className="link">
+                        Ouvrir / télécharger
+                      </a>
+                    </div>
+                  )}
+                  {photoRectoUrl && (
+                    <div>
+                      <b>Photo fond recto :</b>{' '}
+                      <a href={photoRectoUrl} target="_blank" rel="noreferrer" className="link">
+                        Ouvrir / télécharger
+                      </a>
+                    </div>
+                  )}
+                  {photoVersoUrl && (
+                    <div>
+                      <b>Photo fond verso :</b>{' '}
+                      <a href={photoVersoUrl} target="_blank" rel="noreferrer" className="link">
+                        Ouvrir / télécharger
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <p className="adm-muted small" style={{ marginTop: 12 }}>
+        {CARD.printer}. Carte {c.tier}. Puce NFC : <code>{c.nfcUrl}</code> <CopyLink text={c.nfcUrl} />
+      </p>
     </Modal>
   );
 }

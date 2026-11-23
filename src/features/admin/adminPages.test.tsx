@@ -679,15 +679,22 @@ describe("pages du back-office", () => {
         tier: "pro",
         nfcUrl: "https://sc.example/f/autre",
         adresseChangee: false,
-        rectoUrl: null,
-        versoUrl: null,
-        design: null,
         encodedAt: null,
         statut: "livree",
         notes: null,
         printedAt: null,
         testedAt: null,
         createdAt: "2026-10-02T00:00:00.000Z",
+        rectoUrl: "https://cdn.example/pro-recto.webp",
+        versoUrl: "https://cdn.example/pro-verso.webp",
+        design: {
+          texte: { nom: "Autre client", entreprise: "Autre client" },
+          fondRectoLabel: "Noir mat",
+          fondVersoLabel: "Comme le recto",
+          couleurAccentHex: "#c9a25b",
+          couleurTexteRectoHex: "#ffffff",
+          couleurTexteVersoHex: "#ffffff",
+        },
         adresseLivraison: null,
         telephoneLivraison: null,
         notesClient: null,
@@ -712,7 +719,6 @@ describe("pages du back-office", () => {
     expect(host.textContent).toContain("Appeler à l'arrivée");
     expect(host.textContent).toContain("12 000 FCFA");
     expect(host.querySelectorAll('input[type="file"]')).toHaveLength(0);
-    expect(host.textContent).toContain("Modèle Pro actif");
     expect(host.querySelectorAll("tbody tr")).toHaveLength(2);
     const filter = host.querySelector<HTMLSelectElement>(
       'select[aria-label="Filtrer les cartes par statut"]'
@@ -725,9 +731,10 @@ describe("pages du back-office", () => {
     expect(host.querySelectorAll("tbody tr")).toHaveLength(1);
     expect(host.textContent).toContain("Autre client");
 
-    click(byText("button.adm-btn", "Aperçu"));
+    click(byText("button.adm-btn", "Aperçu & infos"));
     await settle();
-    expect(host.textContent).toContain("Recto · modèle actif Modèle Pro actif");
+    expect(host.textContent).toContain("Métadonnées de la carte");
+    expect(host.textContent).toContain("#c9a25b");
     expect(host.querySelector('img[src="https://cdn.example/pro-recto.webp"]')).toBeTruthy();
   });
 

@@ -26,7 +26,6 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: `${ADMIN_BASE}/demandes`, label: "Demandes", icon: "file" },
   { to: `${ADMIN_BASE}/relances`, label: "Relances", icon: "zap" },
   { to: `${ADMIN_BASE}/production`, label: "Production", icon: "gear" },
-  { to: `${ADMIN_BASE}/cartes`, label: "Modèles de cartes", icon: "card" },
   { to: `${ADMIN_BASE}/qrcodes`, label: "QR codes", icon: "qr" },
   { to: `${ADMIN_BASE}/formules`, label: "Formules", icon: "sliders" },
   {
