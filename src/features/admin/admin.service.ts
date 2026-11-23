@@ -9,7 +9,6 @@ import type {
   BillingList,
   Carte,
   CommandeInput,
-  CreateModeleCarteInput,
   CreateStickerInput,
   Emplacements,
   FicheDetail,
@@ -19,11 +18,9 @@ import type {
   LeadRequestsPage,
   LeadStatus,
   ListFichesParams,
-  ModeleCarte,
   Parametres,
   PatchEmplacements,
   PatchFormule,
-  PatchModeleCarteInput,
   ProductionSummary,
   QrApercu,
   QrFormat,
@@ -223,27 +220,6 @@ export const adminApi = {
       `/admin/production/section-stickers/${id}`,
       { statut }
     ),
-  // Modèles de carte (recto / verso affichés au client dans sa demande de carte)
-  listModelesCartes: () =>
-    get<{ modeles: ModeleCarte[] }>("/admin/production/modeles-cartes"),
-  /** Envoie une image de carte (corps binaire) ; renvoie l'adresse à mettre dans rectoUrl / versoUrl. */
-  uploadCardImage: (file: File) =>
-    call(
-      api.post<{ url: string }>(
-        "/admin/production/modeles-cartes/images",
-        file,
-        {
-          headers: { "Content-Type": file.type },
-          transformRequest: [data => data],
-        }
-      )
-    ),
-  createModeleCarte: (b: CreateModeleCarteInput) =>
-    post<{ modele: ModeleCarte }>("/admin/production/modeles-cartes", b),
-  updateModeleCarte: (id: number, b: PatchModeleCarteInput) =>
-    patch<{ modele: ModeleCarte }>(`/admin/production/modeles-cartes/${id}`, b),
-  deleteModeleCarte: (id: number) =>
-    del<{ ok: true }>(`/admin/production/modeles-cartes/${id}`),
   listStickers: () =>
     get<{ stickers: Sticker[] }>("/admin/production/stickers"),
   createSticker: (b: CreateStickerInput) =>

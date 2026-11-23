@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { IconSprite } from "../../../components/Icons";
 import CardStudio from "../../../components/studio/CardStudio";
@@ -35,6 +35,8 @@ export default function ClientCartesPage() {
   useReveal();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState<"" | Tier>("");
 
   useEffect(() => {
     document.title = "Cartes — Support Connecté";
@@ -62,10 +64,29 @@ export default function ClientCartesPage() {
       );
   }, [fichesQuery.data]);
 
+  const filteredFiches = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return activeFiches.filter(({ fiche, plan }) => {
+      if (planFilter && plan !== planFilter) return false;
+      if (!q) return true;
+      const hay = [
+        fiche.prenom,
+        fiche.nom,
+        fiche.slug,
+        fiche.entreprise,
+        fiche.fonction,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [activeFiches, planFilter, search]);
+
   const requestedFicheId = Number(searchParams.get("ficheId"));
   const selected =
-    activeFiches.find(item => item.fiche.id === requestedFicheId) ??
-    activeFiches[0] ??
+    filteredFiches.find(item => item.fiche.id === requestedFicheId) ??
+    filteredFiches[0] ??
     null;
 
   const selectFiche = (ficheId: number) => {
@@ -147,42 +168,76 @@ export default function ClientCartesPage() {
           </div>
         ) : (
           <div className="db-card mb-6">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              Fiches actives ({activeFiches.length})
-            </p>
-            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-              {activeFiches.map(({ fiche, plan }) => {
-                const isSelected = selected?.fiche.id === fiche.id;
-                const fullName =
-                  `${fiche.prenom ?? ""} ${fiche.nom ?? ""}`.trim() ||
-                  fiche.slug;
-                return (
-                  <button
-                    key={fiche.id}
-                    type="button"
-                    onClick={() => selectFiche(fiche.id)}
-                    aria-pressed={isSelected}
-                    className={`flex items-center justify-between gap-3 rounded-xl border p-3 text-left transition ${
-                      isSelected
-                        ? "border-[#EF1733] bg-[#fff5f6] ring-2 ring-[#EF1733]/20"
-                        : "border-neutral-200 bg-white hover:border-neutral-400"
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-neutral-900">
-                        {fullName}
-                      </p>
-                      <p className="truncate text-xs text-neutral-500">
-                        /{fiche.slug}
-                        {fiche.entreprise ? ` · ${fiche.entreprise}` : ""}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-neutral-900 px-2.5 py-0.5 text-[11px] font-semibold text-white">
-                      {PLAN_LABELS[plan]}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                Fiche sélectionnée ({filteredFiches.length} /{" "}
+                {activeFiches.length} fiche{activeFiches.length > 1 ? "s" : ""}{" "}
+                active{activeFiches.length > 1 ? "s" : ""})
+              </p>
+              {selected && (
+                <span className="rounded-full bg-neutral-900 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  Formule {PLAN_LABELS[selected.plan]}
+                </span>
+              )}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_minmax(0,1.3fr)]">
+              <label className="grid gap-1 text-xs font-medium text-neutral-600">
+                Rechercher une fiche
+                <input
+                  type="search"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Nom, entreprise ou slug…"
+                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+                />
+              </label>
+
+              <label className="grid gap-1 text-xs font-medium text-neutral-600">
+                Filtrer par formule
+                <select
+                  value={planFilter}
+                  onChange={e => setPlanFilter(e.target.value as "" | Tier)}
+                  aria-label="Filtrer par formule"
+                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+                >
+                  <option value="">Toutes les formules</option>
+                  <option value="essentielle">Essentielle</option>
+                  <option value="pro">Pro</option>
+                  <option value="signature">Signature</option>
+                </select>
+              </label>
+
+              <label className="grid gap-1 text-xs font-medium text-neutral-600">
+                Choisir la fiche active
+                <select
+                  aria-label="Choisir la fiche active"
+                  value={selected ? String(selected.fiche.id) : ""}
+                  disabled={filteredFiches.length === 0}
+                  onChange={e => {
+                    const id = Number(e.target.value);
+                    if (id) selectFiche(id);
+                  }}
+                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 focus:border-[#EF1733] focus:outline-none disabled:bg-neutral-100"
+                >
+                  {filteredFiches.length === 0 ? (
+                    <option value="">Aucune fiche ne correspond</option>
+                  ) : (
+                    filteredFiches.map(({ fiche, plan }) => {
+                      const fullName =
+                        `${fiche.prenom ?? ""} ${fiche.nom ?? ""}`.trim() ||
+                        fiche.slug;
+                      return (
+                        <option key={fiche.id} value={fiche.id}>
+                          {fullName}
+                          {fiche.entreprise ? ` · ${fiche.entreprise}` : ""} (
+                          /{fiche.slug}) — {PLAN_LABELS[plan]}
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+              </label>
             </div>
           </div>
         )}
@@ -272,7 +327,7 @@ export default function ClientCartesPage() {
               onSubmitted: carte => {
                 queryClient.setQueryData<CardRequestState>(
                   ["card-request", selected.fiche.id],
-                  prev => ({ modele: prev?.modele ?? null, carte }),
+                  { carte },
                 );
               },
             }}

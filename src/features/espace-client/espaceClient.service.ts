@@ -99,27 +99,15 @@ export async function createSectionSticker(
   return response.data.demande;
 }
 
-/** Modèle de carte (recto / verso) défini par l'administration pour la formule de la fiche. */
-export type CardModelPreview = {
-  id: number;
-  tier: "essentielle" | "pro" | "signature";
-  nom: string;
-  rectoUrl: string;
-  versoUrl: string;
-};
-
 export type CardRequestState = {
   carte: CardRequest | null;
-  /** null : aucun modèle défini pour cette formule, le panneau garde son aperçu par défaut. */
-  modele: CardModelPreview | null;
 };
 
 export async function getCardRequest(ficheId: number): Promise<CardRequestState> {
   const response = await api.get<{
     carte: CardRequest | null;
-    modele?: CardModelPreview | null;
   }>(`fiches/${ficheId}/card-request`);
-  return { carte: response.data.carte, modele: response.data.modele ?? null };
+  return { carte: response.data.carte };
 }
 
 export async function uploadClientCardImage(
