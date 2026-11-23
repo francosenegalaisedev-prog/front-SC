@@ -202,7 +202,7 @@ export const adminApi = {
       versoUrl?: string | null;
     }
   ) => patch<{ carte: Carte }>(`/admin/production/cartes/${id}`, b),
-  // Stickers « par section » : demandes de devis des clients ; activer une demande ouvre la section en page publique
+  // Stickers « par section » : générés et activés par l'administration
   listSectionStickers: (
     q: { statut?: SectionStickerAdmin["statut"]; ficheId?: number } = {}
   ) => call(
@@ -210,11 +210,16 @@ export const adminApi = {
       "/admin/production/section-stickers",
       { params: clean(q) },
     ),
-    "Impossible de charger les demandes de stickers. Réessayez.",
+    "Impossible de charger les stickers par section. Réessayez.",
   ),
+  createSectionSticker: (b: { ficheId: number; section: string }) =>
+    post<{ demande: SectionStickerAdmin }>(
+      "/admin/production/section-stickers",
+      b,
+    ),
   setSectionStickerStatus: (
     id: number,
-    statut: "active" | "desactivee" | "refusee"
+    statut: "active" | "desactivee"
   ) =>
     patch<{ demande: SectionStickerAdmin }>(
       `/admin/production/section-stickers/${id}`,

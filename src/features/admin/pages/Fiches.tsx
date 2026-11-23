@@ -22,7 +22,7 @@ type Filters = {
   statut: string;
   formule: string;
   expiration: string;
-  sticker: "" | "demande";
+  sticker: "" | "actif";
   tri: string;
   userId: string;
 };
@@ -31,7 +31,7 @@ const FROM_URL = (q: URLSearchParams): Filters => ({
   statut: q.get("statut") ?? "",
   formule: q.get("formule") ?? "",
   expiration: q.get("expiration") ?? "",
-  sticker: q.get("sticker") === "demande" ? "demande" : "",
+  sticker: q.get("sticker") === "actif" ? "actif" : "",
   tri: q.get("tri") ?? "recent",
   userId: q.get("userId") ?? "",
 });
@@ -137,10 +137,10 @@ export default function Fiches() {
         <select
           value={f.sticker}
           onChange={set("sticker")}
-          aria-label="Demandes de stickers"
+          aria-label="Stickers par section"
         >
-          <option value="">Demandes de stickers</option>
-          <option value="demande">À traiter</option>
+          <option value="">Stickers par section</option>
+          <option value="actif">Avec stickers actifs</option>
         </select>
         <select value={f.tri} onChange={set("tri")} aria-label="Tri">
           <option value="recent">Plus récentes</option>
@@ -231,16 +231,15 @@ export default function Fiches() {
                           : "Sans échéance"}
                     </td>
                     <td data-l="Scans">{x.scansTotal}</td>
-                    <td data-l="Demandes sticker">
+                    <td data-l="Stickers actifs">
                       {x.demandesSticker.length ? (
                         <div className="row-a left">
-                          <span aria-label={`${x.demandesSticker.length} demandes en attente`}>
-                            <Badge tone="red">{x.demandesSticker.length}</Badge>
+                          <span aria-label={`${x.demandesSticker.length} stickers actifs`}>
+                            <Badge tone="green">{x.demandesSticker.length}</Badge>
                           </span>
                           <Btn
-                            kind="red"
                             icon="eye"
-                            aria-label={`Voir les sections demandées pour ${x.entreprise || x.nom}`}
+                            aria-label={`Voir les stickers actifs pour ${x.entreprise || x.nom}`}
                             onClick={e => {
                               e.stopPropagation();
                               setFicheDemandes(x);
@@ -267,30 +266,26 @@ export default function Fiches() {
           />
           {ficheDemandes && (
             <Modal
-              title={`Sections demandées · ${ficheDemandes.entreprise || ficheDemandes.nom}`}
+              title={`Stickers actifs · ${ficheDemandes.entreprise || ficheDemandes.nom}`}
               onClose={() => setFicheDemandes(null)}
             >
               <p className="adm-muted">
-                {ficheDemandes.demandesSticker.length} demande
-                {ficheDemandes.demandesSticker.length > 1 ? "s" : ""} de stickers
-                à traiter.
+                {ficheDemandes.demandesSticker.length} sticker
+                {ficheDemandes.demandesSticker.length > 1 ? "s" : ""} par section
+                actif{ficheDemandes.demandesSticker.length > 1 ? "s" : ""}.
               </p>
               <div className="table-wrap">
                 <table className="adm-tbl">
                   <thead>
                     <tr>
                       <th>Section</th>
-                      <th>Quantité</th>
                     </tr>
                   </thead>
                   <tbody>
                     {ficheDemandes.demandesSticker.map(d => (
                       <tr key={d.id}>
                         <td>
-                          <Badge tone="gold">{sectionLabel(d.section)}</Badge>
-                        </td>
-                        <td>
-                          {d.quantite} sticker{d.quantite > 1 ? "s" : ""}
+                          <Badge tone="green">{sectionLabel(d.section)}</Badge>
                         </td>
                       </tr>
                     ))}

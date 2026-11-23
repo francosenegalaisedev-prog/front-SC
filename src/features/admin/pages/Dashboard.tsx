@@ -446,10 +446,10 @@ export default function Dashboard() {
         />
         <Kpi
           icon="qrcode"
-          label="Demandes de stickers"
+          label="Stickers par section"
           value={new Intl.NumberFormat("fr-FR").format(s.demandesSticker)}
-          sub="toutes fiches confondues"
-          onClick={go("/fiches?sticker=demande")}
+          sub="stickers actifs"
+          onClick={go("/production?tab=sections")}
         />
         <Kpi
           icon="card"

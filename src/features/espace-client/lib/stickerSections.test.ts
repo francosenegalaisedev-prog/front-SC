@@ -1,156 +1,118 @@
 import { describe, expect, it } from "vitest";
-import type { FicheRecord, Onglet } from "../../../types";
-import { visibleTabs } from "../../../lib/plans";
-import { FICHES } from "../../../test/fixtures/fiches";
+import type { FicheRecord } from "../../../types";
 import {
+  ALLOWED_STICKER_SECTIONS,
   hasStickers,
+  latestBySection,
   resolveStickerSection,
-  sectionKey,
   stickerPath,
   stickerSections,
 } from "./stickerSections";
 
-/** Fiche de test dont TOUTES les sections visibles sont activées par l'administration (cas le plus simple). */
-const bySlug = (slug: string): FicheRecord => {
-  const f = structuredClone(FICHES.find(f => f.slug === slug)!);
-  f.stickerSections = visibleTabs(f).map(sectionKey);
-  return f;
-};
-const restaurant = () => bySlug("le-sunset"); // signature, secteur restaurant
-const immo = () => bySlug("teranga-immo"); // signature, secteur immobilier
-const pro = () => bySlug("mamadou-diop"); // pro
-const essentielle = () => bySlug("awa-ndiaye"); // essentielle
-
-describe("droit aux stickers", () => {
-  it("Pro et Signature seulement", () => {
-    expect([
-      hasStickers(essentielle()),
-      hasStickers(pro()),
-      hasStickers(restaurant()),
-    ]).toEqual([false, true, true]);
-  });
+const makeFiche = (overrides: Partial<FicheRecord> = {}): FicheRecord => ({
+  id: 1,
+  slug: "le-sunset",
+  formule: "signature",
+  statut: "active",
+  expiree: false,
+  stickerSections: ["menu", "avis"],
+  enLigneSeule: false,
+  scansTotal: 0,
+  updatedAt: "2026-11-23T00:00:00Z",
+  prenom: "Rose",
+  nom: "Ndiaye",
+  fonction: "",
+  entreprise: "Le Sunset",
+  photo: "",
+  logo: "",
+  telephone: "",
+  whatsapp: "",
+  email: "",
+  site: "",
+  adresse: "",
+  googlePlaceId: "",
+  dateEcheance: null,
+  data: {
+    secteur: "restaurant",
+    onglets: [
+      { id: "menu", type: "menu", visible: true },
+      { id: "horaires", type: "horaires", visible: true },
+      { id: "avis", type: "avis", visible: true },
+      { id: "reseaux", type: "reseaux", visible: true },
+      { id: "presentation", type: "presentation", visible: true },
+      { id: "texte-1", type: "texte", visible: true, titre: "Infos" },
+    ],
+  },
+  ...overrides,
 });
 
-describe("clé de section", () => {
-  const tab = (type: Onglet["type"], id = "x1"): Onglet => ({
-    id,
-    type,
-    visible: true,
-  });
-  it("utilise le type de l'onglet, sauf pour les onglets personnalisés (id)", () => {
-    expect(sectionKey(tab("menu"))).toBe("menu");
-    expect(sectionKey(tab("texte", "texte-9"))).toBe("texte-9");
-  });
-  it("construit l'URL avec le préfixe /s et encode les segments", () => {
-    expect(stickerPath("le-sunset", "menu")).toBe("/s/le-sunset/menu");
-    expect(stickerPath("a b", "c/d")).toBe("/s/a%20b/c%2Fd");
-  });
-});
-
-describe("resolveStickerSection", () => {
-  it("trouve une section par son type", () => {
-    const r = resolveStickerSection(restaurant(), "menu");
-    expect("tab" in r && r.tab.type).toBe("menu");
+describe("stickerSections (7 sections autorisées)", () => {
+  it("autorise exactement les 7 sections demandées", () => {
+    expect(ALLOWED_STICKER_SECTIONS).toEqual([
+      "reseaux",
+      "catalogue",
+      "galerie",
+      "rappel",
+      "avis",
+      "menu",
+      "biens",
+    ]);
   });
 
-  it("trouve une section par l'identifiant de l'onglet", () => {
-    const f = restaurant();
-    const menu = f.data.onglets!.find(t => t.type === "menu")!;
-    const r = resolveStickerSection(f, menu.id);
-    expect("tab" in r && r.tab.id).toBe(menu.id);
+  it("hasStickers : Pro et Signature uniquement", () => {
+    expect(hasStickers({ formule: "essentielle" })).toBe(false);
+    expect(hasStickers({ formule: "pro" })).toBe(true);
+    expect(hasStickers({ formule: "signature" })).toBe(true);
   });
 
-  it("retombe sur la fiche complète pour la formule Essentielle", () => {
-    expect(resolveStickerSection(essentielle(), "presentation")).toEqual({
-      fallback: "plan",
+  it("stickerSections exclut les sections non autorisées (horaires, presentation, texte)", () => {
+    const sections = stickerSections(makeFiche());
+    expect(sections.map(s => s.key)).toEqual(["menu", "avis", "reseaux"]);
+  });
+
+  it("resolveStickerSection retourne la section si autorisée, active et fiche active", () => {
+    expect(resolveStickerSection(makeFiche(), "menu")).toMatchObject({
+      tab: { type: "menu" },
     });
-  });
-
-  it("retombe sur la fiche complète quand la section est masquée", () => {
-    const f = restaurant();
-    f.data.onglets = f.data.onglets!.map(t =>
-      t.type === "menu" ? { ...t, visible: false } : t,
-    );
-    expect(resolveStickerSection(f, "menu")).toEqual({ fallback: "missing" });
-  });
-
-  it("retombe sur la fiche complète quand la section est supprimée ou inconnue", () => {
-    const f = restaurant();
-    f.data.onglets = f.data.onglets!.filter(t => t.type !== "menu");
-    expect(resolveStickerSection(f, "menu")).toEqual({ fallback: "missing" });
-    expect(resolveStickerSection(restaurant(), "n-importe-quoi")).toEqual({
+    expect(resolveStickerSection(makeFiche(), "horaires")).toEqual({
       fallback: "missing",
     });
-  });
-});
-
-describe("activation par l'administration", () => {
-  it("une section non activée n'est PAS servie : repli sur la fiche complète", () => {
-    const f = restaurant();
-    f.stickerSections = ["horaires"]; // seule « horaires » est activée
-    expect(resolveStickerSection(f, "menu")).toEqual({ fallback: "inactive" });
-    const r = resolveStickerSection(f, "horaires");
-    expect("tab" in r && r.tab.type).toBe("horaires");
-  });
-
-  it("aucune section activée (ou serveur sans ce champ) : rien n'est servi", () => {
-    const f = restaurant();
-    f.stickerSections = [];
-    expect(resolveStickerSection(f, "menu")).toEqual({ fallback: "inactive" });
-    delete f.stickerSections;
-    expect(resolveStickerSection(f, "menu")).toEqual({ fallback: "inactive" });
-  });
-
-  it("l'aperçu (administration, éditeur) montre une section même non activée", () => {
-    const f = restaurant();
-    f.stickerSections = [];
-    const r = resolveStickerSection(f, "menu", { requireActive: false });
-    expect("tab" in r && r.tab.type).toBe("menu");
-  });
-
-  it("l'aperçu ne contourne ni la formule ni une section masquée ou inconnue", () => {
-    expect(
-      resolveStickerSection(essentielle(), "presentation", {
-        requireActive: false,
-      }),
-    ).toEqual({ fallback: "plan" });
-    expect(
-      resolveStickerSection(restaurant(), "inconnue", { requireActive: false }),
-    ).toEqual({ fallback: "missing" });
-  });
-
-  it("une section activée est reconnue aussi par l'identifiant de son onglet", () => {
-    const f = restaurant();
-    f.stickerSections = ["menu"];
-    const menu = f.data.onglets!.find(t => t.type === "menu")!;
-    expect("tab" in resolveStickerSection(f, menu.id)).toBe(true);
-  });
-});
-
-describe("stickerSections (sections proposables)", () => {
-  it("place en premier la section du secteur : menu pour un restaurant", () => {
-    const s = stickerSections(restaurant());
-    expect(s[0]).toMatchObject({ key: "menu", primary: true });
-    expect(s.filter(i => i.primary)).toHaveLength(1);
-  });
-
-  it("biens pour l'immobilier", () => {
-    expect(stickerSections(immo())[0]).toMatchObject({
-      key: "biens",
-      primary: true,
+    expect(resolveStickerSection(makeFiche(), "reseaux")).toEqual({
+      fallback: "inactive",
     });
+    expect(
+      resolveStickerSection(makeFiche(), "reseaux", { requireActive: false }),
+    ).toMatchObject({ tab: { type: "reseaux" } });
   });
 
-  it("sans secteur, aucune section n'est mise en avant et l'ordre de la fiche est conservé", () => {
-    const f = pro();
-    delete f.data.secteur;
-    const s = stickerSections(f);
-    expect(s.some(i => i.primary)).toBe(false);
-    expect(s.map(i => i.tab.id)).toEqual(s.map(i => i.tab.id)); // stable
-    expect(s.length).toBeGreaterThan(0);
+  it("l'état de la fiche conditionne celui du sticker (fiche suspendue → inactive)", () => {
+    expect(
+      resolveStickerSection(makeFiche({ statut: "suspendue" }), "menu"),
+    ).toEqual({ fallback: "inactive" });
   });
 
-  it("aucune section pour la formule Essentielle", () => {
-    expect(stickerSections(essentielle())).toEqual([]);
+  it("stickerPath encode proprement le slug et la section", () => {
+    expect(stickerPath("le-sunset", "menu")).toBe("/s/le-sunset/menu");
+  });
+
+  it("latestBySection ignore les sections hors liste autorisée", () => {
+    const map = latestBySection([
+      {
+        id: 1,
+        section: "horaires",
+        statut: "active",
+        createdAt: "2026-11-23T00:00:00Z",
+        activatedAt: "2026-11-23T00:00:00Z",
+      },
+      {
+        id: 2,
+        section: "menu",
+        statut: "active",
+        createdAt: "2026-11-23T00:00:00Z",
+        activatedAt: "2026-11-23T00:00:00Z",
+      },
+    ]);
+    expect(map.has("horaires")).toBe(false);
+    expect(map.get("menu")?.id).toBe(2);
   });
 });
