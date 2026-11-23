@@ -148,7 +148,7 @@ export default function Production() {
         <Kpi icon="zap" label="QR dynamiques sans cible" value={sum.qrSansCible} sub="à régler avant impression" tone={sum.qrSansCible ? 'down' : undefined} onClick={() => setTab('qr')} />
         <Kpi icon="eye" label="Scans des QR dynamiques" value={sum.scansQr} sub="cumul" />
       </section>
-      <Tabs value={tab} onChange={setTab} tabs={[['cartes', 'Cartes · Evolis', cartes.cartes.length], ['fonction', 'Stickers à fonction', fonc.length], ['telephone', 'Stickers 30 mm', tel.length], ['qr', 'QR dynamiques', qr.qr.length], ['sections', 'Stickers par section', (sec?.demandes ?? []).filter((d) => d.statut === 'demande').length]]} />
+      <Tabs value={tab} onChange={setTab} tabs={[['cartes', 'Cartes · Evolis', cartes.cartes.length], ['fonction', 'Stickers à fonction', fonc.length], ['telephone', 'Stickers 30 mm', tel.length], ['qr', 'QR dynamiques', qr.qr.length], ['sections', 'Stickers par section', (sec?.demandes ?? []).filter((d) => d.statut === 'active').length]]} />
 
       {tab === 'cartes' && <>
         <label className="prod-status-filter">Filtrer les cartes par statut

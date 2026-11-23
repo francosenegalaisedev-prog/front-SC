@@ -30,7 +30,6 @@ export interface FicheRow {
   demandesSticker: {
     id: number;
     section: string;
-    quantite: number;
     createdAt: string;
   }[];
 }
@@ -202,7 +201,7 @@ export interface ListFichesParams {
   statut?: string;
   formule?: string;
   expiration?: string;
-  sticker?: "demande";
+  sticker?: "actif";
   userId?: string;
   tri?: string;
   page?: number;

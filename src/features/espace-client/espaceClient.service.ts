@@ -79,24 +79,12 @@ export type CardRequestInput = {
   design?: Record<string, unknown>;
 };
 
-/** Demandes de stickers « par section » d'une fiche (les plus récentes d'abord). */
+/** Stickers « par section » générés par l'administration pour cette fiche. */
 export async function getSectionStickers(ficheId: number): Promise<ApiSectionSticker[]> {
   const response = await api.get<{ demandes: ApiSectionSticker[] }>(
     `fiches/${ficheId}/section-stickers`,
   );
   return response.data.demandes;
-}
-
-/** Demande de devis : N stickers ouvrant cette section. L'administration l'active ensuite. */
-export async function createSectionSticker(
-  ficheId: number,
-  input: { section: string; quantite: number; message?: string },
-): Promise<ApiSectionSticker> {
-  const response = await api.post<{ demande: ApiSectionSticker }>(
-    `fiches/${ficheId}/section-stickers`,
-    input,
-  );
-  return response.data.demande;
 }
 
 export type CardRequestState = {

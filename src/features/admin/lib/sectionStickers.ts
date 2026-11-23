@@ -1,41 +1,40 @@
 import { TAB_TYPES } from "../../../lib/plans";
 import type { TabType } from "../../../types";
 import type { SectionStickerAdmin } from "../../../types/admin";
+import { ALLOWED_STICKER_SECTIONS } from "../../espace-client/lib/stickerSections";
 
-/* Stickers par section : libellés et décisions possibles, côté administration (logique pure). */
+/* Stickers par section : libellés et actions possibles côté administration. */
 type Statut = SectionStickerAdmin["statut"];
 
+export const ADMIN_STICKER_SECTIONS: readonly {
+  key: TabType;
+  label: string;
+}[] = ALLOWED_STICKER_SECTIONS.map(key => ({
+  key,
+  label: TAB_TYPES[key].label,
+}));
+
 export const SS_STATUT: Record<Statut, { label: string; tone: string }> = {
-  demande: { label: "À traiter", tone: "gold" },
-  active: { label: "Activée", tone: "green" },
-  desactivee: { label: "Désactivée", tone: "grey" },
-  refusee: { label: "Refusée", tone: "red" },
+  active: { label: "Activé", tone: "green" },
+  desactivee: { label: "Désactivé", tone: "grey" },
 };
 
-/** Nom lisible d'une section : un type d'onglet connu, sinon un onglet personnalisé. */
 export const sectionLabel = (key: string): string =>
-  key in TAB_TYPES ? TAB_TYPES[key as TabType].label : "Onglet personnalisé";
+  key in TAB_TYPES ? TAB_TYPES[key as TabType].label : key;
 
-export type SectionDecision = "active" | "desactivee" | "refusee";
+export type SectionDecision = "active" | "desactivee";
 
-/** Décisions possibles selon l'état (reflète les transitions acceptées par le serveur). */
 export const DECISIONS: Record<
   Statut,
   { to: SectionDecision; label: string; primary?: boolean }[]
 > = {
-  demande: [
-    { to: "active", label: "Activer la section", primary: true },
-    { to: "refusee", label: "Refuser" },
-  ],
   active: [{ to: "desactivee", label: "Désactiver" }],
   desactivee: [{ to: "active", label: "Réactiver", primary: true }],
-  refusee: [],
 };
 
 export const DECISION_DONE: Record<SectionDecision, string> = {
-  active: "Section activée : le client voit maintenant son lien et son QR",
-  desactivee: "Section désactivée : la page redevient la fiche complète",
-  refusee: "Demande refusée",
+  active: "Sticker activé : le client voit maintenant son lien et son QR",
+  desactivee: "Sticker désactivé : la page redevient la fiche complète",
 };
 
 export const displayName = (f: SectionStickerAdmin["fiche"]) =>
