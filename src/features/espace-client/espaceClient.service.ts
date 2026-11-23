@@ -62,6 +62,7 @@ export type CardRequest = {
   nfcUrl: string;
   rectoUrl: string | null;
   versoUrl: string | null;
+  design?: Record<string, unknown> | null;
   adresseLivraison: string | null;
   telephoneLivraison: string | null;
   notesClient: string | null;
@@ -73,6 +74,9 @@ export type CardRequestInput = {
   adresseLivraison: string;
   telephoneLivraison: string;
   notesClient?: string;
+  rectoUrl?: string;
+  versoUrl?: string;
+  design?: Record<string, unknown>;
 };
 
 /** Demandes de stickers « par section » d'une fiche (les plus récentes d'abord). */
@@ -95,27 +99,31 @@ export async function createSectionSticker(
   return response.data.demande;
 }
 
-/** Modèle de carte (recto / verso) défini par l'administration pour la formule de la fiche. */
-export type CardModelPreview = {
-  id: number;
-  tier: "essentielle" | "pro" | "signature";
-  nom: string;
-  rectoUrl: string;
-  versoUrl: string;
-};
-
 export type CardRequestState = {
   carte: CardRequest | null;
-  /** null : aucun modèle défini pour cette formule, le panneau garde son aperçu par défaut. */
-  modele: CardModelPreview | null;
 };
 
 export async function getCardRequest(ficheId: number): Promise<CardRequestState> {
   const response = await api.get<{
     carte: CardRequest | null;
-    modele?: CardModelPreview | null;
   }>(`fiches/${ficheId}/card-request`);
-  return { carte: response.data.carte, modele: response.data.modele ?? null };
+  return { carte: response.data.carte };
+}
+
+export async function uploadClientCardImage(
+  ficheId: number,
+  file: Blob,
+  contentType?: string,
+): Promise<{ url: string }> {
+  const response = await api.post<{ url: string }>(
+    `fiches/${ficheId}/card-request/images`,
+    file,
+    {
+      headers: { "Content-Type": contentType || file.type || "image/png" },
+      transformRequest: [data => data],
+    },
+  );
+  return response.data;
 }
 
 export async function createCardRequest(

@@ -80,6 +80,12 @@ const NAV: {
       p.startsWith(`${BASE}/demandes-rappel`),
   },
   {
+    to: `${BASE}/cartes`,
+    label: "Cartes",
+    icon: "creditCard",
+    match: p => p.startsWith(`${BASE}/cartes`),
+  },
+  {
     to: `${BASE}/abonnements`,
     label: "Abonnements & formules",
     icon: "creditCard",

@@ -529,30 +529,6 @@ export interface QrFormatInfo {
   description: string;
 }
 
-/** Modèle de carte (recto / verso) défini par l'administration pour une formule : celui que voit le client dans sa demande. */
-export interface ModeleCarte {
-  id: number;
-  tier: Formule;
-  nom: string;
-  rectoUrl: string;
-  versoUrl: string;
-  /** Un seul modèle actif par formule. */
-  actif: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-export interface CreateModeleCarteInput {
-  tier: Formule;
-  nom: string;
-  rectoUrl: string;
-  versoUrl: string;
-  /** Vrai : devient le modèle affiché aux clients de cette formule (l'ancien est désactivé). */
-  actif?: boolean;
-}
-export type PatchModeleCarteInput = Partial<
-  Pick<ModeleCarte, "nom" | "rectoUrl" | "versoUrl" | "actif">
->;
-
 /** Demande de stickers par section, vue administration (fiche et client joints). */
 export interface SectionStickerAdmin extends ApiSectionSticker {
   updatedAt: string;

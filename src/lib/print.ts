@@ -81,15 +81,20 @@ export function pngWithDpi(dataURL: string, dpi: number): string {
 export async function renderCard({ tier, ds = {}, fields = {}, url, logoFallback }: { tier: Tier; ds?: CardDesign; fields?: CardFields; url: string; logoFallback: string }): Promise<PrintFiles> {
   await fonts();
   const W = CARD.w, H = CARD.h, sig = tier === 'signature', pro = tier === 'pro', ess = tier === 'essentielle';
-  const inkF = ds.ink || (sig && !ds.upload && ds.bg === 'or' ? '#1b1712' : '#ffffff');
-  const backSame = ds.back === 'same', backImg = sig ? (ds.back === 'upload' ? ds.backUpload : backSame ? (ds.upload || ds.bgImg) : ds.backImg) : null;
-  const inkB = ds.ink || (sig && !backImg && (backSame ? ds.bg : ds.back) === 'or' ? '#1b1712' : '#ffffff');
+  const frontBg = !sig && ds.bg === 'upload' ? 'noir' : (ds.bg || 'noir');
+  const frontImg = sig ? (ds.upload || ds.bgImg) : null;
+  const inkF = (sig ? ds.ink : null) || (!frontImg && frontBg === 'or' ? '#1b1712' : '#ffffff');
+  const backSame = ds.back === 'same';
+  const rawBack = backSame ? frontBg : (ds.back || 'noir');
+  const backBg = !sig && rawBack === 'upload' ? 'noir' : rawBack;
+  const backImg = sig ? (ds.back === 'upload' ? ds.backUpload : backSame ? (ds.upload || ds.bgImg) : ds.backImg) : null;
+  const inkB = (sig ? ds.ink : null) || (!backImg && backBg === 'or' ? '#1b1712' : '#ffffff');
   const acc = sig ? (ds.accent || '#c9a25b') : '#EF1733';
   const face = async (draw: (x: Ctx) => Promise<void> | void): Promise<string> => { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d')!; await draw(x); return pngWithDpi(c.toDataURL('image/png'), CARD.dpi); };
   const frame = (x: Ctx) => { if (pro) { x.fillStyle = '#EF1733'; x.fillRect(0, 0, W * .024, H); } if (sig) { x.strokeStyle = acc; x.lineWidth = W * .0055; x.strokeRect(W * .00275, W * .00275, W - W * .0055, H - W * .0055); } };
 
   const recto = await face(async (x) => {
-    await drawBackground(x, W, H, sig ? ds.bg : 'noir', sig ? (ds.upload || ds.bgImg) : null, { zoom: ds.zoom, posX: ds.posX, posY: ds.posY, dim: ds.dim });
+    await drawBackground(x, W, H, frontBg, frontImg, { zoom: ds.zoom, posX: ds.posX, posY: ds.posY, dim: frontImg ? ds.dim : 0 });
     frame(x); nfcIcon(x, W - W * .065 - W * .03, W * .06, W * .05, inkF);
     const ls = (ds.logoSize || 62) / 100, zw = W * ls, zh = H * .72 * ls, zx = (W - zw) / 2, zy = (H - zh) / 2;
     const logo = await loadImg(ess ? logoFallback : ds.logo);
@@ -99,8 +104,7 @@ export async function renderCard({ tier, ds = {}, fields = {}, url, logoFallback
   });
 
   const verso = await face(async (x) => {
-    if (sig) await drawBackground(x, W, H, backSame ? ds.bg : ds.back, backImg, { dim: backImg ? (ds.backDim ?? 55) : 0 });
-    else await drawBackground(x, W, H, 'noir');
+    await drawBackground(x, W, H, backBg, backImg, { dim: backImg ? (ds.backDim ?? 55) : 0 });
     frame(x);
     const L = W * (pro ? .10 : .09); let y = W * .07; x.textBaseline = 'top'; x.textAlign = 'left'; x.fillStyle = inkB;
     x.font = `600 ${W * .046}px Inter, sans-serif`; spaced(x, (fields.name || '').toUpperCase(), L, y, W * .046 * .14); y += W * .046 * 1.25;
@@ -114,3 +118,12 @@ export async function renderCard({ tier, ds = {}, fields = {}, url, logoFallback
 }
 
 export function download(dataURL: string, name: string): void { const a = document.createElement('a'); a.href = dataURL; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+
+export function dataUrlToBlob(dataURL: string): Blob {
+  const [header, base64] = dataURL.split(',');
+  const mime = /data:([^;]+);/.exec(header)?.[1] ?? 'image/png';
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
