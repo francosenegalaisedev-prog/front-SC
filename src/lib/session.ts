@@ -13,6 +13,7 @@ export interface SessionUser {
   id?: number;
   role?: "CLIENT" | "ADMIN";
   emailVerified?: boolean;
+  hasPassword?: boolean;
 }
 export interface Session {
   token: string;

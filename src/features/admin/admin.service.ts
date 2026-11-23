@@ -286,6 +286,18 @@ export const adminApi = {
   updateAdminStatus: (id: number, active: boolean) =>
     patch<{ ok: boolean }>(`/admin/users/${id}/status`, { active }),
   deleteAdmin: (id: number) => del<{ ok: boolean }>(`/admin/users/${id}`),
+  updateClientStatus: (id: number, active: boolean, reason?: string) =>
+    patch<{ ok: boolean }>(`/admin/users/${id}/client-status`, {
+      active,
+      ...(reason?.trim() ? { reason: reason.trim() } : {}),
+    }),
+  permanentlyDeleteClient: (id: number, confirmer: string, raison?: string) =>
+    del<{ ok: true; fichesDeleted: number; paymentsPreserved: number }>(
+      `/admin/users/${id}/permanent`,
+      { confirmer, ...(raison?.trim() ? { raison: raison.trim() } : {}) },
+    ),
+  listAccountDeletionLogs: (p: { page?: number; limit?: number }) =>
+    get<AccountDeletionLogsPage>("/admin/account-deletions", p),
   getAppSettings: () =>
     get<{ settings: AdminAppSettings }>("/admin/settings"),
   updateAppSettings: (settings: AdminAppSettings) =>
@@ -327,6 +339,33 @@ export interface AdminActionLog {
 
 export interface AdminActionLogsPage {
   items: AdminActionLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface AccountDeletionLog {
+  id: number;
+  targetUserId: number;
+  targetEmailHash: string;
+  targetRole: "CLIENT" | "ADMIN";
+  action: "REQUESTED" | "CANCELED" | "DEACTIVATED" | "REACTIVATED" | "PURGED";
+  initiatedBy: "USER" | "ADMIN";
+  executedBy: "USER" | "ADMIN" | "SYSTEM_CRON";
+  actorAdminId: number | null;
+  actorAdminEmail: string | null;
+  reason: string | null;
+  fichesDeletedCount: number;
+  paymentsPreservedCount: number;
+  scheduledFor: string | null;
+  createdAt: string;
+}
+
+export interface AccountDeletionLogsPage {
+  items: AccountDeletionLog[];
   pagination: {
     page: number;
     limit: number;

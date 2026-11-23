@@ -145,6 +145,9 @@ export interface UserRow {
   role: "client" | "admin";
   active: boolean;
   emailVerifie: boolean;
+  deletionRequestedAt?: string | null;
+  deletionScheduledAt?: string | null;
+  deletionRequestedBy?: string | null;
   createdAt: string;
   nbFiches: number;
 }

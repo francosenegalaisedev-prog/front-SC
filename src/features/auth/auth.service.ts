@@ -15,6 +15,7 @@ export interface LoginResponse {
     nom: string;
     role: "CLIENT" | "ADMIN";
     emailVerified: boolean;
+    hasPassword?: boolean;
   };
   token: string;
 }
@@ -46,6 +47,7 @@ export async function loginWithGoogle(
         name: user.nom,
         email: user.email,
         emailVerified: user.emailVerified,
+        hasPassword: user.hasPassword,
       },
     });
     return res.data;
@@ -66,6 +68,7 @@ export async function login(loginData: Login): Promise<LoginResponse> {
         name: user.nom,
         email: user.email,
         emailVerified: user.emailVerified,
+        hasPassword: user.hasPassword,
       },
     });
     return res.data;
@@ -113,6 +116,52 @@ export async function changeCurrentPassword(payload: {
   try {
     await api.patch("/auth/me/password", payload);
     return { ok: true };
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function requestAccountDeletion(payload: {
+  password?: string;
+  confirmEmail?: string;
+  reason?: string;
+}): Promise<{ ok: true; deletionScheduledAt: string; graceDays: number }> {
+  try {
+    const res = await api.post<{
+      ok: true;
+      deletionScheduledAt: string;
+      graceDays: number;
+    }>("/auth/me/delete-request", payload);
+    clearSession();
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function cancelAccountDeletion(payload: {
+  email?: string;
+  password?: string;
+  credential?: string;
+}): Promise<LoginResponse> {
+  try {
+    const res = await api.post<LoginResponse>(
+      "/auth/cancel-deletion",
+      payload,
+    );
+    const { token, user } = res.data;
+    saveSession({
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        name: user.nom,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        hasPassword: user.hasPassword,
+      },
+    });
+    return res.data;
   } catch (error) {
     throw toApiError(error);
   }
