@@ -1,16 +1,12 @@
 // @vitest-environment jsdom
 import { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { logout, login } from "../features/auth/auth.service";
+import { login, logout } from "../features/auth/auth.service";
 import { api } from "./api";
 import { ApiError } from "./apiError";
 import { clearSession, getSession, saveSession } from "./session";
 
-/*
-  Le client HTTP est testé avec un adaptateur factice : on observe les requêtes sortantes
-  et on simule les réponses du serveur, sans réseau.
-*/
-type Call = { url?: string; auth?: string };
+type Call = { url?: string; withCredentials?: boolean; xRequestedWith?: string };
 let calls: Call[] = [];
 let respond: (config: InternalAxiosRequestConfig) => {
   status: number;
@@ -25,7 +21,8 @@ beforeEach(() => {
   api.defaults.adapter = async config => {
     calls.push({
       url: config.url,
-      auth: config.headers.Authorization as string | undefined,
+      withCredentials: config.withCredentials,
+      xRequestedWith: config.headers["X-Requested-With"] as string | undefined,
     });
     const { status, data } = respond(config);
     const response = { status, data, statusText: "", headers: {}, config };
@@ -41,21 +38,18 @@ afterEach(() => {
 
 const user = { name: "Awa", email: "awa@exemple.sn" };
 
-describe("client HTTP", () => {
-  it("envoie le jeton de la session", async () => {
+describe("client HTTP (cookie httpOnly)", () => {
+  it("active withCredentials et envoie X-Requested-With sur les requêtes API", async () => {
     saveSession({ token: "T1", user });
     await api.get("/fiches/1");
-    expect(calls[0].auth).toBe("Bearer T1");
+    expect(calls[0]).toEqual({
+      url: "/fiches/1",
+      withCredentials: true,
+      xRequestedWith: "XMLHttpRequest",
+    });
   });
 
-  it("n'envoie pas de jeton sur les routes d'authentification", async () => {
-    saveSession({ token: "T1", user });
-    await api.post("/auth/login", {});
-    await api.post("auth/forgot-password", {});
-    expect(calls.map(c => c.auth)).toEqual([undefined, undefined]);
-  });
-
-  it("supprime la session quand le serveur refuse le jeton (401)", async () => {
+  it("supprime la session locale quand le serveur répond 401 sur une route protégée", async () => {
     saveSession({ token: "T1", user });
     respond = () => ({ status: 401, data: {} });
     await expect(api.get("/client/dashboard/fiches")).rejects.toMatchObject({
@@ -109,7 +103,7 @@ describe("client HTTP", () => {
     });
   });
 
-  it("un 401 de connexion (mauvais mot de passe) ne touche pas la session", async () => {
+  it("un 401 de connexion (mauvais mot de passe) ne touche pas la session existante", async () => {
     saveSession({ token: "T1", user });
     respond = () => ({
       status: 401,
@@ -126,7 +120,7 @@ describe("client HTTP", () => {
 });
 
 describe("auth.service", () => {
-  it("login enregistre la session et renvoie la réponse", async () => {
+  it("login enregistre l'utilisateur sans stocker de JWT en localStorage", async () => {
     respond = () => ({
       status: 200,
       data: {
@@ -141,8 +135,9 @@ describe("auth.service", () => {
       },
     });
     await login({ email: "awa@exemple.sn", password: "secret" });
+    expect(localStorage.getItem("client_token")).toBeNull();
     expect(getSession()).toEqual({
-      token: "T2",
+      token: "",
       user: {
         id: 7,
         role: "CLIENT",
@@ -163,10 +158,13 @@ describe("auth.service", () => {
     expect(getSession()).toBeNull();
   });
 
-  it("logout prévient le serveur AVEC le jeton, puis efface la session", async () => {
+  it("logout appelle /auth/logout avec credentials puis efface la session locale", async () => {
     saveSession({ token: "T3", user });
     await logout();
-    expect(calls).toEqual([{ url: "/auth/logout", auth: "Bearer T3" }]);
+    expect(calls[0]).toMatchObject({
+      url: "/auth/logout",
+      withCredentials: true,
+    });
     expect(getSession()).toBeNull();
   });
 

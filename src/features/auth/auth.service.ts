@@ -1,6 +1,6 @@
 import { api } from "../../lib/api";
 import { ApiError, errorStatus, toApiError } from "../../lib/apiError";
-import { clearSession, getToken, saveSession } from "../../lib/session";
+import { clearSession, saveSession } from "../../lib/session";
 import { IRegister, Login } from "../../types";
 
 /*
@@ -189,10 +189,8 @@ export async function verifyAdminSession(): Promise<void> {
     }
     const email = typeof u.email === "string" ? u.email : "";
     const name = typeof u.nom === "string" ? u.nom : "";
-    const token = getToken();
-    if (!token) throw refuse();
     saveSession({
-      token,
+      token: "",
       user: {
         id: typeof u.id === "number" ? u.id : undefined,
         role: "ADMIN",
@@ -205,18 +203,17 @@ export async function verifyAdminSession(): Promise<void> {
   }
 }
 
-/** Connexion administrateur : POST /auth/admin/login, puis vérification du rôle. */
+/** Connexion administrateur : POST /auth/admin/login (pose le cookie httpOnly), puis vérification du rôle. */
 export async function adminLogin(loginData: Login): Promise<void> {
   try {
-    const res = await api.post<{ token?: string }>(
+    const res = await api.post<{ token?: string; user?: unknown }>(
       "/auth/admin/login",
       loginData,
     );
-    if (!res.data.token)
-      throw new ApiError("Réponse de connexion inattendue (pas de jeton).");
-    // Session provisoire : l'intercepteur de lib/api.ts a besoin du jeton pour appeler /auth/me.
+    if (!res.data.token && !res.data.user)
+      throw new ApiError("Réponse de connexion inattendue.");
     saveSession({
-      token: res.data.token,
+      token: res.data.token ?? "",
       user: { name: "", email: loginData.email, role: "ADMIN" },
     });
     await verifyAdminSession();

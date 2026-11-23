@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
-import { getToken as getSessionToken } from "../../../lib/session";
+import { getSession } from "../../../lib/session";
 import "../../../styles/create-fiche-form.css";
 import { CreatedFicheSuccess } from "../components/create-fiche/CreatedFicheSuccess";
 import {
@@ -34,7 +34,7 @@ import {
 export type { CreatedFiche, CreateFicheFormProps };
 
 export default function CreateFicheForm({
-  getToken = getSessionToken,
+  getToken = () => (getSession() ? "session" : null),
   onCreated,
   onUnauthorized,
   publicBaseUrl = "https://support-connecte.com",

@@ -18,21 +18,22 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("session", () => {
-  it("enregistre puis relit la session", () => {
-    saveSession({ token: "abc", user });
-    expect(getToken()).toBe("abc");
+describe("session (cookie httpOnly)", () => {
+  it("enregistre l'utilisateur sans jamais stocker le JWT dans localStorage", () => {
+    saveSession({ token: "secret-jwt", user });
+    expect(getToken()).toBeNull();
+    expect(localStorage.getItem("client_token")).toBeNull();
     expect(getSession()?.user).toEqual(user);
   });
 
-  it("garde les clés historiques (les sessions déjà ouvertes restent valides)", () => {
-    localStorage.setItem("client_token", "legacy");
-    localStorage.setItem("client_user", JSON.stringify(user));
-    expect(getSession()).toEqual({ token: "legacy", user });
+  it("nettoie un éventuel ancien client_token dans localStorage lors de saveSession", () => {
+    localStorage.setItem("client_token", "legacy-jwt");
+    saveSession({ token: "new-jwt", user });
+    expect(localStorage.getItem("client_token")).toBeNull();
+    expect(getSession()?.user).toEqual(user);
   });
 
   it("ignore un utilisateur illisible ou incomplet", () => {
-    localStorage.setItem("client_token", "t");
     localStorage.setItem("client_user", "{pas du json");
     expect(getSession()).toBeNull();
     localStorage.setItem("client_user", JSON.stringify({ name: "x" }));
@@ -63,33 +64,26 @@ describe("session", () => {
     const listener = vi.fn();
     const off = subscribeSession(listener);
     localStorage.clear();
-    window.dispatchEvent(new StorageEvent("storage", { key: "client_token" }));
+    window.dispatchEvent(new StorageEvent("storage", { key: "client_user" }));
     expect(listener).toHaveBeenCalled();
     expect(getSession()).toBeNull();
     off();
   });
 
-  it("refuse un jeton JWT expiré", () => {
+  it("refuse une session dont l'expiration connue est dépassée", () => {
     saveSession({ token: jwt(Math.floor(Date.now() / 1000) - 60), user });
-    expect(getToken()).toBeNull();
+    expect(getSession()).toBeNull();
   });
 
-  it("se déconnecte tout seul à l'expiration du jeton", () => {
+  it("se déconnecte automatiquement à l'expiration de la session", () => {
     vi.useFakeTimers();
     saveSession({ token: jwt(Math.floor(Date.now() / 1000) + 60), user });
-    expect(getToken()).not.toBeNull();
+    expect(getSession()).not.toBeNull();
     const listener = vi.fn();
     subscribeSession(listener);
     vi.advanceTimersByTime(61_000);
     expect(getSession()).toBeNull();
-    expect(localStorage.getItem("client_token")).toBeNull();
+    expect(localStorage.getItem("client_user")).toBeNull();
     expect(listener).toHaveBeenCalled();
-  });
-
-  it("un jeton sans date d'expiration reste valable (le serveur reste juge)", () => {
-    saveSession({ token: jwt(), user });
-    expect(getToken()).not.toBeNull();
-    saveSession({ token: "pas-un-jwt", user });
-    expect(getToken()).toBe("pas-un-jwt");
   });
 });
