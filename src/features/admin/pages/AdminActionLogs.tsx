@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   adminApi,
   type AccountDeletionLog,
@@ -87,9 +88,20 @@ function actorDescription(log: AccountDeletionLog) {
 }
 
 export default function AdminActionLogs() {
-  const [tab, setTab] = useState<"admin" | "deletions">("admin");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tab, setTab] = useState<"admin" | "deletions">(
+    searchParams.get("tab") === "deletions" ? "deletions" : "admin",
+  );
   const [page, setPage] = useState(1);
   const [delPage, setDelPage] = useState(1);
+
+  const changeTab = (next: "admin" | "deletions") => {
+    setTab(next);
+    const nextParams = new URLSearchParams(searchParams);
+    if (next === "deletions") nextParams.set("tab", "deletions");
+    else nextParams.delete("tab");
+    setSearchParams(nextParams, { replace: true });
+  };
 
   const [data, reload, error] = useData(
     () => adminApi.listActionLogs({ page, limit: 25 }),
@@ -114,7 +126,7 @@ export default function AdminActionLogs() {
 
       <Tabs
         value={tab}
-        onChange={setTab}
+        onChange={changeTab}
         tabs={[
           ["admin", "Actions administrateurs", data?.pagination.total],
           [

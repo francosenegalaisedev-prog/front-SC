@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import type { ChangeEvent } from "react";
 import { errMsg } from "../../../lib/apiError";
 import type { UserRow } from "../../../types/admin";
@@ -21,9 +21,16 @@ import { fdate } from "../lib/format";
 
 export default function Clients() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
   const [text, setText] = useState("");
   const [role, setRole] = useState("");
+  const initialStatut = searchParams.get("statut") ?? "";
+  const [statut, setStatut] = useState(
+    ["actif", "desactive", "suppression"].includes(initialStatut)
+      ? initialStatut
+      : "",
+  );
   const [page, setPage] = useState(1);
   const search = useDebounced(text.trim(), 300);
   useEffect(() => setPage(1), [search]);
@@ -33,10 +40,15 @@ export default function Clients() {
       adminApi.listUsers({
         search: search || undefined,
         role: (role || undefined) as "client" | "admin" | undefined,
+        statut: (statut || undefined) as
+          | "actif"
+          | "desactive"
+          | "suppression"
+          | undefined,
         page,
         limit: 20,
       }),
-    [search, role, page],
+    [search, role, statut, page],
   );
 
   // Modale désactivation / réactivation
@@ -155,6 +167,24 @@ export default function Clients() {
           <option value="">Tous les rôles</option>
           <option value="client">Clients</option>
           <option value="admin">Administrateurs</option>
+        </select>
+        <select
+          value={statut}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+            const next = e.target.value;
+            setStatut(next);
+            setPage(1);
+            const nextParams = new URLSearchParams(searchParams);
+            if (next) nextParams.set("statut", next);
+            else nextParams.delete("statut");
+            setSearchParams(nextParams, { replace: true });
+          }}
+          aria-label="Statut"
+        >
+          <option value="">Tous les statuts</option>
+          <option value="actif">Actifs</option>
+          <option value="desactive">Désactivés</option>
+          <option value="suppression">Suppression en attente</option>
         </select>
       </div>
 

@@ -274,6 +274,7 @@ export const adminApi = {
   listUsers: (p: {
     search?: string;
     role?: "client" | "admin";
+    statut?: "actif" | "desactive" | "suppression";
     page?: number;
     limit?: number;
   }) => get<UsersPage>("/admin/users", { ...p }),

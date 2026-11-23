@@ -53,6 +53,11 @@ export interface Stats {
   clients: number;
   demandesSticker: number;
   demandesCarte: number;
+  suppressions?: {
+    enAttente: number;
+    supprimesTotal: number;
+    supprimesSur30Jours: number;
+  };
   derniersClients: {
     id: number;
     nom: string | null;
