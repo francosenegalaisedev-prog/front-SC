@@ -16,6 +16,8 @@ import { useSession } from "../../../lib/session";
 import { EMAIL_RE, safePath } from "../../../utils/auth";
 import {
   cancelAccountDeletion,
+  completeTwoFaLogin,
+  isTwoFaChallenge,
   login,
   loginWithGoogle,
 } from "../auth.service";
@@ -34,6 +36,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<Errors>({});
   const [recovery, setRecovery] = useState<PendingRecovery | null>(null);
+  const [pending2fa, setPending2fa] = useState<string | null>(null);
+  const [twoFaCode, setTwoFaCode] = useState("");
 
   const params = new URLSearchParams(location.search);
   const deletedScheduled = params.get("deleted") === "scheduled";
@@ -54,6 +58,11 @@ export default function LoginPage() {
     mutationFn: login,
     onSuccess: (res) => {
       setRecovery(null);
+      if (isTwoFaChallenge(res)) {
+        setPending2fa(res.tempToken);
+        setTwoFaCode("");
+        return;
+      }
       // Un administrateur sans page demandée arrive dans le back-office plutôt que dans l'espace client.
       const toAdmin = res.user.role === "ADMIN" && target === AFTER_LOGIN;
       navigate(toAdmin ? AFTER_ADMIN_LOGIN : target, { replace: true });
@@ -77,8 +86,13 @@ export default function LoginPage() {
 
   const googleMutation = useMutation({
     mutationFn: loginWithGoogle,
-    onSuccess: () => {
+    onSuccess: (res) => {
       setRecovery(null);
+      if (isTwoFaChallenge(res)) {
+        setPending2fa(res.tempToken);
+        setTwoFaCode("");
+        return;
+      }
       navigate(target, { replace: true });
     },
     onError: (cause, credential) => {
@@ -94,6 +108,14 @@ export default function LoginPage() {
       } else {
         setRecovery(null);
       }
+    },
+  });
+
+  const twoFaMutation = useMutation({
+    mutationFn: completeTwoFaLogin,
+    onSuccess: (res) => {
+      const toAdmin = res.user.role === "ADMIN" && target === AFTER_LOGIN;
+      navigate(toAdmin ? AFTER_ADMIN_LOGIN : target, { replace: true });
     },
   });
 
@@ -143,6 +165,12 @@ export default function LoginPage() {
     }
   };
 
+  const submitTwoFa = (ev: FormEvent) => {
+    ev.preventDefault();
+    if (!pending2fa || !twoFaCode.trim()) return;
+    twoFaMutation.mutate({ tempToken: pending2fa, code: twoFaCode.trim() });
+  };
+
   const genericError =
     !recovery && (isError || googleMutation.isError)
       ? (error ?? googleMutation.error)?.message
@@ -156,7 +184,60 @@ export default function LoginPage() {
       h1={T.h1}
       lead={T.lead}
     >
-      <form onSubmit={submit} noValidate className="au-form">
+      {pending2fa ? (
+        <form onSubmit={submitTwoFa} noValidate className="au-form">
+          <header>
+            <h2>Vérification en deux étapes</h2>
+            <p>
+              Saisissez le code à 6 chiffres généré par votre application
+              d’authentification ou l’un de vos codes de secours.
+            </p>
+          </header>
+
+          <AuthField
+            id="twofa-code"
+            type="text"
+            label="Code de vérification (6 chiffres ou code de secours)"
+            value={twoFaCode}
+            autoComplete="one-time-code"
+            disabled={twoFaMutation.isPending}
+            maxLength={20}
+            onChange={(v) => setTwoFaCode(v)}
+          />
+
+          {twoFaMutation.isError && (
+            <p className="au-err" role="alert">
+              {twoFaMutation.error.message}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-red"
+            disabled={twoFaMutation.isPending || !twoFaCode.trim()}
+          >
+            {twoFaMutation.isPending
+              ? "Vérification…"
+              : "Vérifier et se connecter"}{" "}
+            <Icon id="arr" />
+          </button>
+
+          <p className="au-alt">
+            <button
+              type="button"
+              className="au-link"
+              onClick={() => {
+                setPending2fa(null);
+                setTwoFaCode("");
+                twoFaMutation.reset();
+              }}
+            >
+              Retour à la connexion
+            </button>
+          </p>
+        </form>
+      ) : (
+        <form onSubmit={submit} noValidate className="au-form">
         <header>
           <h2>{T.heading}</h2>
           <p>{T.sub}</p>
@@ -256,7 +337,8 @@ export default function LoginPage() {
             {T.create}
           </Link>
         </p>
-      </form>
+        </form>
+      )}
     </AuthShell>
   );
 }

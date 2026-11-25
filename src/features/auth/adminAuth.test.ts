@@ -3,7 +3,11 @@ import { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { api } from "../../lib/api";
 import { getSession, clearSession } from "../../lib/session";
-import { adminLogin, verifyAdminSession } from "./auth.service";
+import {
+  adminLogin,
+  completeAdminTwoFaLogin,
+  verifyAdminSession,
+} from "./auth.service";
 
 type Call = { url?: string; auth?: string; withCredentials?: boolean };
 let calls: Call[] = [];
@@ -85,5 +89,41 @@ describe("adminLogin", () => {
     localStorage.setItem("client_user", JSON.stringify({ name: "A", email: "a@b.sn" }));
     await expect(verifyAdminSession()).rejects.toMatchObject({ status: 403 });
     expect(getSession()).toBeNull();
+  });
+
+  it("gère le challenge 2FA admin sans ouvrir de session avant validation", async () => {
+    respond = (c) => {
+      if (c.url === "/auth/admin/login") {
+        return {
+          status: 200,
+          data: { requires2fa: true, tempToken: "TEMP_2FA_TOKEN" },
+        };
+      }
+      if (c.url === "/auth/2fa/login") {
+        return { status: 200, data: { token: "REAL_TOKEN" } };
+      }
+      return {
+        status: 200,
+        data: {
+          user: { id: 3, email: "root@sc.sn", nom: "Root", role: "ADMIN" },
+        },
+      };
+    };
+
+    const challenge = await adminLogin({ email: "root@sc.sn", password: "x" });
+    expect(challenge).toEqual({
+      requires2fa: true,
+      tempToken: "TEMP_2FA_TOKEN",
+    });
+    expect(getSession()).toBeNull();
+
+    await completeAdminTwoFaLogin({
+      tempToken: "TEMP_2FA_TOKEN",
+      code: "123456",
+    });
+    expect(getSession()).toEqual({
+      token: "",
+      user: { id: 3, role: "ADMIN", name: "Root", email: "root@sc.sn" },
+    });
   });
 });

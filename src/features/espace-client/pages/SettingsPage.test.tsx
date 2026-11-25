@@ -6,9 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/apiError";
 import {
   changeCurrentPassword,
+  disable2fa,
   forgotPassword,
+  getCurrentUser,
   requestAccountDeletion,
+  setup2fa,
   updateCurrentProfile,
+  verify2fa,
 } from "../../auth/auth.service";
 import SettingsPage from "./SettingsPage";
 
@@ -17,6 +21,10 @@ vi.mock("../../auth/auth.service", () => ({
   updateCurrentProfile: vi.fn(),
   changeCurrentPassword: vi.fn(),
   requestAccountDeletion: vi.fn(),
+  getCurrentUser: vi.fn(),
+  setup2fa: vi.fn(),
+  verify2fa: vi.fn(),
+  disable2fa: vi.fn(),
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
@@ -31,6 +39,18 @@ describe("Paramètres client : réinitialisation du mot de passe", () => {
     vi.mocked(updateCurrentProfile).mockReset();
     vi.mocked(changeCurrentPassword).mockReset();
     vi.mocked(requestAccountDeletion).mockReset();
+    vi.mocked(getCurrentUser).mockReset();
+    vi.mocked(setup2fa).mockReset();
+    vi.mocked(verify2fa).mockReset();
+    vi.mocked(disable2fa).mockReset();
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: 1,
+      nom: "Awa Ndiaye",
+      email: "awa@example.sn",
+      role: "CLIENT",
+      emailVerified: true,
+      twoFaEnabled: false,
+    });
     host = document.createElement("div");
     root = createRoot(host);
     const user = { name: "Awa Ndiaye", email: "awa@example.sn" };
@@ -200,5 +220,75 @@ describe("Paramètres client : réinitialisation du mot de passe", () => {
     expect(requestAccountDeletion).toHaveBeenCalledWith({
       password: "MonMotDePasse1",
     });
+  });
+
+  it("permet d'activer puis désactiver la double authentification (2FA)", async () => {
+    vi.mocked(setup2fa).mockResolvedValue({
+      qrCode: "data:image/png;base64,FAKEQR",
+      manualKey: "JBSWY3DPEHPK3PXP",
+    });
+    vi.mocked(verify2fa).mockResolvedValue({
+      recoveryCodes: ["AAAA-1111", "BBBB-2222"],
+    });
+    vi.mocked(disable2fa).mockResolvedValue({ ok: true });
+
+    const enableBtn = Array.from(host.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Activer la double authentification"),
+    )!;
+    await act(async () => {
+      enableBtn.click();
+      await Promise.resolve();
+    });
+
+    expect(setup2fa).toHaveBeenCalledOnce();
+    expect(host.textContent).toContain("JBSWY3DPEHPK3PXP");
+
+    const otpInput = host.querySelector<HTMLInputElement>(
+      'input[placeholder="123456"]',
+    )!;
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )!.set!;
+    await act(async () => {
+      nativeSetter.call(otpInput, "654321");
+      otpInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      otpInput.form!.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(verify2fa).toHaveBeenCalledWith("654321");
+    expect(host.textContent).toContain("AAAA-1111");
+    expect(host.textContent).toContain("Activée");
+
+    const disableBtn = Array.from(host.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Désactiver la double authentification"),
+    )!;
+    await act(async () => {
+      disableBtn.click();
+    });
+
+    const disablePwdInput = host.querySelectorAll<HTMLInputElement>(
+      'input[type="password"]',
+    );
+    const pwdInput = disablePwdInput[disablePwdInput.length - 1];
+    await act(async () => {
+      nativeSetter.call(pwdInput, "Secret123!");
+      pwdInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      pwdInput.form!.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(disable2fa).toHaveBeenCalledWith({ password: "Secret123!" });
+    expect(host.textContent).toContain("Désactivée");
   });
 });
