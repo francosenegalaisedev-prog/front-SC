@@ -14,6 +14,7 @@ export interface SessionUser {
   role?: "CLIENT" | "ADMIN";
   emailVerified?: boolean;
   hasPassword?: boolean;
+  twoFaEnabled?: boolean;
 }
 export interface Session {
   token: string;

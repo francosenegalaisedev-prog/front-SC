@@ -16,8 +16,28 @@ export interface LoginResponse {
     role: "CLIENT" | "ADMIN";
     emailVerified: boolean;
     hasPassword?: boolean;
+    twoFaEnabled?: boolean;
   };
   token: string;
+}
+
+export interface TwoFaChallengeResponse {
+  requires2fa: true;
+  tempToken: string;
+}
+
+export type LoginResult = LoginResponse | TwoFaChallengeResponse;
+
+export function isTwoFaChallenge(
+  res: LoginResult | void | TwoFaChallengeResponse,
+): res is TwoFaChallengeResponse {
+  return Boolean(
+    res &&
+      typeof res === "object" &&
+      "requires2fa" in res &&
+      res.requires2fa === true &&
+      typeof res.tempToken === "string",
+  );
 }
 
 export async function register(registerData: IRegister) {
@@ -35,9 +55,12 @@ export async function register(registerData: IRegister) {
 
 export async function loginWithGoogle(
   credential: string,
-): Promise<LoginResponse> {
+): Promise<LoginResult> {
   try {
-    const res = await api.post<LoginResponse>("/auth/google", { credential });
+    const res = await api.post<LoginResult>("/auth/google", { credential });
+    if (isTwoFaChallenge(res.data)) {
+      return res.data;
+    }
     const { token, user } = res.data;
     saveSession({
       token,
@@ -48,6 +71,7 @@ export async function loginWithGoogle(
         email: user.email,
         emailVerified: user.emailVerified,
         hasPassword: user.hasPassword,
+        twoFaEnabled: user.twoFaEnabled,
       },
     });
     return res.data;
@@ -56,9 +80,12 @@ export async function loginWithGoogle(
   }
 }
 
-export async function login(loginData: Login): Promise<LoginResponse> {
+export async function login(loginData: Login): Promise<LoginResult> {
   try {
-    const res = await api.post<LoginResponse>("/auth/login", loginData);
+    const res = await api.post<LoginResult>("/auth/login", loginData);
+    if (isTwoFaChallenge(res.data)) {
+      return res.data;
+    }
     const { token, user } = res.data;
     saveSession({
       token,
@@ -69,8 +96,73 @@ export async function login(loginData: Login): Promise<LoginResponse> {
         email: user.email,
         emailVerified: user.emailVerified,
         hasPassword: user.hasPassword,
+        twoFaEnabled: user.twoFaEnabled,
       },
     });
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function completeTwoFaLogin(payload: {
+  tempToken: string;
+  code: string;
+}): Promise<LoginResponse> {
+  try {
+    const res = await api.post<LoginResponse>("/auth/2fa/login", payload);
+    const { token, user } = res.data;
+    saveSession({
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        name: user.nom,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        hasPassword: user.hasPassword,
+        twoFaEnabled: user.twoFaEnabled,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function setup2fa(): Promise<{
+  qrCode: string;
+  manualKey: string;
+}> {
+  try {
+    const res = await api.post<{ qrCode: string; manualKey: string }>(
+      "/auth/2fa/enable",
+    );
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function verify2fa(
+  otpCode: string,
+): Promise<{ recoveryCodes: string[] }> {
+  try {
+    const res = await api.post<{ recoveryCodes: string[] }>("/auth/2fa/verify", {
+      otpCode,
+    });
+    return res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function disable2fa(payload: {
+  password?: string;
+  code?: string;
+}): Promise<{ ok: true }> {
+  try {
+    const res = await api.post<{ ok: true }>("/auth/2fa/disable", payload);
     return res.data;
   } catch (error) {
     throw toApiError(error);
@@ -253,17 +345,46 @@ export async function verifyAdminSession(): Promise<void> {
 }
 
 /** Connexion administrateur : POST /auth/admin/login (pose le cookie httpOnly), puis vérification du rôle. */
-export async function adminLogin(loginData: Login): Promise<void> {
+export async function adminLogin(
+  loginData: Login,
+): Promise<TwoFaChallengeResponse | void> {
   try {
-    const res = await api.post<{ token?: string; user?: unknown }>(
-      "/auth/admin/login",
-      loginData,
-    );
+    const res = await api.post<{
+      token?: string;
+      user?: unknown;
+      requires2fa?: boolean;
+      tempToken?: string;
+    }>("/auth/admin/login", loginData);
+    if (res.data.requires2fa && res.data.tempToken) {
+      return { requires2fa: true, tempToken: res.data.tempToken };
+    }
     if (!res.data.token && !res.data.user)
       throw new ApiError("Réponse de connexion inattendue.");
     saveSession({
       token: res.data.token ?? "",
       user: { name: "", email: loginData.email, role: "ADMIN" },
+    });
+    await verifyAdminSession();
+  } catch (error) {
+    clearSession();
+    throw toApiError(error);
+  }
+}
+
+export async function completeAdminTwoFaLogin(payload: {
+  tempToken: string;
+  code: string;
+}): Promise<void> {
+  try {
+    const res = await api.post<{ token?: string; user?: unknown }>(
+      "/auth/2fa/login",
+      payload,
+    );
+    if (!res.data.token && !res.data.user)
+      throw new ApiError("Réponse de connexion inattendue.");
+    saveSession({
+      token: res.data.token ?? "",
+      user: { name: "", email: "", role: "ADMIN" },
     });
     await verifyAdminSession();
   } catch (error) {
