@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { IconSprite } from "../../../components/Icons";
 import CardStudio from "../../../components/studio/CardStudio";
 import useReveal from "../../../hooks/useReveal";
+import { api } from "../../../lib/api";
 import type { Tier } from "../../../lib/print";
 import "../../../styles/contact.css";
 import "../../../styles/dashboard.css";
@@ -15,15 +16,33 @@ import {
   type CardRequestState,
 } from "../espaceClient.service";
 
-const STATUS_LABELS: Record<string, string> = {
-  a_imprimer: "En attente de production",
-  imprimee: "Imprimée",
-  encodee: "Encodée",
-  testee: "Testée",
-  livree: "Livrée",
-  annulee: "Annulée",
+const STATUS_META: Record<
+  "envoyee" | "traitee" | "livree",
+  { label: string; description: string; badgeClass: string; dotClass: string; step: number }
+> = {
+  envoyee: {
+    label: "Envoyée",
+    description: "Votre demande a bien été envoyée et est en attente de traitement par notre équipe.",
+    badgeClass: "bg-sky-100 text-sky-900 border border-sky-200",
+    dotClass: "bg-sky-600",
+    step: 1,
+  },
+  traitee: {
+    label: "Traitée",
+    description: "Votre carte est en cours de finalisation / prête pour la livraison.",
+    badgeClass: "bg-amber-100 text-amber-900 border border-amber-200",
+    dotClass: "bg-amber-500",
+    step: 2,
+  },
+  livree: {
+    label: "Livrée",
+    description: "Votre carte a été livrée.",
+    badgeClass: "bg-emerald-100 text-emerald-900 border border-emerald-200",
+    dotClass: "bg-emerald-600",
+    step: 3,
+  },
 };
-const TERMINAL_STATUSES = new Set(["livree", "annulee"]);
+const TERMINAL_STATUSES = new Set(["livree"]);
 
 const PLAN_LABELS: Record<Tier, string> = {
   essentielle: "Essentielle",
@@ -46,6 +65,15 @@ export default function ClientCartesPage() {
     queryKey: ["client-cartes-fiches"],
     queryFn: ({ signal }) => getDashboardFiche(signal),
   });
+
+  const settingsQuery = useQuery({
+    queryKey: ["public", "app-settings"],
+    queryFn: async () =>
+      (await api.get<{ settings: { cardPriceFcfa?: number } }>("/public/settings"))
+        .data.settings,
+    staleTime: 60_000,
+  });
+  const cardPriceFcfa = settingsQuery.data?.cardPriceFcfa ?? 15_000;
 
   // Seules les fiches actives disposant d'une formule active sont éligibles à une demande de carte.
   const activeFiches = useMemo(() => {
@@ -120,8 +148,8 @@ export default function ClientCartesPage() {
           <p className="db-k">Espace client</p>
           <h1>Mes cartes NFC</h1>
           <p className="db-sub">
-            Sélectionnez une fiche active pour composer et commander votre carte
-            physique selon sa formule.
+            Sélectionnez une fiche active pour personnaliser librement et
+            commander votre carte physique.
           </p>
         </header>
 
@@ -253,34 +281,79 @@ export default function ClientCartesPage() {
         ) : orderInProgress ? (
           <div className="db">
             <div className="db-card">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="db-k">Commande #{orderInProgress.id}</p>
-                  <h2 className="text-lg font-semibold text-neutral-900">
-                    {STATUS_LABELS[orderInProgress.statut] ??
-                      "Demande en cours"}
-                  </h2>
-                  <p className="mt-1 text-sm text-neutral-600">
-                    Une demande de carte est déjà en cours pour cette fiche.
-                    Paiement à la livraison
-                    {orderInProgress.montantFcfa != null
-                      ? ` (${orderInProgress.montantFcfa.toLocaleString("fr-FR")} FCFA)`
-                      : ""}
-                    .
-                  </p>
-                  {orderInProgress.adresseLivraison && (
-                    <p className="mt-2 text-xs text-neutral-500">
-                      Livraison : {orderInProgress.adresseLivraison}
-                      {orderInProgress.telephoneLivraison
-                        ? ` · ${orderInProgress.telephoneLivraison}`
-                        : ""}
-                    </p>
-                  )}
-                </div>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
-                  {PLAN_LABELS[orderInProgress.tier]}
-                </span>
-              </div>
+              {(() => {
+                const meta = STATUS_META[orderInProgress.statut] ?? STATUS_META.envoyee;
+                const steps = [
+                  { key: "envoyee", label: "Envoyée", num: 1 },
+                  { key: "traitee", label: "Traitée", num: 2 },
+                  { key: "livree", label: "Livrée", num: 3 },
+                ] as const;
+                return (
+                  <>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="db-k">Commande #{orderInProgress.id}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2.5">
+                          <h2 className="text-lg font-semibold text-neutral-900">
+                            Statut de votre demande
+                          </h2>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}
+                          >
+                            <span className={`h-2 w-2 rounded-full ${meta.dotClass}`} aria-hidden="true" />
+                            {meta.label}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-sm text-neutral-600">
+                          {meta.description} Paiement à la livraison
+                          {orderInProgress.montantFcfa != null
+                            ? ` (${orderInProgress.montantFcfa.toLocaleString("fr-FR")} FCFA)`
+                            : ""}
+                          .
+                        </p>
+                        {orderInProgress.adresseLivraison && (
+                          <p className="mt-2 text-xs text-neutral-500">
+                            Livraison : {orderInProgress.adresseLivraison}
+                            {orderInProgress.telephoneLivraison
+                              ? ` · ${orderInProgress.telephoneLivraison}`
+                              : ""}
+                          </p>
+                        )}
+                      </div>
+                      <span className="rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
+                        {PLAN_LABELS[orderInProgress.tier]}
+                      </span>
+                    </div>
+
+                    <ol
+                      className="mt-4 grid grid-cols-3 gap-2"
+                      aria-label="Progression de votre demande de carte"
+                    >
+                      {steps.map(step => {
+                        const reached = meta.step >= step.num;
+                        const active = meta.step === step.num;
+                        return (
+                          <li
+                            key={step.key}
+                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${
+                              active
+                                ? meta.badgeClass
+                                : reached
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                  : "border-neutral-200 bg-neutral-50 text-neutral-400"
+                            }`}
+                          >
+                            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/80 text-[11px] font-bold">
+                              {step.num}
+                            </span>
+                            <span>{step.label}</span>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>
+                );
+              })()}
 
               {(orderInProgress.rectoUrl || orderInProgress.versoUrl) && (
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -313,8 +386,31 @@ export default function ClientCartesPage() {
             </div>
           </div>
         ) : (
-          <CardStudio
+          <>
+            {currentCard?.statut === "livree" && (
+              <div className="db" style={{ paddingBottom: 0 }}>
+                <div className="db-card mb-6 flex flex-wrap items-center justify-between gap-3 border border-emerald-200 bg-emerald-50/60">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_META.livree.badgeClass}`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${STATUS_META.livree.dotClass}`}
+                        aria-hidden="true"
+                      />
+                      {STATUS_META.livree.label}
+                    </span>
+                    <span className="text-sm text-neutral-700">
+                      Dernière commande (#{currentCard.id}) livrée. Vous pouvez
+                      commander une nouvelle carte ci-dessous si besoin.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <CardStudio
             designer
+            cardPriceFcfa={cardPriceFcfa}
             clientFiche={{
               id: selected.fiche.id,
               slug: selected.fiche.slug,
@@ -332,6 +428,7 @@ export default function ClientCartesPage() {
               },
             }}
           />
+          </>
         ))}
     </section>
   );

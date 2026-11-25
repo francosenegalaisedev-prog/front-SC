@@ -630,7 +630,7 @@ describe("pages du back-office", () => {
         versoUrl: null,
         design: null,
         encodedAt: null,
-        statut: "a_imprimer",
+        statut: "envoyee",
         notes: null,
         printedAt: null,
         testedAt: null,

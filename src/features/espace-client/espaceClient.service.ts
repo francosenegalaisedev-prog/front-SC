@@ -52,13 +52,7 @@ export type CardRequest = {
   id: number;
   ficheId: number | null;
   tier: "essentielle" | "pro" | "signature";
-  statut:
-    | "a_imprimer"
-    | "imprimee"
-    | "encodee"
-    | "testee"
-    | "livree"
-    | "annulee";
+  statut: "envoyee" | "traitee" | "livree";
   nfcUrl: string;
   rectoUrl: string | null;
   versoUrl: string | null;

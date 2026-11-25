@@ -1,23 +1,20 @@
 import type { IconName } from '../components/ui';
 import type { Fonction, StatutCarte, StatutSticker } from '../../../types/admin';
 
-// Même règle que le serveur (TRANSITIONS) : suivant, retour d'une étape, annulation.
+// Même règle que le serveur (TRANSITIONS) : Envoyée → Traitée → Livrée.
 export const CARTE_TRANSITIONS: Record<StatutCarte, StatutCarte[]> = {
-  a_imprimer: ['imprimee', 'annulee'],
-  imprimee:   ['encodee', 'a_imprimer', 'annulee'],
-  encodee:    ['testee', 'imprimee', 'annulee'],
-  testee:     ['livree', 'encodee', 'annulee'],
-  livree:     ['testee'],
-  annulee:    ['a_imprimer'],
+  envoyee: ['traitee', 'livree'],
+  traitee: ['livree', 'envoyee'],
+  livree:  ['traitee'],
 };
 export const carteStatusOptions = (status: StatutCarte): StatutCarte[] => [
   status,
   ...CARTE_TRANSITIONS[status],
 ];
 export const CARTE_SUIVANT: Partial<Record<StatutCarte, StatutCarte>> = {
-  a_imprimer: 'imprimee', imprimee: 'encodee', encodee: 'testee', testee: 'livree',
+  envoyee: 'traitee', traitee: 'livree',
 };
-export const PS: Record<StatutCarte, string> = { a_imprimer: 'À imprimer', imprimee: 'Imprimée', encodee: 'Encodée (NFC)', testee: 'Testée', livree: 'Livrée', annulee: 'Annulée' };
+export const PS: Record<StatutCarte, string> = { envoyee: 'Envoyée', traitee: 'Traitée', livree: 'Livrée' };
 export const SS: Record<StatutSticker, string> = { a_parametrer: 'À paramétrer', parametre: 'Paramétré', teste: 'Testé', imprime: 'Imprimé', livre: 'Livré', annule: 'Annulé' };
 export const FN: Record<Fonction, [string, IconName]> = {
   avis: ['Avis Google', 'check'], wifi: ['Accès Wi-Fi', 'zap'], menu: ['Notre menu', 'file'], reseaux: ['Réseaux sociaux', 'users'],
@@ -42,4 +39,4 @@ export const CHAMPS: Record<Fonction, { k: string; l: string; ph?: string }[]> =
   lien: [{ k: 'lien', l: 'Adresse du lien', ph: 'https://…' }],
 };
 export const VAL = (v: unknown) => (v === true ? 'Oui' : v === false ? 'Non' : String(v));
-export const TONE = (s: string) => (['livree', 'livre', 'testee', 'teste'].includes(s) ? 'green' : ['a_imprimer', 'a_parametrer'].includes(s) ? 'red' : 'gold');
+export const TONE = (s: string) => (['livree', 'livre', 'teste'].includes(s) ? 'green' : ['envoyee', 'a_parametrer'].includes(s) ? 'red' : 'gold');

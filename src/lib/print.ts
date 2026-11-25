@@ -78,26 +78,25 @@ export function pngWithDpi(dataURL: string, dpi: number): string {
 }
 
 /* ---------------- Cartes (Evolis) ---------------- */
-export async function renderCard({ tier, ds = {}, fields = {}, url, logoFallback }: { tier: Tier; ds?: CardDesign; fields?: CardFields; url: string; logoFallback: string }): Promise<PrintFiles> {
+export async function renderCard({ tier, ds = {}, fields = {}, url }: { tier: Tier; ds?: CardDesign; fields?: CardFields; url: string; logoFallback?: string }): Promise<PrintFiles> {
   await fonts();
-  const W = CARD.w, H = CARD.h, sig = tier === 'signature', pro = tier === 'pro', ess = tier === 'essentielle';
-  const frontBg = !sig && ds.bg === 'upload' ? 'noir' : (ds.bg || 'noir');
-  const frontImg = sig ? (ds.upload || ds.bgImg) : null;
-  const inkF = (sig ? ds.ink : null) || (!frontImg && frontBg === 'or' ? '#1b1712' : '#ffffff');
+  const W = CARD.w, H = CARD.h, sig = tier === 'signature', pro = tier === 'pro';
+  const frontBg = ds.bg || 'noir';
+  const frontImg = ds.upload || ds.bgImg || null;
+  const inkF = ds.ink || (!frontImg && frontBg === 'or' ? '#1b1712' : '#ffffff');
   const backSame = ds.back === 'same';
-  const rawBack = backSame ? frontBg : (ds.back || 'noir');
-  const backBg = !sig && rawBack === 'upload' ? 'noir' : rawBack;
-  const backImg = sig ? (ds.back === 'upload' ? ds.backUpload : backSame ? (ds.upload || ds.bgImg) : ds.backImg) : null;
-  const inkB = (sig ? ds.ink : null) || (!backImg && backBg === 'or' ? '#1b1712' : '#ffffff');
-  const acc = sig ? (ds.accent || '#c9a25b') : '#EF1733';
+  const backBg = backSame ? frontBg : (ds.back || 'noir');
+  const backImg = ds.back === 'upload' ? ds.backUpload : backSame ? (ds.upload || ds.bgImg) : ds.backImg;
+  const inkB = ds.ink || (!backImg && backBg === 'or' ? '#1b1712' : '#ffffff');
+  const acc = ds.accent || '#c9a25b';
   const face = async (draw: (x: Ctx) => Promise<void> | void): Promise<string> => { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d')!; await draw(x); return pngWithDpi(c.toDataURL('image/png'), CARD.dpi); };
-  const frame = (x: Ctx) => { if (pro) { x.fillStyle = '#EF1733'; x.fillRect(0, 0, W * .024, H); } if (sig) { x.strokeStyle = acc; x.lineWidth = W * .0055; x.strokeRect(W * .00275, W * .00275, W - W * .0055, H - W * .0055); } };
+  const frame = (x: Ctx) => { if (pro) { x.fillStyle = acc; x.fillRect(0, 0, W * .024, H); } if (sig) { x.strokeStyle = acc; x.lineWidth = W * .0055; x.strokeRect(W * .00275, W * .00275, W - W * .0055, H - W * .0055); } };
 
   const recto = await face(async (x) => {
     await drawBackground(x, W, H, frontBg, frontImg, { zoom: ds.zoom, posX: ds.posX, posY: ds.posY, dim: frontImg ? ds.dim : 0 });
     frame(x); nfcIcon(x, W - W * .065 - W * .03, W * .06, W * .05, inkF);
     const ls = (ds.logoSize || 62) / 100, zw = W * ls, zh = H * .72 * ls, zx = (W - zw) / 2, zy = (H - zh) / 2;
-    const logo = await loadImg(ess ? logoFallback : ds.logo);
+    const logo = await loadImg(ds.logo);
     if (logo) { const s = Math.min(zw / logo.width, zh / logo.height); x.drawImage(logo, zx + (zw - logo.width * s) / 2, zy + (zh - logo.height * s) / 2, logo.width * s, logo.height * s); }
     else { x.fillStyle = inkF; x.textAlign = 'center'; x.textBaseline = 'middle'; let fs = W * .0013 * (ds.logoSize || 62); x.font = `500 ${fs}px "Cormorant Garamond", Georgia, serif`; const t = fields.company || fields.name || ''; while (x.measureText(t).width > zw && fs > 20) { fs -= 2; x.font = `500 ${fs}px "Cormorant Garamond", Georgia, serif`; } x.fillText(t, W / 2, H / 2); }
     x.fillStyle = acc; x.fillRect((W - W * .09) / 2, H - W * .09 - W * .0045, W * .09, W * .0045);

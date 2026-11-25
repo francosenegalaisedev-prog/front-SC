@@ -22,11 +22,10 @@ import track from "../../utils/track";
 import { Icon } from "../Icons";
 
 /*
-  Carte qui s'écrit en direct — page Cartes : <CardStudio designer /> (configurateur par niveau).
-  • Essentielle : fonds prédéfinis (sans photo) recto/verso + logo Support Connecté.
-  • Pro         : fonds prédéfinis (sans photo) recto/verso + logo personnalisé + liseré rouge.
-  • Signature   : tous les fonds + photos importées recto/verso + logo + couleur d'accent hex + couleur des textes hex + réglages.
-  • Mode `clientFiche` : formule verrouillée sur celle de la fiche active sélectionnée,
+  Carte qui s'écrit en direct — page Cartes : <CardStudio designer />.
+  Toutes les formules (Essentielle, Pro, Signature) bénéficient de la personnalisation complète sans limite :
+  • Tous les fonds prédéfinis + photos importées recto/verso + logo personnalisé + couleur d'accent hex + couleur des textes hex + réglages.
+  • Mode `clientFiche` : formule associée à la fiche active sélectionnée,
     pré-remplissage des coordonnées, génération & upload des aperçus recto/verso + photos/logo,
     et envoi de la vraie demande `POST /api/fiches/:id/card-request` avec toutes les métadonnées.
 */
@@ -112,20 +111,33 @@ const MAX = 5 * 1024 * 1024;
 const INLINE = 1.5 * 1024 * 1024;
 const INK = { light: "#ffffff", dark: "#1b1712" };
 
-const NON_PHOTO_PRESETS = DESIGNER.presets.filter(p => !p.img);
-const TIER_PRICE: Record<Tier, number> = {
-  essentielle: 10_000,
-  pro: 12_000,
-  signature: 15_000,
-};
+const DEFAULT_CARD_PRICE_FCFA = 15_000;
+
+function hexToRgbString(hex: string): string | null {
+  const clean = hex.trim().replace(/^#/, "");
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map(c => c + c)
+          .join("")
+      : clean;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 export default function CardStudio({
   id = "creer-ma-carte",
   designer = false,
+  cardPriceFcfa = DEFAULT_CARD_PRICE_FCFA,
   clientFiche,
 }: {
   id?: string;
   designer?: boolean;
+  cardPriceFcfa?: number;
   clientFiche?: StudioClientFiche;
 }) {
   const isClientMode = Boolean(clientFiche);
@@ -173,21 +185,6 @@ export default function CardStudio({
       email: clientFiche.email,
     });
     setTelephoneLivraison(prev => prev || clientFiche.phone);
-    setDs(prev => {
-      const next = { ...prev };
-      if (clientFiche.tier !== "signature") {
-        const frontIsPhoto =
-          next.bg === "upload" ||
-          Boolean(DESIGNER.presets.find(p => p.id === next.bg)?.img);
-        const backIsPhoto =
-          next.back === "upload" ||
-          Boolean(DESIGNER.presets.find(p => p.id === next.back)?.img);
-        if (frontIsPhoto) next.bg = "noir";
-        if (backIsPhoto) next.back = "noir";
-        next.ink = null;
-      }
-      return next;
-    });
     setState("edit");
     setErr({});
     setSubmitError("");
@@ -202,33 +199,18 @@ export default function CardStudio({
   ]);
 
   const T = STUDIO.tiers.find(t => t.id === tier)!;
-  const ess = tier === "essentielle";
-  const sig = tier === "signature";
-  const pro = tier === "pro";
 
-  const availablePresets = sig ? DESIGNER.presets : NON_PHOTO_PRESETS;
-  const effectiveBg =
-    !sig &&
-    (ds.bg === "upload" ||
-      Boolean(DESIGNER.presets.find(p => p.id === ds.bg)?.img))
-      ? "noir"
-      : ds.bg;
-  const effectiveBack =
-    !sig &&
-    (ds.back === "upload" ||
-      Boolean(DESIGNER.presets.find(p => p.id === ds.back)?.img))
-      ? "noir"
-      : ds.back;
+  const availablePresets = DESIGNER.presets;
+  const effectiveBg = ds.bg;
+  const effectiveBack = ds.back;
 
   const P = DESIGNER.presets.find(p => p.id === effectiveBg);
   const PB = DESIGNER.presets.find(
     p => p.id === (effectiveBack === "same" ? effectiveBg : effectiveBack),
   );
-  const files = [
-    !ess && ds.logoName,
-    sig && ds.uploadName,
-    sig && ds.backUploadName,
-  ].filter((x): x is string => Boolean(x));
+  const files = [ds.logoName, ds.uploadName, ds.backUploadName].filter(
+    (x): x is string => Boolean(x),
+  );
 
   useEffect(() => {
     const t = (e: Event) => {
@@ -272,23 +254,6 @@ export default function CardStudio({
     if (isClientMode) return;
     setTier(x);
     track("studio_tier", { tier: x });
-    if (x !== "signature") {
-      setDs(prev => {
-        const frontIsPhoto =
-          prev.bg === "upload" ||
-          Boolean(DESIGNER.presets.find(p => p.id === prev.bg)?.img);
-        const backIsPhoto =
-          prev.back === "upload" ||
-          Boolean(DESIGNER.presets.find(p => p.id === prev.back)?.img);
-        return {
-          ...prev,
-          bg: frontIsPhoto ? "noir" : prev.bg,
-          back: backIsPhoto ? "noir" : prev.back,
-          ink: null,
-        };
-      });
-    }
-    if (x === "essentielle") setBack(false);
   };
 
   const readFile = (f: File | undefined, kind: FileKind) => {
@@ -341,8 +306,7 @@ export default function CardStudio({
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDrag(false);
-    if (sig) readFile(e.dataTransfer.files[0], back ? "back" : "bg");
-    else if (pro && !back) readFile(e.dataTransfer.files[0], "logo");
+    readFile(e.dataTransfer.files[0], back ? "back" : "bg");
   };
 
   const move = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -379,26 +343,23 @@ export default function CardStudio({
     return !Object.keys(e).length;
   };
 
-  const photoF = sig && Boolean(ds.upload || P?.img);
-  const backImg = sig
-    ? effectiveBack === "upload"
+  const photoF = Boolean(ds.upload || P?.img);
+  const backImg =
+    effectiveBack === "upload"
       ? ds.backUpload
       : effectiveBack === "same"
         ? ds.upload || P?.img
-        : PB?.img
-    : null;
+        : PB?.img;
 
-  const inkFront =
-    (sig ? ds.ink : null) || INK[photoF ? "light" : P?.ink || "light"];
-  const inkBack =
-    (sig ? ds.ink : null) || INK[backImg ? "light" : PB?.ink || "light"];
-  const accentHex = sig ? ds.accent : "#EF1733";
+  const inkFront = ds.ink || INK[photoF ? "light" : P?.ink || "light"];
+  const inkBack = ds.ink || INK[backImg ? "light" : PB?.ink || "light"];
+  const accentHex = ds.accent;
 
   const slug =
     clientFiche?.slug || slugify(d.name || d.company) || "votre-fiche";
   const backPreset =
     effectiveBack === "same"
-      ? sig && ds.upload
+      ? ds.upload
         ? "upload"
         : effectiveBg
       : effectiveBack;
@@ -416,12 +377,12 @@ export default function CardStudio({
         ...ds,
         bg: effectiveBg,
         back: effectiveBack,
-        bgImg: sig ? P?.img : undefined,
-        backImg: sig ? PB?.img : undefined,
-        upload: sig ? ds.upload : null,
-        backUpload: sig ? ds.backUpload : null,
-        logo: ess ? null : ds.logo,
-        ink: sig ? ds.ink : null,
+        bgImg: P?.img,
+        backImg: PB?.img,
+        upload: ds.upload,
+        backUpload: ds.backUpload,
+        logo: ds.logo,
+        ink: ds.ink,
       },
       fields: {
         name: d.name.trim(),
@@ -469,23 +430,23 @@ export default function CardStudio({
         };
 
         const [logoUrl, photoRectoUrl, photoVersoUrl] = await Promise.all([
-          !ess ? uploadOptionalAsset(ds.logoFile) : Promise.resolve(null),
-          sig && ds.bg === "upload"
+          uploadOptionalAsset(ds.logoFile),
+          ds.bg === "upload"
             ? uploadOptionalAsset(ds.uploadFile)
             : Promise.resolve(null),
-          sig && ds.back === "upload"
+          ds.back === "upload"
             ? uploadOptionalAsset(ds.backUploadFile)
             : Promise.resolve(null),
         ]);
 
         const fondRectoLabel =
-          sig && ds.bg === "upload"
+          ds.bg === "upload"
             ? `Photo importée (${ds.uploadName})`
             : (P?.label ?? effectiveBg);
         const fondVersoLabel =
           effectiveBack === "same"
             ? "Comme le recto"
-            : sig && effectiveBack === "upload"
+            : effectiveBack === "upload"
               ? `Photo importée (${ds.backUploadName})`
               : (PB?.label ?? effectiveBack);
 
@@ -503,21 +464,24 @@ export default function CardStudio({
           fondVerso: backPreset,
           fondVersoLabel,
           couleurAccentHex: accentHex,
+          couleurAccentRgb: hexToRgbString(accentHex),
           couleurTexteRectoHex: inkFront,
+          couleurTexteRectoRgb: hexToRgbString(inkFront),
           couleurTexteVersoHex: inkBack,
-          couleurTexteMode: sig && ds.ink ? "personnalisee" : "auto",
+          couleurTexteVersoRgb: hexToRgbString(inkBack),
+          couleurTexteMode: ds.ink ? "personnalisee" : "auto",
           logoUrl,
-          logoNom: !ess && ds.logoName ? ds.logoName : null,
-          tailleLogo: !ess ? ds.logoSize : null,
-          photoRectoUrl: photoRectoUrl ?? (sig && P?.img ? P.img : null),
+          logoNom: ds.logoName || null,
+          tailleLogo: ds.logoSize,
+          photoRectoUrl: photoRectoUrl ?? (P?.img ?? null),
           photoVersoUrl:
             photoVersoUrl ??
-            (sig && backImg && effectiveBack !== "upload" ? backImg : null),
-          zoom: sig && photoF ? ds.zoom : null,
-          posX: sig && photoF ? ds.posX : null,
-          posY: sig && photoF ? ds.posY : null,
-          assombrirRecto: sig && photoF ? ds.dim : null,
-          assombrirVerso: sig && backImg ? ds.backDim : null,
+            (backImg && effectiveBack !== "upload" ? backImg : null),
+          zoom: photoF ? ds.zoom : null,
+          posX: photoF ? ds.posX : null,
+          posY: photoF ? ds.posY : null,
+          assombrirRecto: photoF ? ds.dim : null,
+          assombrirVerso: backImg ? ds.backDim : null,
         };
 
         const carte = await createCardRequest(clientFiche.id, {
@@ -545,32 +509,25 @@ export default function CardStudio({
     const fondVerso =
       effectiveBack === "same"
         ? "comme le recto"
-        : sig && effectiveBack === "upload"
+        : effectiveBack === "upload"
           ? `image importée (${ds.backUploadName})`
           : DESIGNER.presets.find(p => p.id === effectiveBack)?.label;
     const design = designer
       ? {
-          recto: ess ? "logo Support Connecté" : "logo",
-          logo: ess
-            ? "Support Connecté"
-            : ds.logoName || "aucun (nom de l’entreprise)",
-          taille_logo: ess ? undefined : ds.logoSize,
-          fond:
-            sig && ds.upload ? `image importée (${ds.uploadName})` : P?.label,
+          recto: "logo",
+          logo: ds.logoName || "aucun (nom de l’entreprise)",
+          taille_logo: ds.logoSize,
+          fond: ds.upload ? `image importée (${ds.uploadName})` : P?.label,
           fond_verso: fondVerso,
           accent: accentHex,
-          couleur_textes: sig && ds.ink ? ds.ink : `${inkFront} (auto)`,
-          ...(sig
-            ? {
-                zoom: ds.zoom,
-                cadrage: `${ds.posX} % / ${ds.posY} %`,
-                assombrir: ds.dim,
-                assombrir_verso: ds.backDim,
-                fond_fichier: ds.uploadData || undefined,
-                fond_verso_fichier: ds.backUploadData || undefined,
-              }
-            : {}),
-          logo_fichier: !ess ? ds.logoData || undefined : undefined,
+          couleur_textes: ds.ink ? ds.ink : `${inkFront} (auto)`,
+          zoom: ds.zoom,
+          cadrage: `${ds.posX} % / ${ds.posY} %`,
+          assombrir: ds.dim,
+          assombrir_verso: ds.backDim,
+          fond_fichier: ds.uploadData || undefined,
+          fond_verso_fichier: ds.backUploadData || undefined,
+          logo_fichier: ds.logoData || undefined,
         }
       : null;
     const now = new Date().toISOString();
@@ -654,17 +611,16 @@ export default function CardStudio({
         backgroundPosition: `${ds.posX}% ${ds.posY}%`,
       }
     : undefined;
-  const bgBack: CSSProperties | undefined =
-    sig && backImg
-      ? {
-          backgroundImage: `url(${backImg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }
-      : undefined;
+  const bgBack: CSSProperties | undefined = backImg
+    ? {
+        backgroundImage: `url(${backImg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : undefined;
 
   const sendLabel = isClientMode
-    ? `Commander ma carte ${T.label} (${TIER_PRICE[tier].toLocaleString("fr-FR")} FCFA)`
+    ? `Commander ma carte (${cardPriceFcfa.toLocaleString("fr-FR")} FCFA)`
     : designer
       ? DESIGNER.send[tier]
       : STUDIO.send;
@@ -696,7 +652,7 @@ export default function CardStudio({
           </h2>
           <p className="cs-p">
             {isClientMode
-              ? `Formule active de la fiche : ${T.label} (${TIER_PRICE[tier].toLocaleString("fr-FR")} FCFA · paiement à la livraison).`
+              ? `Formule active de la fiche : ${T.label} · Carte personnalisée : ${cardPriceFcfa.toLocaleString("fr-FR")} FCFA (paiement à la livraison).`
               : H.text}
           </p>
 
@@ -721,11 +677,8 @@ export default function CardStudio({
             </div>
           )}
           <p className="cs-note">
-            {ess
-              ? "Formule Essentielle : choisissez le fond de votre carte (sans photo). Le logo Support Connecté reste au recto."
-              : pro
-                ? "Formule Pro : choisissez le fond de votre carte (sans photo) et importez votre logo au recto."
-                : T.note}
+            Personnalisez librement votre carte : logo, fonds, photos
+            recto/verso, couleur d’accent et couleur des textes.
           </p>
 
           {designer && (
@@ -754,49 +707,45 @@ export default function CardStudio({
 
                 {!back ? (
                   <>
-                    {!ess && (
-                      <>
-                        <p className="cs-sk">{DESIGNER.logoLabel}</p>
-                        <div className="cs-logo-ctl">
-                          {fileBtn("logo", DESIGNER.uploadLogo, ds.logo)}
-                          {ds.logo && (
-                            <button
-                              type="button"
-                              className="cs-mini"
-                              onClick={() =>
-                                setDs(x => ({
-                                  ...x,
-                                  logo: null,
-                                  logoName: "",
-                                  logoData: "",
-                                  logoFile: null,
-                                }))
-                              }
-                            >
-                              {DESIGNER.remove}
-                            </button>
-                          )}
-                        </div>
-                        <label className="cs-sl">
-                          <span>{DESIGNER.logoSize}</span>
-                          <input
-                            type="range"
-                            min="30"
-                            max="95"
-                            value={ds.logoSize}
-                            onChange={e =>
-                              setDesign(
-                                "logoSize",
-                                Number(e.target.value),
-                                "front",
-                              )
-                            }
-                            style={cssVars({ "--p": (ds.logoSize - 30) / 65 })}
-                          />
-                        </label>
-                        <p className="cs-hint">{DESIGNER.logoHint}</p>
-                      </>
-                    )}
+                    <p className="cs-sk">{DESIGNER.logoLabel}</p>
+                    <div className="cs-logo-ctl">
+                      {fileBtn("logo", DESIGNER.uploadLogo, ds.logo)}
+                      {ds.logo && (
+                        <button
+                          type="button"
+                          className="cs-mini"
+                          onClick={() =>
+                            setDs(x => ({
+                              ...x,
+                              logo: null,
+                              logoName: "",
+                              logoData: "",
+                              logoFile: null,
+                            }))
+                          }
+                        >
+                          {DESIGNER.remove}
+                        </button>
+                      )}
+                    </div>
+                    <label className="cs-sl">
+                      <span>{DESIGNER.logoSize}</span>
+                      <input
+                        type="range"
+                        min="30"
+                        max="95"
+                        value={ds.logoSize}
+                        onChange={e =>
+                          setDesign(
+                            "logoSize",
+                            Number(e.target.value),
+                            "front",
+                          )
+                        }
+                        style={cssVars({ "--p": (ds.logoSize - 30) / 65 })}
+                      />
+                    </label>
+                    <p className="cs-hint">{DESIGNER.logoHint}</p>
 
                     <p className="cs-sk">{DESIGNER.bgLabel}</p>
                     <div
@@ -821,38 +770,30 @@ export default function CardStudio({
                           <span>{p.label}</span>
                         </button>
                       ))}
-                      {sig && (
-                        <label
-                          className={`pz pz-up${effectiveBg === "upload" ? " on" : ""}`}
-                          style={
-                            ds.upload
-                              ? { backgroundImage: `url(${ds.upload})` }
-                              : undefined
-                          }
-                        >
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={e => {
-                              readFile(e.target.files?.[0], "bg");
-                              e.target.value = "";
-                            }}
-                          />
-                          <Icon id="i-scan" />
-                          <span>
-                            {ds.upload ? DESIGNER.replace : DESIGNER.upload}
-                          </span>
-                        </label>
-                      )}
+                      <label
+                        className={`pz pz-up${effectiveBg === "upload" ? " on" : ""}`}
+                        style={
+                          ds.upload
+                            ? { backgroundImage: `url(${ds.upload})` }
+                            : undefined
+                        }
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => {
+                            readFile(e.target.files?.[0], "bg");
+                            e.target.value = "";
+                          }}
+                        />
+                        <Icon id="i-scan" />
+                        <span>
+                          {ds.upload ? DESIGNER.replace : DESIGNER.upload}
+                        </span>
+                      </label>
                     </div>
-                    {!sig && (
-                      <p className="cs-hint">
-                        Fonds photo et importation d’image réservés à la formule
-                        Signature.
-                      </p>
-                    )}
 
-                    {sig && photoF && (
+                    {photoF && (
                       <div className="cs-tune">
                         <p className="cs-sk">{DESIGNER.tuneLabel}</p>
                         {(
@@ -916,31 +857,29 @@ export default function CardStudio({
                           <span>{p.label}</span>
                         </button>
                       ))}
-                      {sig && (
-                        <label
-                          className={`pz pz-up${effectiveBack === "upload" ? " on" : ""}`}
-                          style={
-                            ds.backUpload
-                              ? { backgroundImage: `url(${ds.backUpload})` }
-                              : undefined
-                          }
-                        >
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={e => {
-                              readFile(e.target.files?.[0], "back");
-                              e.target.value = "";
-                            }}
-                          />
-                          <Icon id="i-scan" />
-                          <span>
-                            {ds.backUpload ? DESIGNER.replace : DESIGNER.upload}
-                          </span>
-                        </label>
-                      )}
+                      <label
+                        className={`pz pz-up${effectiveBack === "upload" ? " on" : ""}`}
+                        style={
+                          ds.backUpload
+                            ? { backgroundImage: `url(${ds.backUpload})` }
+                            : undefined
+                        }
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => {
+                            readFile(e.target.files?.[0], "back");
+                            e.target.value = "";
+                          }}
+                        />
+                        <Icon id="i-scan" />
+                        <span>
+                          {ds.backUpload ? DESIGNER.replace : DESIGNER.upload}
+                        </span>
+                      </label>
                     </div>
-                    {sig && backImg && (
+                    {backImg && (
                       <label className="cs-sl">
                         <span>{DESIGNER.backDim}</span>
                         <input
@@ -962,87 +901,83 @@ export default function CardStudio({
                   </>
                 )}
 
-                {sig && (
-                  <div className="cs-row2">
-                    <div>
-                      <p className="cs-sk">{DESIGNER.accentLabel}</p>
-                      <div
-                        className="cs-swatches"
-                        role="radiogroup"
-                        aria-label={DESIGNER.accentLabel}
-                      >
-                        {DESIGNER.accents.map(c => (
-                          <button
-                            key={c}
-                            type="button"
-                            role="radio"
-                            aria-checked={ds.accent === c}
-                            className={ds.accent === c ? "on" : ""}
-                            style={cssVars({ "--c": c })}
-                            onClick={() => setDesign("accent", c)}
-                            aria-label={c}
-                          />
-                        ))}
-                        <label
-                          className="cs-color"
-                          aria-label="Accent personnalisé"
-                        >
-                          <input
-                            type="color"
-                            value={ds.accent}
-                            onChange={e => setDesign("accent", e.target.value)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="cs-sk">{DESIGNER.inkLabel}</p>
-                      <div
-                        className="cs-swatches"
-                        role="radiogroup"
-                        aria-label={DESIGNER.inkLabel}
-                      >
+                <div className="cs-row2">
+                  <div>
+                    <p className="cs-sk">{DESIGNER.accentLabel}</p>
+                    <div
+                      className="cs-swatches"
+                      role="radiogroup"
+                      aria-label={DESIGNER.accentLabel}
+                    >
+                      {DESIGNER.accents.map(c => (
                         <button
+                          key={c}
                           type="button"
                           role="radio"
-                          aria-checked={!ds.ink}
-                          className={`auto${!ds.ink ? " on" : ""}`}
-                          onClick={() => setDesign("ink", null)}
-                        >
-                          {DESIGNER.inkAuto}
-                        </button>
-                        {DESIGNER.inks.map(c => (
-                          <button
-                            key={c}
-                            type="button"
-                            role="radio"
-                            aria-checked={ds.ink === c}
-                            className={ds.ink === c ? "on" : ""}
-                            style={cssVars({ "--c": c })}
-                            onClick={() => setDesign("ink", c)}
-                            aria-label={c}
-                          />
-                        ))}
-                        <label
-                          className="cs-color"
-                          aria-label="Couleur des textes personnalisée"
-                        >
-                          <input
-                            type="color"
-                            value={ds.ink || "#ffffff"}
-                            onChange={e => setDesign("ink", e.target.value)}
-                          />
-                        </label>
-                      </div>
+                          aria-checked={ds.accent === c}
+                          className={ds.accent === c ? "on" : ""}
+                          style={cssVars({ "--c": c })}
+                          onClick={() => setDesign("accent", c)}
+                          aria-label={c}
+                        />
+                      ))}
+                      <label
+                        className="cs-color"
+                        aria-label="Accent personnalisé"
+                      >
+                        <input
+                          type="color"
+                          value={ds.accent}
+                          onChange={e => setDesign("accent", e.target.value)}
+                        />
+                      </label>
                     </div>
                   </div>
-                )}
+                  <div>
+                    <p className="cs-sk">{DESIGNER.inkLabel}</p>
+                    <div
+                      className="cs-swatches"
+                      role="radiogroup"
+                      aria-label={DESIGNER.inkLabel}
+                    >
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={!ds.ink}
+                        className={`auto${!ds.ink ? " on" : ""}`}
+                        onClick={() => setDesign("ink", null)}
+                      >
+                        {DESIGNER.inkAuto}
+                      </button>
+                      {DESIGNER.inks.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          role="radio"
+                          aria-checked={ds.ink === c}
+                          className={ds.ink === c ? "on" : ""}
+                          style={cssVars({ "--c": c })}
+                          onClick={() => setDesign("ink", c)}
+                          aria-label={c}
+                        />
+                      ))}
+                      <label
+                        className="cs-color"
+                        aria-label="Couleur des textes personnalisée"
+                      >
+                        <input
+                          type="color"
+                          value={ds.ink || "#ffffff"}
+                          onChange={e => setDesign("ink", e.target.value)}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
 
-                {!ess && (
-                  <p className="cs-hint">
-                    {DESIGNER.fileHint} {sig ? DESIGNER.drop : ""}.
-                  </p>
-                )}
+                <p className="cs-hint">
+                  {DESIGNER.fileHint} {DESIGNER.drop}.
+                </p>
                 {err.file && (
                   <p className="ld-err" role="alert">
                     {err.file}
@@ -1248,15 +1183,13 @@ export default function CardStudio({
             onPointerLeave={leave}
             aria-label="Aperçu de votre carte"
             onDragOver={e => {
-              if (sig || pro) {
-                e.preventDefault();
-                setDrag(true);
-              }
+              e.preventDefault();
+              setDrag(true);
             }}
             onDragLeave={() => setDrag(false)}
             onDrop={onDrop}
             style={cssVars({
-              "--acc": sig ? ds.accent : undefined,
+              "--acc": ds.accent,
               "--inkF": inkFront,
               "--inkB": inkBack,
             })}
@@ -1265,15 +1198,13 @@ export default function CardStudio({
               <>
                 {/* RECTO : le logo */}
                 <div
-                  className={`cs-face cs-front face-logo pr-${sig && ds.upload ? "upload" : effectiveBg}`}
+                  className={`cs-face cs-front face-logo pr-${ds.upload ? "upload" : effectiveBg}`}
                 >
-                  {sig && (
-                    <span
-                      className="cs-bg"
-                      style={bgFront}
-                      aria-hidden="true"
-                    />
-                  )}
+                  <span
+                    className="cs-bg"
+                    style={bgFront}
+                    aria-hidden="true"
+                  />
                   {photoF && (
                     <span
                       className="cs-dim"
@@ -1288,12 +1219,7 @@ export default function CardStudio({
                     className="cs-logo-zone"
                     style={cssVars({ "--ls": ds.logoSize })}
                   >
-                    {ess ? (
-                      <img
-                        src="/images/logo-blanc.webp"
-                        alt="Support Connecté"
-                      />
-                    ) : ds.logo ? (
+                    {ds.logo ? (
                       <img src={ds.logo} alt="" />
                     ) : (
                       <span
@@ -1315,10 +1241,8 @@ export default function CardStudio({
                 <div
                   className={`cs-face cs-back face-info pr-${backPreset}`}
                 >
-                  {sig && (
-                    <span className="cs-bg" style={bgBack} aria-hidden="true" />
-                  )}
-                  {sig && backImg && (
+                  <span className="cs-bg" style={bgBack} aria-hidden="true" />
+                  {backImg && (
                     <span
                       className="cs-dim"
                       style={{ opacity: ds.backDim / 100 }}
@@ -1339,12 +1263,10 @@ export default function CardStudio({
                     <QR text={ficheUrl(slug)} size={120} />
                   </span>
                   <span className="cs-glare" aria-hidden="true" />
-                  {sig && (
-                    <span className="cs-dropzone" aria-hidden="true">
-                      <Icon id="i-scan" />
-                      {DESIGNER.drop}
-                    </span>
-                  )}
+                  <span className="cs-dropzone" aria-hidden="true">
+                    <Icon id="i-scan" />
+                    {DESIGNER.drop}
+                  </span>
                 </div>
               </>
             </div>

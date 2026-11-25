@@ -3,17 +3,16 @@ import { carteStatusOptions } from "./production";
 
 describe("carteStatusOptions", () => {
   it("only offers allowed next actions for a card request", () => {
-    expect(carteStatusOptions("a_imprimer")).toEqual([
-      "a_imprimer",
-      "imprimee",
-      "annulee",
-    ]);
-    expect(carteStatusOptions("testee")).toEqual([
-      "testee",
+    expect(carteStatusOptions("envoyee")).toEqual([
+      "envoyee",
+      "traitee",
       "livree",
-      "encodee",
-      "annulee",
     ]);
-    expect(carteStatusOptions("livree")).toEqual(["livree", "testee"]);
+    expect(carteStatusOptions("traitee")).toEqual([
+      "traitee",
+      "livree",
+      "envoyee",
+    ]);
+    expect(carteStatusOptions("livree")).toEqual(["livree", "traitee"]);
   });
 });

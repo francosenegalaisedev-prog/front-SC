@@ -44,6 +44,7 @@ export default function AdminSettings() {
     supportPhone: "",
     socialLinks: { instagram: "", facebook: "", linkedin: "" },
     maintenance: false,
+    cardPriceFcfa: 15_000,
   });
   const queryClient = useQueryClient();
   const run = useAction();
@@ -280,6 +281,25 @@ export default function AdminSettings() {
                 <Field label="Nom de la plateforme"><input required minLength={2} maxLength={100} value={settings.platformName} onChange={event => setSettings(current => ({ ...current, platformName: event.target.value }))} /></Field>
                 <Field label="E-mail de support"><input type="email" maxLength={254} value={settings.supportEmail} onChange={event => setSettings(current => ({ ...current, supportEmail: event.target.value }))} /></Field>
                 <Field label="Téléphone de support"><input type="tel" maxLength={40} value={settings.supportPhone} onChange={event => setSettings(current => ({ ...current, supportPhone: event.target.value }))} /></Field>
+                <Field
+                  label="Prix d’une carte NFC personnalisée (FCFA)"
+                  hint="Appliqué à toutes les formules (Essentielle, Pro, Signature). Par défaut : 15 000 FCFA."
+                >
+                  <input
+                    type="number"
+                    min={0}
+                    max={10000000}
+                    step={500}
+                    required
+                    value={settings.cardPriceFcfa ?? 15000}
+                    onChange={event =>
+                      setSettings(current => ({
+                        ...current,
+                        cardPriceFcfa: Math.max(0, Number(event.target.value) || 0),
+                      }))
+                    }
+                  />
+                </Field>
                 <h3>Réseaux sociaux (liens HTTPS)</h3>
                 {(["instagram", "facebook", "linkedin"] as const).map(network => (
                   <Field key={network} label={network[0].toUpperCase() + network.slice(1)}>

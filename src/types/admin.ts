@@ -250,13 +250,7 @@ export interface Revenus {
 }
 
 // ───── Production (cartes NFC, stickers, QR dynamiques) ─────
-export type StatutCarte =
-  | "a_imprimer"
-  | "imprimee"
-  | "encodee"
-  | "testee"
-  | "livree"
-  | "annulee";
+export type StatutCarte = "envoyee" | "traitee" | "livree";
 export type StatutSticker =
   | "a_parametrer"
   | "parametre"

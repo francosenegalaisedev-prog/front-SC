@@ -28,7 +28,7 @@ export const DESIGNER = {
   label: "Configurateur",
   title: "Composez votre carte,",
   red: "elle se crée sous vos yeux.", // À VALIDER
-  text: "Recto : votre logo. Verso : vos coordonnées et votre QR code. Signature : fonds, couleurs et photos à votre image.", // À VALIDER
+  text: "Recto : votre logo. Verso : vos coordonnées et votre QR code. Personnalisez librement fonds, photos et couleurs à votre image.", // À VALIDER
   essNote:
     "La carte Essentielle garde le design Support Connecté. Vos coordonnées s’affichent sur votre page connectée, modifiables à vie.", // À VALIDER (fin : catalogue)
   panel: "Personnalisation",

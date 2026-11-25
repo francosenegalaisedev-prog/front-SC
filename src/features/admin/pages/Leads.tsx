@@ -24,10 +24,8 @@ const STATUS: Record<LeadStatus, { label: string; tone: string }> = {
 };
 
 const ACTIVE_CARD_STATUSES = new Set([
-  "a_imprimer",
-  "imprimee",
-  "encodee",
-  "testee",
+  "envoyee",
+  "traitee",
 ]);
 
 export default function Leads() {

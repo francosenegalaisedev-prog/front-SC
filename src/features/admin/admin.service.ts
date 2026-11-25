@@ -307,6 +307,7 @@ export interface AdminAppSettings {
     linkedin: string;
   };
   maintenance: boolean;
+  cardPriceFcfa?: number;
 }
 
 export interface AdminActionLog {

@@ -26,12 +26,9 @@ type StickerStatusFilter = StatutSticker | 'tous';
 
 const CARD_FILTER_LABELS: Record<CardStatusFilter, string> = {
   tous: 'Tous les statuts',
-  a_imprimer: PS.a_imprimer,
-  imprimee: PS.imprimee,
-  encodee: PS.encodee,
-  testee: PS.testee,
+  envoyee: PS.envoyee,
+  traitee: PS.traitee,
   livree: PS.livree,
-  annulee: PS.annulee,
 };
 const STICKER_FILTER_LABELS: Record<StickerStatusFilter, string> = {
   tous: 'Tous les statuts',
@@ -61,24 +58,89 @@ function CopyLink({ text }: { text: string }) {
 }
 const client = (f: { entreprise: string; nom: string } | null) => f?.entreprise || f?.nom || '—';
 
-function HexSwatch({ label, hex }: { label: string; hex?: unknown }) {
+function hexToColorFormats(hex: string): {
+  hex: string;
+  rgb: string;
+  cmyk: string;
+} | null {
+  const clean = hex.trim().replace(/^#/, '');
+  const full =
+    clean.length === 3
+      ? clean
+          .split('')
+          .map(ch => ch + ch)
+          .join('')
+      : clean;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const k = 1 - Math.max(rn, gn, bn);
+  const c = k === 1 ? 0 : Math.round(((1 - rn - k) / (1 - k)) * 100);
+  const m = k === 1 ? 0 : Math.round(((1 - gn - k) / (1 - k)) * 100);
+  const y = k === 1 ? 0 : Math.round(((1 - bn - k) / (1 - k)) * 100);
+  const kp = Math.round(k * 100);
+  return {
+    hex: hex.trim(),
+    rgb: `rgb(${r}, ${g}, ${b})`,
+    cmyk: `cmyk(${c}%, ${m}%, ${y}%, ${kp}%)`,
+  };
+}
+
+function ColorSwatch({
+  label,
+  hex,
+  rgb,
+}: {
+  label: string;
+  hex?: unknown;
+  rgb?: unknown;
+}) {
   if (typeof hex !== 'string' || !hex) return null;
+  const parsed = hexToColorFormats(hex);
+  const rgbValue =
+    typeof rgb === 'string' && rgb ? rgb : parsed?.rgb ?? null;
+  const hexValue = parsed?.hex ?? hex;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
       <span
         style={{
-          width: 18,
-          height: 18,
+          width: 20,
+          height: 20,
+          marginTop: 2,
           borderRadius: 4,
           border: '1px solid rgba(0,0,0,0.2)',
-          background: hex,
+          background: hexValue,
           display: 'inline-block',
           flexShrink: 0,
         }}
         aria-hidden="true"
       />
-      <span>{label} : <code>{hex}</code></span>
-      <CopyLink text={hex} />
+      <div style={{ display: 'grid', gap: 2 }}>
+        <div>
+          <b>{label} :</b>{' '}
+          {rgbValue ? (
+            <>
+              <code>{rgbValue}</code> <CopyLink text={rgbValue} />
+            </>
+          ) : (
+            <>
+              <code>{hexValue}</code> <CopyLink text={hexValue} />
+            </>
+          )}
+        </div>
+        <div className="adm-muted" style={{ fontSize: 12 }}>
+          HEX <code>{hexValue}</code> <CopyLink text={hexValue} />
+          {parsed && (
+            <>
+              {' · '}CMJN <code>{parsed.cmyk}</code>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -336,11 +398,11 @@ function Apercu({ vue, onClose }: { vue: Vue; onClose: () => void }) {
             </div>
 
             <div>
-              <p className="eyebrow">Couleurs (hexadécimal) & fonds</p>
-              <div className="small" style={{ display: 'grid', gap: 6, marginTop: 6 }}>
-                <HexSwatch label="Accent" hex={design.couleurAccentHex} />
-                <HexSwatch label="Texte recto" hex={design.couleurTexteRectoHex} />
-                <HexSwatch label="Texte verso" hex={design.couleurTexteVersoHex} />
+              <p className="eyebrow">Couleurs (RGB / HEX / CMJN) & fonds</p>
+              <div className="small" style={{ display: 'grid', gap: 8, marginTop: 6 }}>
+                <ColorSwatch label="Accent" hex={design.couleurAccentHex} rgb={design.couleurAccentRgb} />
+                <ColorSwatch label="Texte recto" hex={design.couleurTexteRectoHex} rgb={design.couleurTexteRectoRgb} />
+                <ColorSwatch label="Texte verso" hex={design.couleurTexteVersoHex} rgb={design.couleurTexteVersoRgb} />
                 <div><b>Fond recto :</b> {String(design.fondRectoLabel ?? design.fondRecto ?? '—')}</div>
                 <div><b>Fond verso :</b> {String(design.fondVersoLabel ?? design.fondVerso ?? '—')}</div>
                 {design.tailleLogo != null && <div><b>Taille logo :</b> {String(design.tailleLogo)} %</div>}
