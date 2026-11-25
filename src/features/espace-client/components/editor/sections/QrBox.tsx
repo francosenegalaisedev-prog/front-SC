@@ -1,4 +1,4 @@
-import { ENV } from "../../../../../lib/env";
+import { publicAppOrigin } from "../../../../../lib/env";
 import type { FicheRecord } from "../../../../../types";
 import { I } from "../../fiche/Icon";
 import { QR } from "../../fiche/QR";
@@ -14,7 +14,7 @@ export default function QrBox({ fiche }: { fiche: FicheRecord }) {
       <div className="ed-qr">
         <div className="ed-qr-v" id="ed-qr-svg">
           <QR
-            text={`${ENV.VITE_PUBLIC_APP_URL}/f/${fiche.slug}`}
+            text={`${publicAppOrigin()}/f/${fiche.slug}`}
             logo={fiche.logo}
             size={132}
           />
@@ -38,7 +38,7 @@ export default function QrBox({ fiche }: { fiche: FicheRecord }) {
           </button>
           <a
             className="ed-up"
-            href={`${ENV.VITE_PUBLIC_APP_URL}/contact?sujet=qr#formulaire`}
+            href={`${publicAppOrigin()}/contact?sujet=qr#formulaire`}
             target="_blank"
             rel="noreferrer"
           >

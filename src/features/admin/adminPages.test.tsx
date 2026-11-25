@@ -41,7 +41,6 @@ const fiche = (id: number, slug: string, entreprise: string) => ({
   demandesSticker: [] as {
     id: number;
     section: string;
-    quantite: number;
     createdAt: string;
   }[],
 });
@@ -132,18 +131,16 @@ const route = (c: InternalAxiosRequestConfig): unknown => {
   if (url === "/admin/fiches") {
     const params = c.params as Record<string, string> | undefined;
     const row = fiche(12, "chez-awa", "Chez Awa");
-    if (params?.sticker === "demande") {
+    if (params?.sticker === "actif") {
       row.demandesSticker = [
         {
           id: 8,
           section: "menu",
-          quantite: 20,
           createdAt: "2026-10-29T10:00:00Z",
         },
         {
           id: 9,
-          section: "horaires",
-          quantite: 5,
+          section: "avis",
           createdAt: "2026-10-29T11:00:00Z",
         },
       ];
@@ -554,33 +551,12 @@ describe("pages du back-office", () => {
     ).toMatchObject({ statut: "suspendue" });
   });
 
-  it("le KPI des stickers ouvre les fiches avec demandes en attente", async () => {
+  it("le KPI des stickers par section ouvre l’onglet Stickers par section de Production", async () => {
     act(() => root.render(app("/admin")));
     await settle();
-    click(byText("button.kpi", "Demandes de stickers"));
+    click(byText("button.kpi", "Stickers par section"));
     await settle();
-    expect(where()).toBe("/admin/fiches?sticker=demande");
-    expect(
-      calls.filter(c => c.url === "/admin/fiches").at(-1)?.params
-    ).toMatchObject({
-      sticker: "demande",
-    });
-
-    expect(host.textContent).not.toContain("Menu");
-    click(byText("button.adm-btn-red", "Voir sections"));
-    await settle();
-    expect(host.querySelector('[role="dialog"]')?.textContent).toContain(
-      "Menu"
-    );
-    expect(host.querySelector('[role="dialog"]')?.textContent).toContain(
-      "Horaires"
-    );
-    expect(host.querySelector('[role="dialog"]')?.textContent).toContain(
-      "20 stickers"
-    );
-    click(byText('[role="dialog"] button', "Ouvrir la fiche"));
-    await settle();
-    expect(where()).toBe("/admin/fiches/12");
+    expect(where()).toBe("/admin/production?tab=sections");
   });
 
   it("le KPI des demandes de cartes ouvre la page Production", async () => {
@@ -597,20 +573,20 @@ describe("pages du back-office", () => {
     expect(host.textContent).toContain("Production");
   });
 
-  it("permet de filtrer les demandes de stickers depuis la page Fiches", async () => {
+  it("permet de filtrer les fiches avec stickers actifs depuis la page Fiches", async () => {
     act(() => root.render(app("/admin/fiches")));
     await settle();
     const filter = host.querySelector(
-      'select[aria-label="Demandes de stickers"]'
+      'select[aria-label="Stickers par section"]'
     ) as HTMLSelectElement;
     act(() => {
-      filter.value = "demande";
+      filter.value = "actif";
       filter.dispatchEvent(new Event("change", { bubbles: true }));
     });
     await settle();
     expect(
       calls.filter(c => c.url === "/admin/fiches").at(-1)?.params
-    ).toMatchObject({ sticker: "demande" });
+    ).toMatchObject({ sticker: "actif" });
     expect(host.textContent).toContain("Voir sections");
   });
 
@@ -679,15 +655,22 @@ describe("pages du back-office", () => {
         tier: "pro",
         nfcUrl: "https://sc.example/f/autre",
         adresseChangee: false,
-        rectoUrl: null,
-        versoUrl: null,
-        design: null,
         encodedAt: null,
         statut: "livree",
         notes: null,
         printedAt: null,
         testedAt: null,
         createdAt: "2026-10-02T00:00:00.000Z",
+        rectoUrl: "https://cdn.example/pro-recto.webp",
+        versoUrl: "https://cdn.example/pro-verso.webp",
+        design: {
+          texte: { nom: "Autre client", entreprise: "Autre client" },
+          fondRectoLabel: "Noir mat",
+          fondVersoLabel: "Comme le recto",
+          couleurAccentHex: "#c9a25b",
+          couleurTexteRectoHex: "#ffffff",
+          couleurTexteVersoHex: "#ffffff",
+        },
         adresseLivraison: null,
         telephoneLivraison: null,
         notesClient: null,
@@ -712,7 +695,6 @@ describe("pages du back-office", () => {
     expect(host.textContent).toContain("Appeler à l'arrivée");
     expect(host.textContent).toContain("12 000 FCFA");
     expect(host.querySelectorAll('input[type="file"]')).toHaveLength(0);
-    expect(host.textContent).toContain("Modèle Pro actif");
     expect(host.querySelectorAll("tbody tr")).toHaveLength(2);
     const filter = host.querySelector<HTMLSelectElement>(
       'select[aria-label="Filtrer les cartes par statut"]'
@@ -725,9 +707,10 @@ describe("pages du back-office", () => {
     expect(host.querySelectorAll("tbody tr")).toHaveLength(1);
     expect(host.textContent).toContain("Autre client");
 
-    click(byText("button.adm-btn", "Aperçu"));
+    click(byText("button.adm-btn", "Aperçu & infos"));
     await settle();
-    expect(host.textContent).toContain("Recto · modèle actif Modèle Pro actif");
+    expect(host.textContent).toContain("Métadonnées de la carte");
+    expect(host.textContent).toContain("#c9a25b");
     expect(host.querySelector('img[src="https://cdn.example/pro-recto.webp"]')).toBeTruthy();
   });
 

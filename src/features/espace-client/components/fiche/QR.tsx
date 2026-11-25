@@ -61,3 +61,69 @@ export function QR({
     </svg>
   );
 }
+
+/** Génère un PNG haute résolution (640×640) du QR code pour partage ou téléchargement. */
+export async function qrToPngBlob(
+  text: string,
+  logo?: string,
+  px = 640,
+): Promise<Blob | null> {
+  const m = qrMatrix(text);
+  if (!m || typeof document === "undefined") return null;
+
+  const q = 4;
+  const total = m.n + q * 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = px;
+  canvas.height = px;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, px, px);
+
+  const cell = px / total;
+  ctx.fillStyle = "#0c0c0c";
+  for (let r = 0; r < m.n; r++) {
+    for (let c = 0; c < m.n; c++) {
+      if (m.dark(r, c)) {
+        const x = Math.floor((c + q) * cell);
+        const y = Math.floor((r + q) * cell);
+        const w = Math.ceil((c + q + 1) * cell) - x;
+        const h = Math.ceil((r + q + 1) * cell) - y;
+        ctx.fillRect(x, y, w, h);
+      }
+    }
+  }
+
+  if (logo) {
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        el.crossOrigin = "anonymous";
+        el.onload = () => resolve(el);
+        el.onerror = reject;
+        el.src = logo;
+      });
+      const hole = Math.round(m.n * 0.26);
+      const start = q + Math.floor((m.n - hole) / 2);
+      const pad = 0.5 * cell;
+      const bx = start * cell - pad;
+      const by = start * cell - pad;
+      const bs = hole * cell + pad * 2;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(bx, by, bs, bs);
+      ctx.drawImage(img, start * cell, start * cell, hole * cell, hole * cell);
+    } catch {
+      /* Si le logo ne peut pas être chargé en CORS, on exporte le QR code sans logo */
+    }
+  }
+
+  return new Promise<Blob | null>(resolve => {
+    try {
+      canvas.toBlob(blob => resolve(blob), "image/png");
+    } catch {
+      resolve(null);
+    }
+  });
+}

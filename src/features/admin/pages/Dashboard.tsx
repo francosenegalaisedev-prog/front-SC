@@ -446,10 +446,10 @@ export default function Dashboard() {
         />
         <Kpi
           icon="qrcode"
-          label="Demandes de stickers"
+          label="Stickers par section"
           value={new Intl.NumberFormat("fr-FR").format(s.demandesSticker)}
-          sub="toutes fiches confondues"
-          onClick={go("/fiches?sticker=demande")}
+          sub="stickers actifs"
+          onClick={go("/production?tab=sections")}
         />
         <Kpi
           icon="card"
@@ -464,6 +464,21 @@ export default function Dashboard() {
           label="Scans au total"
           value={new Intl.NumberFormat("fr-FR").format(s.scansTotal)}
           sub="toutes fiches confondues"
+        />
+        <Kpi
+          icon="clock"
+          label="Suppressions en attente"
+          value={s.suppressions?.enAttente ?? 0}
+          sub="délai de grâce 30 jours"
+          tone={s.suppressions?.enAttente ? "hot" : undefined}
+          onClick={go("/clients?statut=suppression")}
+        />
+        <Kpi
+          icon="trash"
+          label="Comptes supprimés"
+          value={s.suppressions?.supprimesTotal ?? 0}
+          sub={`${s.suppressions?.supprimesSur30Jours ?? 0} sur les 30 derniers jours`}
+          onClick={go("/historique?tab=deletions")}
         />
       </section>
 

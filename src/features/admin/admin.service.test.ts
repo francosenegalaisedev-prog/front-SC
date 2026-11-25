@@ -11,6 +11,7 @@ type Call = {
   url?: string;
   params?: unknown;
   auth?: string;
+  withCredentials?: boolean;
   data?: unknown;
 };
 let calls: Call[] = [];
@@ -35,6 +36,7 @@ beforeEach(() => {
       url: config.url,
       params: config.params,
       auth: config.headers.Authorization as string | undefined,
+      withCredentials: config.withCredentials,
       data: config.data,
     });
     const { status, data, headers } = respond(config);
@@ -56,7 +58,7 @@ afterEach(() => {
 });
 
 describe("adminApi", () => {
-  it("envoie le jeton et retire les paramètres vides", async () => {
+  it("envoie les cookies de session et retire les paramètres vides", async () => {
     await adminApi.listFiches({
       search: "",
       statut: "active",
@@ -68,8 +70,9 @@ describe("adminApi", () => {
       method: "get",
       url: "/admin/fiches",
       params: { statut: "active", page: 2, limit: 20 },
+      withCredentials: true,
     });
-    expect(calls[0].auth).toBeTruthy();
+    expect(calls[0].auth).toBeUndefined();
   });
 
   it("supprime une fiche avec la confirmation du slug", async () => {
@@ -90,8 +93,9 @@ describe("adminApi", () => {
     expect(calls[0]).toMatchObject({
       method: "post",
       url: "/admin/users/admin",
+      withCredentials: true,
     });
-    expect(calls[0].auth).toBeTruthy();
+    expect(calls[0].auth).toBeUndefined();
     expect(JSON.parse(String(calls[0].data))).toEqual({
       nom: " Awa Ndiaye ",
       email: "awa@example.com",

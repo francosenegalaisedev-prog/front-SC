@@ -1,14 +1,14 @@
 import { useMutation } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthField from "../../../components/auth/AuthField";
 import AuthShell from "../../../components/auth/AuthShell";
+import GoogleSignInButton from "../../../components/auth/GoogleSignInButton";
 import { Icon } from "../../../components/Icons";
-import { A_REGISTER as T } from "../../../data/auth";
+import { AFTER_LOGIN, A_REGISTER as T } from "../../../data/auth";
 import { EMAIL_RE, passwordOk, passwordRules } from "../../../utils/auth";
-import { register } from "../auth.service";
-
+import { loginWithGoogle, register } from "../auth.service";
 // Page Inscription — /inscription (nom, e-mail, mot de passe, confirmation).
 // Le serveur revalide tout (la validation ci-dessous n'est qu'un confort) et envoie l'e-mail de vérification.
 type Field = "name" | "email" | "password" | "confirm";
@@ -22,13 +22,14 @@ export default function RegisterPage() {
     confirm: "",
     website: "",
   });
+
   const [err, setErr] = useState<Errors>({});
   const [sending, setSending] = useState(false);
   const [doneEmail, setDoneEmail] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   const set = (k: keyof typeof d) => (v: string) => {
-    setD(x => ({ ...x, [k]: v }));
-    setErr(x => ({ ...x, [k]: undefined }));
+    setD((x) => ({ ...x, [k]: v }));
+    setErr((x) => ({ ...x, [k]: undefined }));
   };
   const rules = passwordRules(d.password);
 
@@ -70,6 +71,11 @@ export default function RegisterPage() {
     onError: () => {
       setSending(false);
     },
+  });
+
+  const googleMutation = useMutation({
+    mutationFn: loginWithGoogle,
+    onSuccess: () => navigate(AFTER_LOGIN, { replace: true }),
   });
 
   return (
@@ -130,7 +136,7 @@ export default function RegisterPage() {
             onChange={set("password")}
           />
           <ul className="au-rules" aria-label="Critères du mot de passe">
-            {(Object.keys(T.rules) as (keyof typeof T.rules)[]).map(k => (
+            {(Object.keys(T.rules) as (keyof typeof T.rules)[]).map((k) => (
               <li key={k} className={rules[k] ? "ok" : undefined}>
                 <span>
                   <Icon id="i-check" />
@@ -158,7 +164,7 @@ export default function RegisterPage() {
             aria-hidden="true"
             name="website"
             value={d.website}
-            onChange={e => set("website")(e.target.value)}
+            onChange={(e) => set("website")(e.target.value)}
           />
           {isError && (
             <p className="au-err" role="alert">
@@ -170,6 +176,9 @@ export default function RegisterPage() {
           <button type="submit" className="btn btn-red" disabled={sending}>
             {sending ? T.sending : T.submit} <Icon id="arr" />
           </button>
+          <GoogleSignInButton
+            onCredential={(cred) => googleMutation.mutate(cred)}
+          />
           <p className="au-hint">
             {T.legal[0]}
             <Link to="/mentions-legales" className="au-link">

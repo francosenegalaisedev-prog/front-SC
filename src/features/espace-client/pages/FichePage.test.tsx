@@ -148,52 +148,28 @@ describe("Tableau de bord de la fiche", () => {
     expect(host.textContent).toContain("2 / 2");
   });
 
-  it("ouvre la demande de carte directement depuis l’onglet Carte", async () => {
+  it("redirige vers l’atelier Cartes depuis l’onglet Carte", async () => {
     await openPage();
 
     await act(async () => {
       host.querySelectorAll<HTMLButtonElement>(".fiche-dashboard-nav button")[2].click();
     });
-    await act(async () => {
-      host.querySelector<HTMLButtonElement>(".fiche-card-request-button")!.click();
-    });
-    for (let i = 0; i < 6; i++) {
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
-      });
-    }
 
-    expect(host.querySelector('[role="dialog"]')).toBeTruthy();
-    expect(host.textContent).toContain("Demande de carte — Awa Ndiaye");
-    expect(host.textContent).toContain("FCFA");
-    expect(host.querySelector('textarea[required]')).toBeTruthy();
+    const link = host.querySelector<HTMLAnchorElement>(".fiche-card-request-button");
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute("href")).toBe("/espace-client/cartes?ficheId=1");
+    expect(host.textContent).toContain("atelier Cartes");
   });
 
-  it("affiche le recto et le verso du modèle actif si la fiche a un abonnement valide", async () => {
-    await openPage();
-    await act(async () => {
-      host.querySelectorAll<HTMLButtonElement>(".fiche-dashboard-nav button")[2].click();
-    });
-    for (let i = 0; i < 6; i++) {
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
-      });
-    }
-
-    expect(host.querySelector('img[alt="Pro rouge — recto"]')?.getAttribute("src"))
-      .toBe("https://cdn.exemple.sn/pro-recto.webp");
-    expect(host.querySelector('img[alt="Pro rouge — verso"]')?.getAttribute("src"))
-      .toBe("https://cdn.exemple.sn/pro-verso.webp");
-  });
-
-  it("n'affiche pas l'aperçu du modèle si l'abonnement de la fiche est expiré", async () => {
+  it("indique qu’un abonnement actif est requis si la fiche est expirée", async () => {
     ficheExpiree = true;
     await openPage();
     await act(async () => {
       host.querySelectorAll<HTMLButtonElement>(".fiche-dashboard-nav button")[2].click();
     });
 
-    expect(host.querySelector(".fiche-card-model-faces")).toBeNull();
-    expect(host.querySelector('img[alt="Pro rouge — recto"]')).toBeNull();
+    expect(host.textContent).toContain("Activez un abonnement");
+    const link = host.querySelector<HTMLAnchorElement>(".fiche-card-request-button");
+    expect(link?.getAttribute("href")).toBe("/espace-client/cartes?ficheId=1");
   });
 });

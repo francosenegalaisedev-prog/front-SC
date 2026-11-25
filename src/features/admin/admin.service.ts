@@ -9,7 +9,6 @@ import type {
   BillingList,
   Carte,
   CommandeInput,
-  CreateModeleCarteInput,
   CreateStickerInput,
   Emplacements,
   FicheDetail,
@@ -19,11 +18,9 @@ import type {
   LeadRequestsPage,
   LeadStatus,
   ListFichesParams,
-  ModeleCarte,
   Parametres,
   PatchEmplacements,
   PatchFormule,
-  PatchModeleCarteInput,
   ProductionSummary,
   QrApercu,
   QrFormat,
@@ -205,7 +202,7 @@ export const adminApi = {
       versoUrl?: string | null;
     }
   ) => patch<{ carte: Carte }>(`/admin/production/cartes/${id}`, b),
-  // Stickers « par section » : demandes de devis des clients ; activer une demande ouvre la section en page publique
+  // Stickers « par section » : générés et activés par l'administration
   listSectionStickers: (
     q: { statut?: SectionStickerAdmin["statut"]; ficheId?: number } = {}
   ) => call(
@@ -213,37 +210,21 @@ export const adminApi = {
       "/admin/production/section-stickers",
       { params: clean(q) },
     ),
-    "Impossible de charger les demandes de stickers. Réessayez.",
+    "Impossible de charger les stickers par section. Réessayez.",
   ),
+  createSectionSticker: (b: { ficheId: number; section: string }) =>
+    post<{ demande: SectionStickerAdmin }>(
+      "/admin/production/section-stickers",
+      b,
+    ),
   setSectionStickerStatus: (
     id: number,
-    statut: "active" | "desactivee" | "refusee"
+    statut: "active" | "desactivee"
   ) =>
     patch<{ demande: SectionStickerAdmin }>(
       `/admin/production/section-stickers/${id}`,
       { statut }
     ),
-  // Modèles de carte (recto / verso affichés au client dans sa demande de carte)
-  listModelesCartes: () =>
-    get<{ modeles: ModeleCarte[] }>("/admin/production/modeles-cartes"),
-  /** Envoie une image de carte (corps binaire) ; renvoie l'adresse à mettre dans rectoUrl / versoUrl. */
-  uploadCardImage: (file: File) =>
-    call(
-      api.post<{ url: string }>(
-        "/admin/production/modeles-cartes/images",
-        file,
-        {
-          headers: { "Content-Type": file.type },
-          transformRequest: [data => data],
-        }
-      )
-    ),
-  createModeleCarte: (b: CreateModeleCarteInput) =>
-    post<{ modele: ModeleCarte }>("/admin/production/modeles-cartes", b),
-  updateModeleCarte: (id: number, b: PatchModeleCarteInput) =>
-    patch<{ modele: ModeleCarte }>(`/admin/production/modeles-cartes/${id}`, b),
-  deleteModeleCarte: (id: number) =>
-    del<{ ok: true }>(`/admin/production/modeles-cartes/${id}`),
   listStickers: () =>
     get<{ stickers: Sticker[] }>("/admin/production/stickers"),
   createSticker: (b: CreateStickerInput) =>
@@ -274,6 +255,7 @@ export const adminApi = {
   listUsers: (p: {
     search?: string;
     role?: "client" | "admin";
+    statut?: "actif" | "desactive" | "suppression";
     page?: number;
     limit?: number;
   }) => get<UsersPage>("/admin/users", { ...p }),
@@ -286,6 +268,18 @@ export const adminApi = {
   updateAdminStatus: (id: number, active: boolean) =>
     patch<{ ok: boolean }>(`/admin/users/${id}/status`, { active }),
   deleteAdmin: (id: number) => del<{ ok: boolean }>(`/admin/users/${id}`),
+  updateClientStatus: (id: number, active: boolean, reason?: string) =>
+    patch<{ ok: boolean }>(`/admin/users/${id}/client-status`, {
+      active,
+      ...(reason?.trim() ? { reason: reason.trim() } : {}),
+    }),
+  permanentlyDeleteClient: (id: number, confirmer: string, raison?: string) =>
+    del<{ ok: true; fichesDeleted: number; paymentsPreserved: number }>(
+      `/admin/users/${id}/permanent`,
+      { confirmer, ...(raison?.trim() ? { raison: raison.trim() } : {}) },
+    ),
+  listAccountDeletionLogs: (p: { page?: number; limit?: number }) =>
+    get<AccountDeletionLogsPage>("/admin/account-deletions", p),
   getAppSettings: () =>
     get<{ settings: AdminAppSettings }>("/admin/settings"),
   updateAppSettings: (settings: AdminAppSettings) =>
@@ -327,6 +321,33 @@ export interface AdminActionLog {
 
 export interface AdminActionLogsPage {
   items: AdminActionLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface AccountDeletionLog {
+  id: number;
+  targetUserId: number;
+  targetEmailHash: string;
+  targetRole: "CLIENT" | "ADMIN";
+  action: "REQUESTED" | "CANCELED" | "DEACTIVATED" | "REACTIVATED" | "PURGED";
+  initiatedBy: "USER" | "ADMIN";
+  executedBy: "USER" | "ADMIN" | "SYSTEM_CRON";
+  actorAdminId: number | null;
+  actorAdminEmail: string | null;
+  reason: string | null;
+  fichesDeletedCount: number;
+  paymentsPreservedCount: number;
+  scheduledFor: string | null;
+  createdAt: string;
+}
+
+export interface AccountDeletionLogsPage {
+  items: AccountDeletionLog[];
   pagination: {
     page: number;
     limit: number;

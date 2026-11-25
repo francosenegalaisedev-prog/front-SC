@@ -4,6 +4,16 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  server: {
+    host: true,
+    allowedHosts: [".trycloudflare.com"],
+    proxy: {
+      "/api": {
+        target: process.env.VITE_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

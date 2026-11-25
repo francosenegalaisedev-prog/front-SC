@@ -12,6 +12,7 @@ export class ApiError extends Error {
     message: string,
     public code?: string,
     public status?: number,
+    public details?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
@@ -102,6 +103,7 @@ export function toApiError(
       resolvedMessage,
       err?.code,
       e.response.status,
+      err?.details,
     );
   }
   return new ApiError(fallback ?? UNEXPECTED_ERROR_MESSAGE);

@@ -108,16 +108,13 @@ export interface ApiFicheSummary {
   } | null;
 }
 
-/** Cycle d'une demande de stickers « par section » : l'administration l'ACTIVE, la désactive ou la refuse. */
-export type SectionStickerStatus = "demande" | "active" | "desactivee" | "refusee";
+/** Cycle d'un sticker « par section » : généré par l'administration (active ou desactivee). */
+export type SectionStickerStatus = "active" | "desactivee";
 
-/** GET /fiches/:id/section-stickers : une demande de devis du client (nombre de stickers pour une section). */
+/** GET /fiches/:id/section-stickers : sticker par section généré par l'administration. */
 export interface ApiSectionSticker {
   id: number;
-  /** Clé de la section dans l'adresse /s/:slug/:section (type d'onglet, ou identifiant d'un onglet personnalisé). */
   section: string;
-  quantite: number;
-  message: string | null;
   statut: SectionStickerStatus;
   createdAt: string;
   activatedAt: string | null;

@@ -25,7 +25,7 @@ const fiche = (slug = "le-sunset") =>
   structuredClone(FICHES.find(f => f.slug === slug)!);
 const html = (el: ReturnType<typeof h>) =>
   renderToString(h(MemoryRouter, null, el));
-const OWNER_MARKERS = ["NFC · QR", "f-qrp", "Scannez pour ouvrir"];
+const OWNER_MARKERS = ["Afficher QR code", "f-qrp", "Scannez pour ouvrir"];
 
 describe("Fiche : outils du propriétaire", () => {
   it("par défaut (visiteur) : ni bouton « NFC · QR », ni QR code", () => {
@@ -198,14 +198,14 @@ describe("PublicFichePage : qui voit les outils", () => {
   it("visiteur anonyme : aucun outil, et aucune requête vers l'espace client", async () => {
     const text = await open();
     expect(text).toContain("Partager");
-    expect(text).not.toContain("NFC · QR");
+    expect(text).not.toContain("Afficher QR code");
     expect(dashboardCalls()).toBe(0);
   });
 
   it("propriétaire connecté : les outils apparaissent", async () => {
     saveSession({ token: "T", user });
     dashboard = () => ({ status: 200, data: [{ id: 1, slug: "le-sunset" }] });
-    expect(await open()).toContain("NFC · QR");
+    expect(await open()).toContain("Afficher QR code");
   });
 
   it("connecté mais fiche d'un autre : aucun outil", async () => {
@@ -213,13 +213,13 @@ describe("PublicFichePage : qui voit les outils", () => {
     dashboard = () => ({ status: 200, data: [{ id: 2, slug: "autre-fiche" }] });
     const text = await open();
     expect(text).toContain("Partager");
-    expect(text).not.toContain("NFC · QR");
+    expect(text).not.toContain("Afficher QR code");
   });
 
   it("session refusée par le serveur (401) : aucun outil, la session est supprimée", async () => {
     saveSession({ token: "T", user });
     dashboard = () => ({ status: 401, data: {} });
-    expect(await open()).not.toContain("NFC · QR");
+    expect(await open()).not.toContain("Afficher QR code");
     expect(getSession()).toBeNull();
   });
 });
