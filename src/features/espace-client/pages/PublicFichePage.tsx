@@ -40,7 +40,9 @@ export default function PublicFichePage() {
         const snap = getSnapshot(slug);
         // Réseau absent : on montre la copie enregistrée. Une vraie erreur
         // du serveur (fiche introuvable) reste une erreur.
-        if (snap && (!navigator.onLine || e instanceof TypeError)) {
+        // Pas de réponse du serveur = problème réseau (axios : pas de `response`).
+        const noResponse = !(e as { response?: unknown })?.response;
+        if (snap && (!navigator.onLine || noResponse)) {
           fromCache.current = true;
           return snap;
         }
