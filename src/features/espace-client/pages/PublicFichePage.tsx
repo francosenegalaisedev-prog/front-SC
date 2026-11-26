@@ -7,7 +7,7 @@ import PublicFicheState from "../components/PublicFicheState";
 import InstallFicheButton from "../components/InstallFicheButton";
 import { useFichePwa } from "../hooks/useFichePwa";
 import { ficheDisplayName } from "../lib/fichePwa";
-import { addFiche } from "../lib/portefeuille";
+import { addFiche, getSnapshot } from "../lib/portefeuille";
 import { useFicheOwnerStatus } from "../hooks/useIsFicheOwner";
 import { usePassage, type PassageSource } from "../hooks/usePassage";
 import { fetchFiche } from "../lib/ficheApi";
@@ -22,11 +22,31 @@ export default function PublicFichePage() {
       ? requestedSource
       : "direct";
 
+  const fromCache = useRef(false);
   const ficheQuery = useQuery({
     queryKey: ["public-fiche", slug],
     enabled: slug.length > 0,
-    queryFn: ({ signal }) =>
-      fetchFiche(`fiches/public/${encodeURIComponent(slug)}`, signal),
+    // Sans cela, react-query met la requête en pause quand il n'y a pas de réseau.
+    networkMode: "always",
+    queryFn: async ({ signal }) => {
+      try {
+        const fiche = await fetchFiche(
+          `fiches/public/${encodeURIComponent(slug)}`,
+          signal
+        );
+        fromCache.current = false;
+        return fiche;
+      } catch (e) {
+        const snap = getSnapshot(slug);
+        // Réseau absent : on montre la copie enregistrée. Une vraie erreur
+        // du serveur (fiche introuvable) reste une erreur.
+        if (snap && (!navigator.onLine || e instanceof TypeError)) {
+          fromCache.current = true;
+          return snap;
+        }
+        throw e;
+      }
+    },
     retry: false,
   });
 
@@ -41,7 +61,7 @@ export default function PublicFichePage() {
 
   useEffect(() => {
     const f = ficheQuery.data;
-    if (!f || ownerPending || isOwner) return;
+    if (!f || ownerPending || isOwner || fromCache.current) return;
     addFiche(f, ficheDisplayName(f), f.logo || undefined);
   }, [ficheQuery.data, ownerPending, isOwner]);
 
@@ -85,6 +105,24 @@ export default function PublicFichePage() {
             scrollerRef={scrollerRef}
             ownerTools={isOwner}
           />
+          {fromCache.current && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 40,
+                padding: "6px 12px",
+                background: "#111",
+                color: "#fff",
+                fontSize: 12,
+                textAlign: "center",
+              }}
+            >
+              Hors ligne : version enregistrée sur ton téléphone
+            </div>
+          )}
           <InstallFicheButton
             name={ficheDisplayName(ficheQuery.data)}
             {...pwa}
