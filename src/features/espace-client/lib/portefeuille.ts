@@ -54,3 +54,7 @@ export function subscribePortefeuille(cb: () => void): () => void {
     window.removeEventListener("storage", cb);
   };
 }
+
+export function getSnapshot(slug: string): FicheRecord | undefined {
+  return listFiches().find((e) => e.slug === slug)?.snapshot;
+}
