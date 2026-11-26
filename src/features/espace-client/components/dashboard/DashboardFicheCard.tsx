@@ -16,7 +16,6 @@ type Props = {
   selected: boolean;
   deletePending: boolean;
   onSelect: () => void;
-  onView: (slug: string) => void;
   onEdit: (ficheId: number) => void;
   onDelete: (fiche: ApiFicheSummary) => void;
 };
@@ -26,7 +25,6 @@ export function DashboardFicheCard({
   selected,
   deletePending,
   onSelect,
-  onView,
   onEdit,
   onDelete,
 }: Props) {
@@ -75,8 +73,6 @@ export function DashboardFicheCard({
         </span>
 
         <span className="db-act">
-          <button onClick={() => onView(fiche.slug)}>Voir</button>
-
           {h === "expired" && (
             <Link className="db-public-link" to={renewPath(fiche.id)}>
               Renouveler

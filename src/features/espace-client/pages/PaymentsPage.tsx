@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { errMsg } from "../../../lib/apiError";
 import { CONTACT } from "../../../data/apropos";
 import { useClientUser } from "../layout/useClientUser";
@@ -154,14 +153,6 @@ export default function PaymentsPage() {
                           </span>
                           {payment.reference && (
                             <span>Référence : {payment.reference}</span>
-                          )}
-                          {payment.fiche.id && (
-                            <Link
-                              className="font-medium text-[#514a40] underline underline-offset-2"
-                              to={`/espace-client/fiche/preview/${payment.fiche.id}`}
-                            >
-                              Voir la fiche
-                            </Link>
                           )}
                         </div>
                         {payment.motifEchec && (

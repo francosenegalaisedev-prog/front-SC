@@ -56,8 +56,7 @@ const NAV: {
     match: p =>
       p === BASE ||
       p === `${BASE}/` ||
-      p.startsWith(`${BASE}/fiches`) ||
-      p.startsWith(`${BASE}/fiche/preview/`),
+      p.startsWith(`${BASE}/fiches`),
   },
   {
     to: `${BASE}/editeur`,

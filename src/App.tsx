@@ -76,11 +76,6 @@ const CallbackRequestsPage = lazy(
 const ClientCartesPage = lazy(
   () => import("./features/espace-client/pages/ClientCartesPage")
 );
-const FichePage = lazy(() =>
-  import("./features/espace-client/pages/FichePage").then(m => ({
-    default: m.FichePage,
-  }))
-);
 const EditorPage = lazy(
   () => import("./features/espace-client/pages/EditorPage")
 );
@@ -305,7 +300,6 @@ export default function App() {
             }
           >
             <Route index element={<DashboardPage />} />
-            <Route path="fiche/preview/:id" element={<FichePage />} />
             <Route path="prospects" element={<CallbackRequestsPage />} />
             <Route path="cartes" element={<ClientCartesPage />} />
             <Route

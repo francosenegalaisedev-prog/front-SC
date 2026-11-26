@@ -24,7 +24,6 @@ import { DeleteFicheModal } from "./dashboard/DeleteFicheModal";
 interface Props {
   user: { name: string };
   onEdit: (ficheId: number) => void;
-  onView: (slug: string) => void;
 }
 
 type Fiche = NonNullable<ReturnType<typeof useDashboardFiches>["data"]>[number];
@@ -44,7 +43,7 @@ function Skeleton() {
   );
 }
 
-export default function Dashboard({ user, onEdit, onView }: Props) {
+export default function Dashboard({ user, onEdit }: Props) {
   const queryClient = useQueryClient();
 
   const {
@@ -254,7 +253,6 @@ export default function Dashboard({ user, onEdit, onView }: Props) {
                   selected={fiche.id === cur?.id}
                   deletePending={deleteMutation.isPending}
                   onSelect={() => setSel(fiche.slug)}
-                  onView={onView}
                   onEdit={onEdit}
                   onDelete={handleDelete}
                 />

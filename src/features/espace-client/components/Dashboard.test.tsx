@@ -99,7 +99,7 @@ describe("Dashboard deletion", () => {
       root.render(
         <QueryClientProvider client={client}>
           <MemoryRouter>
-            <Dashboard user={{ name: "Awa Ndiaye" }} onEdit={() => {}} onView={() => {}} />
+            <Dashboard user={{ name: "Awa Ndiaye" }} onEdit={() => {}} />
           </MemoryRouter>
         </QueryClientProvider>,
       ),
@@ -155,7 +155,6 @@ describe("Dashboard deletion", () => {
             <Dashboard
               user={{ name: "Awa Ndiaye" }}
               onEdit={() => {}}
-              onView={() => {}}
             />
           </MemoryRouter>
         </QueryClientProvider>,
