@@ -1,5 +1,5 @@
-const SITE = "https://support-connecte.com";
-const BRAND = "Support Connecte";
+const SITE = "https://www.logcard.io";
+const BRAND = "LogCard";
 const DEFAULT_IMAGE = "/og-image.png";
 
 interface SeoProps {

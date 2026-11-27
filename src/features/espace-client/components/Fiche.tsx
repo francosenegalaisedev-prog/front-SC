@@ -271,7 +271,7 @@ export default function Fiche({
           <div>
             <span>Mentions légales · Confidentialité</span>
             <a href={publicAppUrl} target="_blank" rel="noreferrer">
-              Support Connecté <I n="arrow" s={11} />
+              LogCard <I n="arrow" s={11} />
             </a>
           </div>
           <p>
@@ -286,7 +286,7 @@ export default function Fiche({
               target="_blank"
               rel="noreferrer"
             >
-              Créée avec <b>Support Connecté</b>
+              Créée avec <b>LogCard</b>
             </a>
           )}
         </footer>

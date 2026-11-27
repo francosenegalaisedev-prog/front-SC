@@ -1,7 +1,7 @@
 import { api } from '../lib/api';
 
 /*
-  Envoie les demandes au backend Support Connecté. Les données du studio de carte
+  Envoie les demandes au backend LogCard. Les données du studio de carte
   qui peuvent contenir des images encodées ne sont pas incluses dans la requête.
 */
 /** Champs communs à toutes les demandes (formulaire de contact, devis V5, configurateur de carte). */

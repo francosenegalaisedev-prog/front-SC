@@ -471,7 +471,7 @@
   margin-top: 0.85rem;
 }
 
-/* Espace client : palette Support Connecté (noir, ivoire et rouge). */
+/* Espace client : palette LogCard (noir, ivoire et rouge). */
 .fiche-dashboard {
   padding: clamp(0.85rem, 1.6vw, 1.25rem);
   border: 1px solid #e3dfd8;

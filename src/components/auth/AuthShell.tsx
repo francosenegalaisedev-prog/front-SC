@@ -28,7 +28,7 @@ export default function AuthShell({
   lead,
   children,
 }: Props) {
-  usePageMeta(`${title} — Support Connecté`, description);
+  usePageMeta(`${title} — LogCard`, description);
   useEffect(() => {
     const m = document.createElement("meta");
     m.name = "robots";
@@ -48,11 +48,11 @@ export default function AuthShell({
           <Link
             className="au-logo"
             to="/"
-            aria-label="Support Connecté, accueil"
+            aria-label="LogCard, accueil"
           >
             <img
               src="/images/logo-blanc.webp"
-              alt="Support Connecté"
+              alt="LogCard"
               width="150"
               height="47"
             />

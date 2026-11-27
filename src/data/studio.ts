@@ -4,7 +4,7 @@
 // « À VALIDER » = proposition de rédaction.
 
 // Configurateur (page Cartes) : règles par niveau, conformes au catalogue
-//  - Essentielle : design Support Connecté, sans personnalisation visuelle
+//  - Essentielle : design LogCard, sans personnalisation visuelle
 //  - Pro : recto-verso personnalisé avec vos coordonnées
 //  - Signature : « Design sur mesure, finitions premium » → fond, logo, couleur, réglages
 import type { Tier } from "../lib/print";
@@ -30,7 +30,7 @@ export const DESIGNER = {
   red: "elle se crée sous vos yeux.", // À VALIDER
   text: "Recto : votre logo. Verso : vos coordonnées et votre QR code. Personnalisez librement fonds, photos et couleurs à votre image.", // À VALIDER
   essNote:
-    "La carte Essentielle garde le design Support Connecté. Vos coordonnées s’affichent sur votre page connectée, modifiables à vie.", // À VALIDER (fin : catalogue)
+    "La carte Essentielle garde le design LogCard. Vos coordonnées s’affichent sur votre page connectée, modifiables à vie.", // À VALIDER (fin : catalogue)
   panel: "Personnalisation",
   faceFront: "Recto",
   faceBack: "Verso",
@@ -166,7 +166,7 @@ export const STUDIO = {
   oneSide: "La carte Essentielle est imprimée au recto.",
   info: "En validant, vous acceptez d’être recontacté au sujet de cette maquette.",
   optin:
-    "J’accepte de recevoir les nouveautés et offres Support Connecté (e-mail ou WhatsApp). Désinscription possible à tout moment.",
+    "J’accepte de recevoir les nouveautés et offres LogCard (e-mail ou WhatsApp). Désinscription possible à tout moment.",
   send: "Recevoir ma maquette",
   errors: {
     name: "Indiquez votre nom.",

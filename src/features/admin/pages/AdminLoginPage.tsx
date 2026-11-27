@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
             <div className="flex items-center justify-center py-4">
               <img
                 src="/images/Logo.png"
-                alt="Logo Support Connecté"
+                alt="Logo LogCard"
                 width={54}
                 height={54}
                 className="h-[54px] w-[54px] object-contain"
@@ -130,7 +130,7 @@ export default function AdminLoginPage() {
             <div className="flex items-center justify-center py-4">
               <img
                 src="/images/Logo.png"
-                alt="Logo Support Connecté"
+                alt="Logo LogCard"
                 width={54}
                 height={54}
                 className="h-[54px] w-[54px] object-contain"

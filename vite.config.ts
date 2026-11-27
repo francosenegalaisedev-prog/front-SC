@@ -26,9 +26,9 @@ export default defineConfig({
         "favicon_io/apple-touch-icon.png",
       ],
       manifest: {
-        name: "Support Connecté",
-        short_name: "SC",
-        description: "Support Connecté",
+        name: "LogCard",
+        short_name: "LogCard",
+        description: "LogCard — Cartes de visite connectées NFC & QR",
         theme_color: "#ffffff",
         background_color: "#ffffff",
         display: "standalone",

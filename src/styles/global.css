@@ -1,4 +1,4 @@
-/* Support Connecté — styles globaux. Tokens conformes au cahier des charges (sections 02, 03, 04, 18, 19). */
+/* LogCard — styles globaux. Tokens conformes au cahier des charges (sections 02, 03, 04, 18, 19). */
 :root{
   --noir:#08090A; --noir2:#111315; --rouge:#EF1733; --rouge-h:#D10F28; --blanc:#FFFFFF; --ivoire:#F6F3EC;
   --gris:#55575A; --gris-l:#E7E5E1; --gris-xl:#F7F7F5; --txt:#111315; --bg:#FFFFFF;

@@ -37,7 +37,7 @@ export default function CreateFicheForm({
   getToken = () => (getSession() ? "session" : null),
   onCreated,
   onUnauthorized,
-  publicBaseUrl = "https://support-connecte.com",
+  publicBaseUrl = "https://www.logcard.io",
 }: CreateFicheFormProps) {
   const uid = useId();
   const refs = useRef<

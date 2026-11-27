@@ -181,7 +181,7 @@ function PublicLayout({ settings }: { settings?: PublicAppSettings }) {
 function NotFound() {
   return (
     <>
-    <Seo noindex title="Page introuvable | Support Connecté" description="Cette page n'existe pas." />
+    <Seo noindex title="Page introuvable | LogCard" description="Cette page n'existe pas." />
       <IconSprite />
       <Header current="" />
       <main className="notfound">

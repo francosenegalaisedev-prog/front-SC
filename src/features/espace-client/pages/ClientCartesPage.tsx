@@ -58,7 +58,7 @@ export default function ClientCartesPage() {
   const [planFilter, setPlanFilter] = useState<"" | Tier>("");
 
   useEffect(() => {
-    document.title = "Cartes — Support Connecté";
+    document.title = "Cartes — LogCard";
   }, []);
 
   const fichesQuery = useQuery({

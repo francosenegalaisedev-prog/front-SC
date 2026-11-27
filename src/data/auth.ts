@@ -42,7 +42,7 @@ export const A_LOGIN = {
     network:
       "Connexion impossible pour le moment. Vérifiez votre réseau et réessayez.",
   },
-  meta: "Connectez-vous à votre espace client Support Connecté.",
+  meta: "Connectez-vous à votre espace client LogCard.",
 };
 
 export const A_REGISTER = {
@@ -91,7 +91,7 @@ export const A_REGISTER = {
     hint: "Pas de message ? Regardez dans les courriers indésirables.",
     login: "Aller à la connexion",
   },
-  meta: "Créez votre compte Support Connecté pour gérer vos cartes et fiches connectées.",
+  meta: "Créez votre compte LogCard pour gérer vos cartes et fiches connectées.",
 };
 
 export const SHOW = "Afficher";

@@ -14,8 +14,8 @@ export function waNumber(raw: string | null | undefined): string | null {
 export function waMessage(type: RelanceType, r: RelanceItem): string {
   const salut = `Bonjour ${r.prenom || r.nom},`;
   const fiche = r.entreprise ? `votre fiche connectée « ${r.entreprise} »` : 'votre fiche connectée';
-  if (type === 'bientot') return `${salut} ${fiche} Support Connecté arrive à échéance le ${fdate(r.dateEcheance)}. Souhaitez-vous la renouveler ?`;
-  if (type === 'expirees') return `${salut} ${fiche} Support Connecté a expiré${r.dateEcheance ? ` le ${fdate(r.dateEcheance)}` : ''}. Je peux la réactiver dès aujourd’hui si vous le souhaitez.`;
+  if (type === 'bientot') return `${salut} ${fiche} LogCard arrive à échéance le ${fdate(r.dateEcheance)}. Souhaitez-vous la renouveler ?`;
+  if (type === 'expirees') return `${salut} ${fiche} LogCard a expiré${r.dateEcheance ? ` le ${fdate(r.dateEcheance)}` : ''}. Je peux la réactiver dès aujourd’hui si vous le souhaitez.`;
   return `${salut} ${fiche} a déjà été consultée ${r.scansTotal} fois. Souhaitez-vous que je vous présente la formule Pro ?`;
 }
 

@@ -62,7 +62,7 @@ export default function SettingsPage() {
   const [twoFaCopied, setTwoFaCopied] = useState<"" | "key" | "codes">("");
 
   useEffect(() => {
-    document.title = "Paramètres — Support Connecté";
+    document.title = "Paramètres — LogCard";
   }, []);
 
   useEffect(() => {
