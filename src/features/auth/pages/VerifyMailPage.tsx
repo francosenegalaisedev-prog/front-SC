@@ -55,12 +55,12 @@ export const VerifyMailPage = () => {
       {/* Logo */}
       <a
         href="/"
-        aria-label="Support Connecté, accueil"
+        aria-label="LogCard, accueil"
         className="absolute left-5 top-6 sm:left-10 lg:left-[72px]"
       >
         <img
           src="/images/logo-blanc.webp"
-          alt="Support Connecté"
+          alt="LogCard"
           width="142"
           className="h-auto w-32 object-contain sm:w-[142px]"
         />
@@ -88,7 +88,7 @@ export const VerifyMailPage = () => {
         </div>
 
         <p className="mb-2 text-[10px] font-bold tracking-[0.16em] text-[#c9c7c3]">
-          SUPPORT CONNECTÉ
+          LOGCARD
         </p>
 
         <h1
@@ -147,7 +147,7 @@ export const VerifyMailPage = () => {
 
       {/* Pied de page */}
       <p className="absolute bottom-4 text-center text-[10px] font-medium tracking-wide text-[#696b6e]">
-        © {new Date().getFullYear()} Support Connecté
+        © {new Date().getFullYear()} LogCard
       </p>
 
       {/* Modal de succes */}

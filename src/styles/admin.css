@@ -1,4 +1,4 @@
-/* Support Connecté — Back-office. Palette : noir #08090A, rouge #EF1733, ivoire #F6F3EC.
+/* LogCard — Back-office. Palette : noir #08090A, rouge #EF1733, ivoire #F6F3EC.
    Feuille ISOLÉE : toutes les règles sont sous `.adm` (racine posée par AdminLayout) et les animations sont préfixées `adm-`,
    pour ne pas se mélanger aux styles du site public ni de l'espace client. Les classes du back-office qui portaient le même
    nom qu'une classe globale du site (btn, tbl, tabs, chip, seg, muted, red, mini) sont préfixées `adm-`. */

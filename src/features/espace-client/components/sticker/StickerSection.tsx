@@ -57,7 +57,7 @@ export default function StickerSection({
         <footer className="ss-foot">
           Créée avec{" "}
           <a href={publicAppUrl || "/"} target="_blank" rel="noreferrer">
-            Support Connecté
+            LogCard
           </a>
         </footer>
       )}

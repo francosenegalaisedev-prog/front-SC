@@ -49,7 +49,7 @@ export default function PaymentsPage() {
   });
 
   useEffect(() => {
-    document.title = "Mes paiements — Support Connecté";
+    document.title = "Mes paiements — LogCard";
   }, []);
 
   return (
@@ -239,7 +239,7 @@ export default function PaymentsPage() {
             <div className="flex items-start justify-between gap-4 border-b border-[#e3dfd8] pb-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#EF1733]">
-                  Support Connecté
+                  LogCard
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">Reçu de paiement</h2>
                 <p className="mt-1 text-sm text-[#6d665d]">

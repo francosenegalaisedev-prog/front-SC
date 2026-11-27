@@ -32,7 +32,7 @@ export function ShareSheet({
   const title =
     `${fiche.prenom} ${fiche.nom}`.trim() ||
     fiche.entreprise ||
-    "Support Connecté";
+    "LogCard";
   const canNativeShare =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
 

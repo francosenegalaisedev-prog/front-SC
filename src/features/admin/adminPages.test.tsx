@@ -241,7 +241,7 @@ const route = (c: InternalAxiosRequestConfig): unknown => {
   if (url === "/admin/settings")
     return {
       settings: {
-        platformName: "Support Connecté",
+        platformName: "LogCard",
         supportEmail: "support@sc.sn",
         supportPhone: "",
         socialLinks: { instagram: "", facebook: "", linkedin: "" },
@@ -535,7 +535,7 @@ describe("pages du back-office", () => {
     expect(host.textContent).toContain("Journal d’activité");
     expect(host.textContent).toContain("Paramètres de l’application");
     expect(host.textContent).toContain("Root");
-    expect(host.querySelector('.top-mob img[alt="Support Connecté"]')?.getAttribute("src"))
+    expect(host.querySelector('.top-mob img[alt="LogCard"]')?.getAttribute("src"))
       .toBe("/images/logo-noir.webp");
     expect(calls.some(call => call.url === "/admin/action-logs")).toBe(true);
   });

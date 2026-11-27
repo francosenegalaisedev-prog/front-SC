@@ -45,7 +45,7 @@ export default function PortefeuillePage() {
             textTransform: "uppercase",
           }}
         >
-          Support Connecté
+          LogCard
         </div>
         <h1 style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 500, margin: "4px 0 4px" }}>
           Mes fiches

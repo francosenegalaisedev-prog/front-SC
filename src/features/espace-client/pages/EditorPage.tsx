@@ -84,7 +84,7 @@ function FicheEditor({ id }: { id: string }) {
   } = useFicheEditor(id);
 
   useEffect(() => {
-    document.title = "Modifier ma fiche — Support Connecté";
+    document.title = "Modifier ma fiche — LogCard";
   }, []);
 
   // Quitter la page (fermeture ou lien interne) avec des modifications non enregistrées

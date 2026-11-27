@@ -159,7 +159,7 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
         <div className="flex items-center gap-3 px-4 py-4">
           <img
             src="/images/logo-vertical-blanc.webp"
-            alt="Logo Support Connecté"
+            alt="Logo LogCard"
             width={34}
             height={34}
             className="h-8.5 w-8.5 shrink-0 object-contain"
@@ -167,7 +167,7 @@ export default function ClientLayout({ children }: { children?: ReactNode }) {
 
           <div className="flex flex-col">
             <span className="text-sm font-semibold leading-tight text-white">
-              Support Connecté
+              LogCard
             </span>
             <small className="mt-1 text-xs leading-tight text-gray-400">
               Espace client

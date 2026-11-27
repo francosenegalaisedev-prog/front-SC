@@ -8,7 +8,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Tableau de bord — Support Connecté";
+    document.title = "Tableau de bord — LogCard";
   }, []);
 
   return (

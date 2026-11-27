@@ -10,4 +10,4 @@ Disallow: /api
 Disallow: /f/
 Disallow: /s/
 
-Sitemap: https://www.support-connecte.com/sitemap.xml
+Sitemap: https://www.logcard.io/sitemap.xml

@@ -39,7 +39,7 @@ export default function AdminSettings() {
   const [passwordError, setPasswordError] = useState("");
   const [invitation, setInvitation] = useState({ nom: "", email: "" });
   const [settings, setSettings] = useState<AdminAppSettings>({
-    platformName: "Support Connecté",
+    platformName: "LogCard",
     supportEmail: "",
     supportPhone: "",
     socialLinks: { instagram: "", facebook: "", linkedin: "" },
@@ -78,7 +78,7 @@ export default function AdminSettings() {
     if (settingsQuery.data) setSettings(settingsQuery.data);
   }, [settingsQuery.data]);
   useEffect(() => {
-    document.title = "Paramètres administrateur — Support Connecté";
+    document.title = "Paramètres administrateur — LogCard";
   }, []);
 
   const selectTab = (next: SettingsTab) => {

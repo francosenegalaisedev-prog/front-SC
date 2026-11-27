@@ -22,7 +22,7 @@ export default function QrBox({ fiche }: { fiche: FicheRecord }) {
         <div className="ed-qr-t">%QrBox
           <p>
             Le QR code de votre fiche :{" "}
-            <b>support-connecte.com/f/{fiche.slug}</b>. C’est le même que celui
+            <b>logcard.io/f/{fiche.slug}</b>. C’est le même que celui
             de votre carte.
           </p>
           <button
